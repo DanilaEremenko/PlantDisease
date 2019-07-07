@@ -3,6 +3,16 @@ from data_maker import get_data
 from img_proc import plot_image_from_arr
 import gui_reporter as gr
 
+from keras.models import model_from_json
+
+
+def save_to_json(model, path):
+    json_string = model.to_json()
+    json_file = open(path, "w")
+    json_file.write(json_string)
+    json_file.close()
+
+
 if __name__ == '__main__':
     ##############################################################################
     # --------------------- train data making ------------------------------------
@@ -35,11 +45,11 @@ if __name__ == '__main__':
 
     verbose = True
     epochs = 2
-    batch_size = 32
+    batch_size = 16
     validation_split = 0.1
     show = True
     save = not show
-    lr = 0.01
+    lr = 0.05
 
     model = get_CNN(img_shape, class_marks.__len__(), lr=lr)
 
@@ -59,7 +69,19 @@ if __name__ == '__main__':
                             save=save
                             )
 
+    ##############################################################################
+    # --------------------- predicting & analyzing--------------------------------
+    ##############################################################################
     # scores = model.evaluate(x_test, y_test, verbose=verbose)
     # print("accuracy = %.2f" % scores[1])
 
     # model.predict(x_train[0].reshape(1,img_shape[0],img_shape[1],img_shape[2]))
+
+    ##############################################################################
+    # --------------------- model saving & loading -------------------------------
+    ##############################################################################
+    # save_to_json(model, "model.json")
+    # model = model_from_json(json_string)
+
+    # model.save_weights('model_weights.h5')
+    # model.load_weights('model_weights.h5')
