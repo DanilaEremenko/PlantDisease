@@ -2,9 +2,7 @@ from conv_network import get_CNN
 from data_maker import get_data
 from img_proc import plot_image_from_arr
 import gui_reporter as gr
-
-from keras.models import model_from_json
-
+import numpy as np
 
 def save_to_json(model, path):
     json_string = model.to_json()
@@ -23,11 +21,11 @@ if __name__ == '__main__':
         "PlantVillage/Potato___Late_blight"
     )
 
-    class_marks = (
-        (0, 0, 1),
-        (0, 1, 0),
-        (1, 0, 0)
-    )
+    class_marks = np.array([
+        (1,0),
+        (0,1),
+        (1,0)
+    ])
 
     # img_shape = get_imgs_shapes(paths_to_dirs[0]) # if parse without compressing
     img_shape = (32, 32, 3)  # if parse with compressing
@@ -44,14 +42,14 @@ if __name__ == '__main__':
     ##############################################################################
 
     verbose = True
-    epochs = 2
+    epochs = 20
     batch_size = 16
     validation_split = 0.1
     show = True
     save = not show
     lr = 0.05
 
-    model = get_CNN(img_shape, class_marks.__len__(), lr=lr)
+    model = get_CNN(img_shape, out_neurons_num=class_marks[0].shape[0], lr=lr)
 
     history = model.fit \
             (
@@ -70,18 +68,8 @@ if __name__ == '__main__':
                             )
 
     ##############################################################################
-    # --------------------- predicting & analyzing--------------------------------
+    # --------------------- model saving -----------------------------------------
     ##############################################################################
-    # scores = model.evaluate(x_test, y_test, verbose=verbose)
-    # print("accuracy = %.2f" % scores[1])
+    save_to_json(model, "model.json")
 
-    # model.predict(x_train[0].reshape(1,img_shape[0],img_shape[1],img_shape[2]))
-
-    ##############################################################################
-    # --------------------- model saving & loading -------------------------------
-    ##############################################################################
-    # save_to_json(model, "model.json")
-    # model = model_from_json(json_string)
-
-    # model.save_weights('model_weights.h5')
-    # model.load_weights('model_weights.h5')
+    model.save_weights('model_weights.h5')

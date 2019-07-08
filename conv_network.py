@@ -1,16 +1,16 @@
 from __future__ import print_function
 
 from keras.models import Sequential
-from keras.layers import Dense, Flatten, Activation
+from keras.layers import Dense, Flatten
 from keras.layers import Dropout
 from keras.layers.convolutional import Conv2D, MaxPooling2D
-from keras.optimizers import SGD, Adam
+from keras.optimizers import Adam
 import logging
 
 logging.getLogger('tensorflow').disabled = True
 
 
-def get_CNN(img_shape, class_num, lr=0.1):
+def get_CNN(img_shape, out_neurons_num, lr=0.1):
     model = Sequential()
 
     # 1 conv layer
@@ -46,7 +46,7 @@ def get_CNN(img_shape, class_num, lr=0.1):
 
     model.add(Dropout(0.5))
 
-    model.add(Dense(class_num, activation='softmax'))
+    model.add(Dense(out_neurons_num, activation='softmax'))
 
     model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=lr), metrics=['accuracy'])
 

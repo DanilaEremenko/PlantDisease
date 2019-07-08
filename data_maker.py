@@ -35,5 +35,5 @@ def get_data(paths_to_dirs, class_marks, img_shape, max_img_num=None):
         y_train = np.append(y_train, curr_y)
         im_sum += i
     x_train.shape = (im_sum, img_shape[0], img_shape[1], img_shape[2])
-    y_train.shape = (im_sum, class_marks.__len__())
+    y_train.shape = (im_sum, class_marks[0].shape[0])
     return x_train, y_train
