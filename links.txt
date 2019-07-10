@@ -1,0 +1,2 @@
+https://www.kaggle.com/emmarex/plantdisease
+https://www.researchgate.net/post/Is_any_dataset_available_other_than_Plant_Village_Dataset_for_plant_disease_detection_using_Machine_learning

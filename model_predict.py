@@ -41,8 +41,8 @@ if __name__ == '__main__':
         },
         "pepper": {
             "data_dirs": (
-                "PlantVillage/PlantVillage/Pepper__bell___Bacterial_spot",
-                "PlantVillage/PlantVillage/Pepper__bell___healthy",
+                "PlantVillage/Pepper__bell___Bacterial_spot",
+                "PlantVillage/Pepper__bell___healthy",
             ),
             "class_marks": np.array([
                 (1, 0),

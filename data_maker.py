@@ -9,13 +9,15 @@ def get_class_from_dir(path_to_dir, class_mark, img_shape, max_img_num=None):
     i = 0
 
     for path_to_img in os.listdir(path_to_dir):
-        curr_x = np.append(curr_x, get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape))
-        curr_y = np.append(curr_y, class_mark)
-        i += 1
+        img_pxs = get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape)
+        if img_pxs.shape == img_shape:
+            curr_x = np.append(curr_x, get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape))
+            curr_y = np.append(curr_y, class_mark)
+            i += 1
 
-        if max_img_num != None:
-            if i == max_img_num:
-                break
+            if max_img_num != None:
+                if i == max_img_num:
+                    break
 
     curr_x.shape = (i, img_shape[0], img_shape[1], img_shape[2])
 
