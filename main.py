@@ -1,6 +1,6 @@
 import sys
 from PyQt4 import QtGui
-from main_gui import Window
+from main_gui import *
 
 if __name__ == '__main__':
     #######################################################
@@ -14,6 +14,7 @@ if __name__ == '__main__':
     # ------------------ gui ------------------------------
     #######################################################
     app = QtGui.QApplication(sys.argv)
-    window = Window()
+    window_choose_dirs = Window_Choose_Dirs()
+    window_start = Window_Start(window_choose_dirs)
 
     sys.exit(app.exec_())
