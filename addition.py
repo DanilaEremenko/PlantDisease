@@ -1,8 +1,11 @@
+# coding=utf-8
 from keras.models import model_from_json
-from data_maker import get_data
+from data_maker import get_data_full, get_x_from_dir
 from img_proc import plot_image_from_arr
 from conv_network import get_CNN
 import gui_reporter as gr
+import os
+import numpy as np
 
 
 def get_model_from_json(path):
@@ -16,7 +19,7 @@ def train_on_dir(model, data, title, img_shape, max_ing_num=None, verbose=False,
     if not data.keys().__contains__("epochs"):
         raise Exception("no key epochs in train data")
 
-    (x_train, y_train) = get_data(data, img_shape)
+    (x_train, y_train) = get_data_full(data, img_shape)
 
     # plot example
     plot_image_from_arr(x_train[0].transpose()[0].transpose())
@@ -50,10 +53,26 @@ def train_on_dir(model, data, title, img_shape, max_ing_num=None, verbose=False,
 
 
 def examine_on_dir(model, data, title, img_shape, max_img_num=None):
-    (x_test, y_test) = get_data(data, img_shape, max_img_num=max_img_num)
+    (x_test, y_test) = get_data_full(data, img_shape, max_img_num=max_img_num)
 
     plot_image_from_arr(x_test[0].transpose()[0].transpose())
 
     verbose = False
     scores = model.evaluate(x_test, y_test, verbose=verbose)
     print("accuracy on %s = %.2f" % (title, scores[1]))
+
+
+def predict_on_dir(model, data_dirs, img_shape):
+    text = ""
+    for data_dir in data_dirs:
+        x_data = get_x_from_dir(data_dir, img_shape)
+        for file, prediction in zip(os.listdir(data_dir), model.predict(x_data)):
+            if prediction[0] > prediction[1]:
+                answer = "healthy"
+            else:
+                answer = "diseased"
+
+            text += "%s/%s\t\t%s\n" % (data_dir, file, answer)
+
+    with open('answer.txt', 'a') as answer_file:
+        answer_file.write(text)

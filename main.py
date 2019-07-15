@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # ------------------ gui ------------------------------
     #######################################################
     app = QtGui.QApplication(sys.argv)
-    window_choose_dirs = Window_Choose_Dirs()
-    window_start = Window_Start(window_choose_dirs)
+    window_choose_dirs = WindowPreparePredict()
+    window_start = WindowStart(window_choose_dirs)
 
     sys.exit(app.exec_())

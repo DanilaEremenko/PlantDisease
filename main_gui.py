@@ -3,14 +3,16 @@ from __future__ import print_function
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtGui import QWidget, QLineEdit, QMainWindow
-from addition import get_model_from_json
+from addition import get_model_from_json, predict_on_dir
+import time
+import numpy as np
 
 
-class Window_Start(QWidget):
+class WindowStart(QWidget):
     btn_size = 100
 
     def __init__(self, window_choose_dirs):
-        super(Window_Start, self).__init__()
+        super(WindowStart, self).__init__()
         self.window_choose_dirs = window_choose_dirs
         self.setGeometry(50, 50, 500, 300)
         self.setWindowTitle("Plant Disease Recognizer")
@@ -45,7 +47,6 @@ class Window_Start(QWidget):
 
     @pyqtSlot()
     def use_existing_NN(self):
-        self.hide()
         self.window_choose_dirs.home(self)
         pass
 
@@ -70,24 +71,18 @@ class Window_Start(QWidget):
         pass
 
 
-class Window_Choose_Dirs(QWidget):
+class WindowPreparePredict(QWidget):
     btn_size = 100
+    img_shape = (32, 32, 3)
 
     def __init__(self):
-        super(Window_Choose_Dirs, self).__init__()
+        super(WindowPreparePredict, self).__init__()
         self.setGeometry(50, 50, 500, 300)
         self.setWindowTitle("Plant Disease Recognizer")
         self.setWindowIcon(QtGui.QIcon("res/robot.jpg"))
         self.data_dirs = []
-
-    def home(self, back_window):
-        self.back_window = back_window
-        # path_to_model = str(QtGui.QFileDialog.getOpenFileNameAndFilter(self, "Open *.json file with saved NN", "",
-        #                                                               "Json Files (*.json)")[0])
-        self.plant_name = MyTextBox().read_value()
-        print("plant name = " % self.plant_name)
-        # print("loading model from %s" % path_to_model)
-        # self.model = get_model_from_json(path_to_model)
+        self.plant_name = "potato"
+        self.class_marks = np.empty(0)
 
         btn_add_data_dir = QtGui.QPushButton("Add data dir")
         btn_add_data_dir.pressed.connect(self.add_data_dir)
@@ -107,7 +102,16 @@ class Window_Choose_Dirs(QWidget):
         vbox.addLayout(hbox)
 
         self.setLayout(vbox)
+
+    def home(self, back_window):
+        self.back_window = back_window
+        self.back_window.hide()
         self.show()
+
+        path_to_model = str(QtGui.QFileDialog.getOpenFileNameAndFilter(self, "Open *.json file with saved NN", "",
+                                                                       "Json Files (*.json)")[0])
+
+        self.model = get_model_from_json(path_to_model)
 
     @pyqtSlot()
     def add_data_dir(self):
@@ -119,45 +123,55 @@ class Window_Choose_Dirs(QWidget):
     @pyqtSlot()
     def predict(self):
         print("TODO predict")
-        data = {}
-        for data_dir in self.data_dirs:
-            data['']
+        if self.data_dirs.__len__() == 0:
+            print("No data dirs defined")
+            pass
+
+        predict_on_dir(self.model, self.data_dirs, img_shape=self.img_shape)
+
         self.hide()
         self.back_window.show()
         pass
 
-
-class MyTextBox(QWidget):
-    btn_size = 100
-
-    def __init__(self):
-        super(MyTextBox, self).__init__()
-        self.setGeometry(50, 50, 500, 300)
-        self.setWindowTitle("Plant Disease Recognizer")
-        self.setWindowIcon(QtGui.QIcon("res/robot.jpg"))
-        self.data_dirs = []
-        self.textbox = QLineEdit(self)
-        self.textbox.move(self.padding, self.padding)
-        self.textbox.resize(100, 40)
-        self.line = ""
-
-    def read_value(self, back_window):
-        btn_ok = QtGui.QPushButton("Ok")
-        btn_ok.pressed.connect(self.set_val)
-        btn_ok.resize(self.btn_size, self.btn_size)
-
-        hbox = QtGui.QHBoxLayout()
-        hbox.addStretch(1)
-        hbox.addWidget(btn_ok)
-
-        vbox = QtGui.QVBoxLayout()
-        vbox.addStretch(1)
-        vbox.addLayout(hbox)
-
-        self.setLayout(vbox)
-        self.show()
-
-    @pyqtSlot()
-    def set_val(self):
-        self.line = self.textbox.text()
-        pass
+###########################################################
+# ---------------------- someday --------------------------
+###########################################################
+# class MyTextBox(QWidget):
+#     btn_size = 100
+#     padding = 100
+#
+#     def __init__(self, back_window):
+#         super(MyTextBox, self).__init__()
+#         self.setGeometry(50, 50, 500, 300)
+#         self.setWindowTitle("Plant Disease Recognizer")
+#         self.setWindowIcon(QtGui.QIcon("res/robot.jpg"))
+#         self.data_dirs = []
+#         self.textbox = QLineEdit(self)
+#         self.textbox.move(self.padding, self.padding)
+#         self.textbox.resize(100, 40)
+#         self.line = None
+#         self.back_window = back_window
+#
+#         self.back_window.hide()
+#         btn_ok = QtGui.QPushButton("Ok")
+#         btn_ok.pressed.connect(self.set_val)
+#         btn_ok.resize(self.btn_size, self.btn_size)
+#
+#         hbox = QtGui.QHBoxLayout()
+#         hbox.addStretch(1)
+#         hbox.addWidget(btn_ok)
+#
+#         vbox = QtGui.QVBoxLayout()
+#         vbox.addStretch(1)
+#         vbox.addLayout(hbox)
+#
+#         self.setLayout(vbox)
+#         self.show()
+#
+#     @pyqtSlot()
+#     def set_val(self):
+#         self.line = self.textbox.text()
+#         self.hide()
+#         self.back_window.show()
+#
+#         pass
