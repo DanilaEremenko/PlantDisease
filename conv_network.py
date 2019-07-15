@@ -22,7 +22,7 @@ def get_CNN(img_shape, out_neurons_num, lr=0.1):
     model.add(Conv2D(img_shape[0], kernel_size=3, activation='relu'))
 
     # selection layer
-    model.add(MaxPooling2D(pool_size=(2, 2), dim_ordering="th"))
+    model.add(MaxPooling2D(data_format="channels_first", pool_size=(2, 2)))
 
     # regularization
     model.add(Dropout(0.25))
@@ -34,7 +34,7 @@ def get_CNN(img_shape, out_neurons_num, lr=0.1):
     model.add(Conv2D(img_shape[0] * 2, kernel_size=3, activation='relu'))
 
     # selection layer
-    model.add(MaxPooling2D(pool_size=(2, 2), dim_ordering="th"))
+    model.add(MaxPooling2D(data_format="channels_first", pool_size=(2, 2)))
 
     # regularization
     model.add(Dropout(0.25))

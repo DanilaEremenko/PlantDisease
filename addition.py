@@ -1,11 +1,10 @@
 # coding=utf-8
-from keras.models import model_from_json
+from keras.optimizers import Adam
+from keras.models import model_from_json, load_model
 from data_maker import get_data_full, get_x_from_dir
 from img_proc import plot_image_from_arr
-from conv_network import get_CNN
 import gui_reporter as gr
 import os
-import numpy as np
 
 
 def get_model_from_json(path):
@@ -13,6 +12,13 @@ def get_model_from_json(path):
     for line in open(path, 'r').readlines(): json_string += line
 
     return model_from_json(json_string)
+
+
+def get_full_model(json_path, h5_path):
+    model = get_model_from_json(json_path)
+    model.load_weights(h5_path)
+    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.05), metrics=['accuracy'])
+    return model
 
 
 def train_on_dir(model, data, title, img_shape, max_ing_num=None, verbose=False, history_show=True):

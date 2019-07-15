@@ -26,7 +26,7 @@ if __name__ == '__main__':
                 (0, 1),
                 (1, 0)
             ]),
-            "epochs": 30
+            "epochs": 20
         }
     }
 
@@ -48,6 +48,6 @@ if __name__ == '__main__':
     ##############################################################################
     # --------------------- model saving -----------------------------------------
     ##############################################################################
-    save_to_json(model, "model.json")
+    save_to_json(model, "models/model_potato_%d.json" % train_data.get("potato").get("epochs"))
 
-    model.save_weights('model_weights.h5')
+    model.save_weights('models/model_potato_%d.h5' % train_data.get("potato").get("epochs"))

@@ -3,7 +3,7 @@ from __future__ import print_function
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtGui import QWidget, QLineEdit, QMainWindow
-from addition import get_model_from_json, predict_on_dir
+from addition import get_full_model, predict_on_dir
 import time
 import numpy as np
 
@@ -108,10 +108,11 @@ class WindowPreparePredict(QWidget):
         self.back_window.hide()
         self.show()
 
-        path_to_model = str(QtGui.QFileDialog.getOpenFileNameAndFilter(self, "Open *.json file with saved NN", "",
-                                                                       "Json Files (*.json)")[0])
-
-        self.model = get_model_from_json(path_to_model)
+        path_to_json = str(QtGui.QFileDialog.getOpenFileNameAndFilter(self, "Open *.json file with saved NN", "",
+                                                                      "Json Files (*.json)")[0])
+        path_to_h5 = str(QtGui.QFileDialog.getOpenFileNameAndFilter(self, "Open *.h5 file with saved weights", "",
+                                                                    "h5 files (*.h5)")[0])
+        self.model = get_full_model(json_path=path_to_json, h5_path=path_to_h5)
 
     @pyqtSlot()
     def add_data_dir(self):

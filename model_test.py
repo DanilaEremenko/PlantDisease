@@ -1,14 +1,13 @@
 import numpy as np
 from keras.optimizers import Adam
-from addition import get_model_from_json, examine_on_dir, train_on_dir
+from addition import get_full_model, examine_on_dir, train_on_dir
 
 if __name__ == '__main__':
     ##############################################################################
     # --------------------- model loading ----------------------------------------
     ##############################################################################
-    model = get_model_from_json("model.json")
-    lr = 0.05
-    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=lr), metrics=['accuracy'])
+
+    model = get_full_model("models/model_potato_30.json", "models/model_potato_30.h5")
 
     ##############################################################################
     # --------------------- choose testing data ----------------------------------
@@ -74,21 +73,21 @@ if __name__ == '__main__':
     ##############################################################################
     # ----------------------------- train ----------------------------------------
     ##############################################################################
-    for key in train_data.keys():
-        model = train_on_dir(model=model,
-                             data=train_data.get(key),
-                             title=key,
-                             img_shape=img_shape,
-                             verbose=False
-                             )
+    # for key in train_data.keys():
+    #     model = train_on_dir(model=model,
+    #                          data=train_data.get(key),
+    #                          title=key,
+    #                          img_shape=img_shape,
+    #                          verbose=False
+    #                          )
 
     ##############################################################################
     # ----------------------------- exam after second learning -------------------
     ##############################################################################
-    for key in test_data.keys():
-        examine_on_dir(
-            model=model,
-            data=test_data.get(key),
-            title=key,
-            img_shape=img_shape
-        )
+    # for key in test_data.keys():
+    #     examine_on_dir(
+    #         model=model,
+    #         data=test_data.get(key),
+    #         title=key,
+    #         img_shape=img_shape
+    #     )
