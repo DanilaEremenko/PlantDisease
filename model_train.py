@@ -17,9 +17,9 @@ if __name__ == '__main__':
     train_data = {
         "potato": {
             "data_dirs": (
-                "PlantVillage/Potato___Early_blight",
-                "PlantVillage/Potato___healthy",
-                "PlantVillage/Potato___Late_blight"
+                "Datasets/PlantVillage/Potato___Early_blight",
+                "Datasets/PlantVillage/Potato___healthy",
+                "Datasets/PlantVillage/Potato___Late_blight"
             ),
             "class_marks": np.array([
                 (1, 0),

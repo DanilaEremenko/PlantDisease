@@ -1,6 +1,6 @@
 import sys
 from PyQt4 import QtGui
-from main_gui import *
+from main_gui import WindowPreparePredict,WindowStart
 
 if __name__ == '__main__':
     #######################################################

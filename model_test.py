@@ -1,5 +1,4 @@
 import numpy as np
-from keras.optimizers import Adam
 from addition import get_full_model, examine_on_dir, train_on_dir
 
 if __name__ == '__main__':
@@ -15,9 +14,9 @@ if __name__ == '__main__':
     test_data = {
         "potato": {
             "data_dirs": (
-                "PlantVillage/Potato___Early_blight",
-                "PlantVillage/Potato___healthy",
-                "PlantVillage/Potato___Late_blight"
+                "Datasets/PlantVillage/Potato___Early_blight",
+                "Datasets/PlantVillage/Potato___healthy",
+                "Datasets/PlantVillage/Potato___Late_blight"
             ),
             "class_marks": np.array([
                 (1, 0),
@@ -27,9 +26,9 @@ if __name__ == '__main__':
         },
         "tomato": {
             "data_dirs": (
-                "PlantVillage/Tomato_Early_blight",
-                "PlantVillage/Tomato_healthy",
-                "PlantVillage/Tomato_Late_blight"
+                "Datasets/PlantVillage/Tomato_Early_blight",
+                "Datasets/PlantVillage/Tomato_healthy",
+                "Datasets/PlantVillage/Tomato_Late_blight"
             ),
             "class_marks": np.array([
                 (1, 0),
@@ -40,8 +39,8 @@ if __name__ == '__main__':
         },
         "pepper": {
             "data_dirs": (
-                "PlantVillage/Pepper__bell___Bacterial_spot",
-                "PlantVillage/Pepper__bell___healthy",
+                "Datasets/PlantVillage/Pepper__bell___Bacterial_spot",
+                "Datasets/PlantVillage/Pepper__bell___healthy",
             ),
             "class_marks": np.array([
                 (1, 0),
@@ -73,21 +72,21 @@ if __name__ == '__main__':
     ##############################################################################
     # ----------------------------- train ----------------------------------------
     ##############################################################################
-    # for key in train_data.keys():
-    #     model = train_on_dir(model=model,
-    #                          data=train_data.get(key),
-    #                          title=key,
-    #                          img_shape=img_shape,
-    #                          verbose=False
-    #                          )
+    for key in train_data.keys():
+        model = train_on_dir(model=model,
+                             data=train_data.get(key),
+                             title=key,
+                             img_shape=img_shape,
+                             verbose=False
+                             )
 
     ##############################################################################
     # ----------------------------- exam after second learning -------------------
     ##############################################################################
-    # for key in test_data.keys():
-    #     examine_on_dir(
-    #         model=model,
-    #         data=test_data.get(key),
-    #         title=key,
-    #         img_shape=img_shape
-    #     )
+    for key in test_data.keys():
+        examine_on_dir(
+            model=model,
+            data=test_data.get(key),
+            title=key,
+            img_shape=img_shape
+        )
