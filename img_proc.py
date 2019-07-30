@@ -26,37 +26,6 @@ def crop_multiply_data(img, name, crop_area, path_out_dir):
     pass
 
 
-def crop_img_window(path_img_in, img_shape, window_shape, path_out_dir, draw_net=True, make_test_dir=False):
-    if not os.path.isdir(path_out_dir):
-        raise Exception("No such directory %s" % path_out_dir)
-
-    full_img = Image.open(path_img_in)  # TODO
-    full_img.thumbnail(img_shape)
-    full_img.show()
-    p1_x, p1_y, p2_x, p2_y = 0, 0, window_shape[0], window_shape[1]
-    i = 0
-    while p2_y <= full_img.size[1]:
-        while p2_x <= full_img.size[0]:
-            if make_test_dir:
-                crop_multiply_data(img=full_img,
-                                   name="%d" % i,
-                                   crop_area=(p1_x, p1_y, p2_x, p2_y),
-                                   path_out_dir=path_out_dir
-                                   )
-
-            if draw_net: full_img = draw_rect(full_img, (p1_x, p1_y, p2_x, p2_y), color=255)
-
-            p1_x += window_shape[0]
-            p2_x += window_shape[0]
-            i += 1
-        p1_x = 0
-        p2_x = window_shape[0]
-        p1_y += window_shape[1]
-        p2_y += window_shape[1]
-    if draw_net: full_img.show()
-    pass
-
-
 #############################################################################
 # --------------------------- localizing ---------------------------------------
 #############################################################################
@@ -64,6 +33,7 @@ def draw_rect(img, points, color):
     if points.__len__() != 4:
         raise Exception("points.__len__()!=4")
     px1, py1, px2, py2 = points[0:4]
+    px1, py1, px2, py2 = int(px1), int(py1), int(px2), int(py2)
     img_arr = np.asarray(img)
     img_arr.setflags(write=1)
     img_arr[py1:py1 + 1, px1:px2] = color  # top

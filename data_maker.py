@@ -1,10 +1,12 @@
 import numpy as np
 import os
 from img_proc import get_pxs_full
+from PIL import Image
+from img_proc import crop_multiply_data, draw_rect
 
 
 ################################################################################
-# --------------------------------- for train & test ---------------------------
+# --------------------------------- for train & test on dirs -------------------
 ################################################################################
 def get_class_from_dir(path_to_dir, class_mark, img_shape, max_img_num=None):
     curr_x = np.empty(0)
@@ -49,7 +51,7 @@ def get_data_full(data, img_shape, max_img_num=None):
 
 
 ################################################################################
-# --------------------------------- for predict --------------------------------
+# --------------------------------- for predict on dir -------------------------
 ################################################################################
 def get_x_from_dir(path_to_dir, img_shape, max_img_num=None):
     curr_x = np.empty(0)
@@ -67,3 +69,50 @@ def get_x_from_dir(path_to_dir, img_shape, max_img_num=None):
     curr_x.shape = (i, img_shape[0], img_shape[1], img_shape[2])
 
     return curr_x
+
+
+################################################################################
+# --------------------------------- for predict on image -----------------------
+################################################################################
+def get_x_from_croped_img(path_img_in, img_shape, window_shape, path_out_dir, draw_net=True, make_test_dir=False):
+    if not os.path.isdir(path_out_dir):
+        raise Exception("No such directory %s" % path_out_dir)
+
+    full_img = Image.open(path_img_in)
+    full_img.thumbnail(img_shape)
+    if draw_net: full_img.show()
+
+    draw_image = full_img
+
+    p1_x, p1_y, p2_x, p2_y = 0, 0, window_shape[0], window_shape[1]
+    i = 0
+    x_data = np.empty(0)
+    x_coord = np.empty(0)
+
+    while p2_y <= full_img.size[1]:
+        while p2_x <= full_img.size[0]:
+            if make_test_dir:
+                crop_multiply_data(img=full_img,
+                                   name="%d" % i,
+                                   crop_area=(p1_x, p1_y, p2_x, p2_y),
+                                   path_out_dir=path_out_dir
+                                   )
+
+            curr_x = np.asarray(full_img.crop((p1_x, p1_y, p2_x, p2_y)))
+            x_data = np.append(x_data, curr_x)
+            x_coord = np.append(x_coord, (p1_x, p1_y, p2_x, p2_y))
+
+            if draw_net: draw_image = draw_rect(draw_image, (p1_x, p1_y, p2_x, p2_y), color=255)
+
+            p1_x += window_shape[0]
+            p2_x += window_shape[0]
+            i += 1
+        p1_x = 0
+        p2_x = window_shape[0]
+        p1_y += window_shape[1]
+        p2_y += window_shape[1]
+    if draw_net: draw_image.show()
+
+    x_data.shape = (i, window_shape[0], window_shape[1], window_shape[2])
+    x_coord.shape = (i, 4)
+    return x_data, x_coord, full_img

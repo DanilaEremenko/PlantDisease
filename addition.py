@@ -1,8 +1,8 @@
 # coding=utf-8
 from keras.optimizers import Adam
-from keras.models import model_from_json, load_model
+from keras.models import model_from_json
 from data_maker import get_data_full, get_x_from_dir
-from img_proc import plot_image_from_arr
+from img_proc import plot_image_from_arr, draw_rect
 import gui_reporter as gr
 import os
 
@@ -82,3 +82,13 @@ def predict_on_dir(model, data_dirs, img_shape):
 
     with open('answer.txt', 'a') as answer_file:
         answer_file.write(text)
+
+
+def predict_and_localize_on_image(model, x_data, x_coord, image):
+    for curr_window, coord in zip(x_data, x_coord):
+        curr_window.shape = (1, curr_window.shape[0], curr_window.shape[1], curr_window.shape[2])
+        pred = model.predict(curr_window)
+        print("%d %d" % (pred[0][0], pred[0][1]))
+        if pred[0][0] > pred[0][1]:
+            image = draw_rect(image, coord, 255)
+    return image
