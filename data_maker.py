@@ -74,13 +74,12 @@ def get_x_from_dir(path_to_dir, img_shape, max_img_num=None):
 ################################################################################
 # --------------------------------- for predict on image -----------------------
 ################################################################################
-def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=255, path_out_dir=None, draw_net=True):
+def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=255, path_out_dir=None):
     if path_out_dir != None and not os.path.isdir(path_out_dir):
         raise Exception("No such directory %s" % path_out_dir)
 
     full_img = Image.open(path_img_in)
     full_img.thumbnail(img_shape)
-    if draw_net: full_img.show()
 
     draw_image = full_img
 
@@ -102,7 +101,7 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
             x_data = np.append(x_data, curr_x)
             x_coord = np.append(x_coord, (p1_x, p1_y, p2_x, p2_y))
 
-            if draw_net: draw_image = draw_rect(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
+            draw_image = draw_rect(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
 
             p1_x += int(window_shape[0] * step)
             p2_x += int(window_shape[0] * step)
@@ -111,8 +110,7 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
         p2_x = window_shape[0]
         p1_y += window_shape[1]
         p2_y += window_shape[1]
-    if draw_net: draw_image.show()
 
     x_data.shape = (i, window_shape[0], window_shape[1], window_shape[2])
     x_coord.shape = (i, 4)
-    return x_data, x_coord, full_img
+    return x_data, x_coord, full_img, draw_image
