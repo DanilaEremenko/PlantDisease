@@ -11,7 +11,7 @@ if __name__ == '__main__':
         path_img_in=path_img_in,
         img_shape=(512, 512),
         window_shape=window_shape,
-        step=1.0,
+        step=0.5,
         color=color
 
     )

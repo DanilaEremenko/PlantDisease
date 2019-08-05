@@ -108,8 +108,8 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
             i += 1
         p1_x = 0
         p2_x = window_shape[0]
-        p1_y += window_shape[1]
-        p2_y += window_shape[1]
+        p1_y += int(window_shape[1] * step)
+        p2_y += int(window_shape[1] * step)
 
     x_data.shape = (i, window_shape[0], window_shape[1], window_shape[2])
     x_coord.shape = (i, 4)
