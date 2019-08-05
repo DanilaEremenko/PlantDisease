@@ -74,8 +74,8 @@ def get_x_from_dir(path_to_dir, img_shape, max_img_num=None):
 ################################################################################
 # --------------------------------- for predict on image -----------------------
 ################################################################################
-def get_x_from_croped_img(path_img_in, img_shape, window_shape, path_out_dir, draw_net=True, make_test_dir=False):
-    if not os.path.isdir(path_out_dir):
+def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=255, path_out_dir=None, draw_net=True):
+    if path_out_dir != None and not os.path.isdir(path_out_dir):
         raise Exception("No such directory %s" % path_out_dir)
 
     full_img = Image.open(path_img_in)
@@ -91,7 +91,7 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, path_out_dir, dr
 
     while p2_y <= full_img.size[1]:
         while p2_x <= full_img.size[0]:
-            if make_test_dir:
+            if path_out_dir != None:
                 crop_multiply_data(img=full_img,
                                    name="%d" % i,
                                    crop_area=(p1_x, p1_y, p2_x, p2_y),
@@ -102,10 +102,10 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, path_out_dir, dr
             x_data = np.append(x_data, curr_x)
             x_coord = np.append(x_coord, (p1_x, p1_y, p2_x, p2_y))
 
-            if draw_net: draw_image = draw_rect(draw_image, (p1_x, p1_y, p2_x, p2_y), color=255)
+            if draw_net: draw_image = draw_rect(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
 
-            p1_x += window_shape[0]
-            p2_x += window_shape[0]
+            p1_x += int(window_shape[0] * step)
+            p2_x += int(window_shape[0] * step)
             i += 1
         p1_x = 0
         p2_x = window_shape[0]
