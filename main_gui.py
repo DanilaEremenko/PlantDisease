@@ -1,8 +1,8 @@
 # coding=utf-8
 from __future__ import print_function
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import pyqtSlot
-from PyQt4.QtGui import QWidget, QLineEdit, QMainWindow
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QWidget, QLineEdit, QMainWindow
 from addition import get_full_model, predict_on_dir
 import time
 import numpy as np
@@ -16,29 +16,28 @@ class WindowStart(QWidget):
         self.window_choose_dirs = window_choose_dirs
         self.setGeometry(50, 50, 500, 300)
         self.setWindowTitle("Plant Disease Recognizer")
-        self.setWindowIcon(QtGui.QIcon("res/robot.jpg"))
         self.home()
 
     def home(self):
-        btn_use_existing_NN = QtGui.QPushButton("Use existing NN")
+        btn_use_existing_NN = QtWidgets.QPushButton("Use existing NN")
         btn_use_existing_NN.pressed.connect(self.use_existing_NN)
         btn_use_existing_NN.resize(self.btn_size, self.btn_size)
 
-        btn_create_new_NN = QtGui.QPushButton("Create new NN")
+        btn_create_new_NN = QtWidgets.QPushButton("Create new NN")
         btn_create_new_NN.pressed.connect(self.create_new_NN)
         btn_create_new_NN.resize(self.btn_size, self.btn_size)
 
-        btn_quit = QtGui.QPushButton("Quit")
+        btn_quit = QtWidgets.QPushButton("Quit")
         btn_quit.clicked.connect(QtCore.QCoreApplication.instance().quit)
         btn_quit.resize(self.btn_size, self.btn_size)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(btn_use_existing_NN)
         hbox.addWidget(btn_create_new_NN)
         hbox.addWidget(btn_quit)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
         vbox.addStretch(1)
         vbox.addLayout(hbox)
 
@@ -79,25 +78,24 @@ class WindowPreparePredict(QWidget):
         super(WindowPreparePredict, self).__init__()
         self.setGeometry(50, 50, 500, 300)
         self.setWindowTitle("Plant Disease Recognizer")
-        self.setWindowIcon(QtGui.QIcon("res/robot.jpg"))
         self.data_dirs = []
         self.plant_name = "potato"
         self.class_marks = np.empty(0)
 
-        btn_add_data_dir = QtGui.QPushButton("Add data dir")
+        btn_add_data_dir = QtWidgets.QPushButton("Add data dir")
         btn_add_data_dir.pressed.connect(self.add_data_dir)
         btn_add_data_dir.resize(self.btn_size, self.btn_size)
 
-        btn_predict = QtGui.QPushButton("Predict")
+        btn_predict = QtWidgets.QPushButton("Predict")
         btn_predict.pressed.connect(self.predict)
         btn_predict.resize(self.btn_size, self.btn_size)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(btn_add_data_dir)
         hbox.addWidget(btn_predict)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
         vbox.addStretch(1)
         vbox.addLayout(hbox)
 
@@ -108,16 +106,16 @@ class WindowPreparePredict(QWidget):
         self.back_window.hide()
         self.show()
 
-        path_to_json = str(QtGui.QFileDialog.getOpenFileNameAndFilter(self, "Open *.json file with saved NN", "",
-                                                                      "Json Files (*.json)")[0])
-        path_to_h5 = str(QtGui.QFileDialog.getOpenFileNameAndFilter(self, "Open *.h5 file with saved weights", "",
-                                                                    "h5 files (*.h5)")[0])
+        path_to_json = str(QtWidgets.QFileDialog.getOpenFileName(self, "Open *.json file with saved NN", "",
+                                                                          "Json Files (*.json)")[0])
+        path_to_h5 = str(QtWidgets.QFileDialog.getOpenFileName(self, "Open *.h5 file with saved weights", "",
+                                                                        "h5 files (*.h5)")[0])
         self.model = get_full_model(json_path=path_to_json, h5_path=path_to_h5)
 
     @pyqtSlot()
     def add_data_dir(self):
         print("TODO add data dir")
-        data_dir = QtGui.QFileDialog.getExistingDirectory()
+        data_dir = QtWidgets.QFileDialog.getExistingDirectory()
         self.data_dirs.append(data_dir)
         pass
 
@@ -145,7 +143,7 @@ class WindowPreparePredict(QWidget):
 #         super(MyTextBox, self).__init__()
 #         self.setGeometry(50, 50, 500, 300)
 #         self.setWindowTitle("Plant Disease Recognizer")
-#         self.setWindowIcon(QtGui.QIcon("res/robot.jpg"))
+#         self.setWindowIcon(QtWidgets.QIcon("res/robot.jpg"))
 #         self.data_dirs = []
 #         self.textbox = QLineEdit(self)
 #         self.textbox.move(self.padding, self.padding)
@@ -154,15 +152,15 @@ class WindowPreparePredict(QWidget):
 #         self.back_window = back_window
 #
 #         self.back_window.hide()
-#         btn_ok = QtGui.QPushButton("Ok")
+#         btn_ok = QtWidgets.QPushButton("Ok")
 #         btn_ok.pressed.connect(self.set_val)
 #         btn_ok.resize(self.btn_size, self.btn_size)
 #
-#         hbox = QtGui.QHBoxLayout()
+#         hbox = QtWidgets.QHBoxLayout()
 #         hbox.addStretch(1)
 #         hbox.addWidget(btn_ok)
 #
-#         vbox = QtGui.QVBoxLayout()
+#         vbox = QtWidgets.QVBoxLayout()
 #         vbox.addStretch(1)
 #         vbox.addLayout(hbox)
 #

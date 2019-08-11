@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 from main_gui import WindowPreparePredict,WindowStart
 
 if __name__ == '__main__':
@@ -13,7 +13,7 @@ if __name__ == '__main__':
     #######################################################
     # ------------------ gui ------------------------------
     #######################################################
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     window_choose_dirs = WindowPreparePredict()
     window_start = WindowStart(window_choose_dirs)
 
