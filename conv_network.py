@@ -42,7 +42,7 @@ def get_CNN(img_shape, out_neurons_num, lr=0.1):
     # 2D -> 1D
     model.add(Flatten())
 
-    model.add(Dense(img_shape[0] * img_shape[1] / 2, activation='relu'))
+    model.add(Dense(int(img_shape[0] * img_shape[1] / 2), activation='relu'))
 
     model.add(Dropout(0.5))
 

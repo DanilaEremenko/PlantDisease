@@ -34,8 +34,8 @@ def draw_rect(img, points, color):
         raise Exception("points.__len__()!=4")
     px1, py1, px2, py2 = points[0:4]
     px1, py1, px2, py2 = int(px1), int(py1), int(px2), int(py2)
-    img_arr = np.asarray(img)
-    img_arr.setflags(write=1)
+    img_arr = np.array(img)
+    # img_arr.setflags(write=1)
     img_arr[py1:py1 + 1, px1:px2] = color  # top
     img_arr[py2:py2 + 1, px1:px2] = color  # bottom
     img_arr[py1:py2, px1:px1 + 1] = color  # left
