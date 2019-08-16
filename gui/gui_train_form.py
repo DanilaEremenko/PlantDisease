@@ -2,9 +2,10 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QWidget, QLineEdit, QMainWindow, QLabel
 from PyQt5.QtGui import QPixmap, QImage
-from data_maker import get_x_from_croped_img
+import data_maker as dmk
 from img_proc import draw_rect
 import numpy as np
+import os
 
 
 class WindowClassificationPicture(QWidget):
@@ -24,8 +25,11 @@ class WindowClassificationPicture(QWidget):
 
     def home(self):
         self.setMouseTracking(True)
+
         picture_path = self.choose_picture()
-        x_data, x_coord, full_img, draw_image = get_x_from_croped_img(
+        self.picture_name = os.path.splitext(picture_path)[0]
+
+        x_data, x_coord, full_img, draw_image = dmk.get_x_from_croped_img(
             path_img_in=picture_path,
             img_shape=self.img_shape,
             window_shape=self.window_shape,
@@ -56,7 +60,7 @@ class WindowClassificationPicture(QWidget):
         btn_okay.resize(self.btn_size, self.btn_size)
 
         btn_quit = QtWidgets.QPushButton("Quit")
-        btn_quit.clicked.connect(QtCore.QCoreApplication.instance().quit)
+        btn_quit.clicked.connect(self.quit_pressed)
         btn_quit.resize(self.btn_size, self.btn_size)
 
         hbox = QtWidgets.QHBoxLayout()
@@ -103,4 +107,29 @@ class WindowClassificationPicture(QWidget):
         pass
 
     def okay_pressed(self):
+        self.draw_image.save("%s_net.JPG" % self.picture_name)
+        y_data = np.empty(0)
+
+        for i in range(0, self.colors.__len__()):
+            if self.colors[i] == self.color_good:
+                y_data = np.append(y_data, [0, 1])
+            else:
+                y_data = np.append(y_data, [1, 0])
+
+        y_data.shape = (self.x_data.shape[0], 2)
+
+        dmk.json_create(
+            path="%s.json" % self.picture_name,
+            x_data=self.x_data,
+            y_data=y_data
+        )
+
         print("OKAY")
+
+        self.quit_pressed()
+
+        pass
+
+    def quit_pressed(self):
+        QtCore.QCoreApplication.instance().quit()
+        pass

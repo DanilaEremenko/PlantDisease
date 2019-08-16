@@ -3,6 +3,7 @@ import os
 from img_proc import get_pxs_full
 from PIL import Image
 from img_proc import crop_multiply_data, draw_rect
+import json
 
 
 ################################################################################
@@ -114,3 +115,20 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
     x_data.shape = (i, window_shape[0], window_shape[1], window_shape[2])
     x_coord.shape = (i, 4)
     return x_data, x_coord, full_img, draw_image
+
+
+def json_create(path, x_data, y_data):
+    if x_data.shape[0] != y_data.shape[0]:
+        raise Exception("bad shape")
+    with open(path, "w") as fp:
+        json.dump({"x_data": x_data.tolist(), "y_data": y_data.tolist()}, fp)
+        fp.close()
+
+    pass
+
+
+def json_load(path):
+    with open(path, "r") as fp:
+        data_dict = json.load(fp)
+        fp.close()
+        return np.array(data_dict.get("x_data")), np.array(data_dict.get("y_data"))
