@@ -1,8 +1,8 @@
 import numpy as np
 import os
-from img_proc import get_pxs_full
+from pd_lib.img_proc import get_pxs_full
 from PIL import Image
-from img_proc import crop_multiply_data, draw_rect
+from pd_lib.img_proc import crop_multiply_data, draw_rect
 import json
 
 
@@ -115,6 +115,21 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
     x_data.shape = (i, window_shape[0], window_shape[1], window_shape[2])
     x_coord.shape = (i, 4)
     return x_data, x_coord, full_img, draw_image
+
+
+def get_data_from_json_list(json_list, img_shape, class_num):
+    test_num = 0
+    x_train = np.empty(0)
+    y_train = np.empty(0)
+    for train_json in json_list:
+        curr_x_train, curr_y_train = json_load(train_json)
+        x_train = np.append(x_train, curr_x_train)
+        y_train = np.append(y_train, curr_y_train)
+        test_num += curr_y_train.shape[0]
+    x_train.shape = (test_num, img_shape[0], img_shape[1], img_shape[2])
+    y_train.shape = (test_num, class_num)
+
+    return x_train, y_train
 
 
 def json_create(path, x_data, y_data):

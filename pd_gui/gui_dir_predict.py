@@ -2,9 +2,8 @@
 from __future__ import print_function
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QWidget, QLineEdit, QMainWindow
-from addition import get_full_model, predict_on_dir
-import time
+from PyQt5.QtWidgets import QWidget
+from pd_lib.addition import get_full_model, predict_on_dir
 import numpy as np
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-from addition import get_full_model, examine_on_dir, train_on_dir
+from pd_lib.addition import get_full_model, examine_on_dir, train_on_dir
 
 if __name__ == '__main__':
     ##############################################################################

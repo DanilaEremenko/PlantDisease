@@ -1,11 +1,10 @@
 import sys
 from PyQt5 import QtWidgets
-from gui.gui_train_form import WindowClassificationPicture
-import data_maker as dmk
+from pd_gui.gui_train_form import WindowClassificationPicture
 
 if __name__ == '__main__':
     #######################################################
-    # ------------------ gui ------------------------------
+    # ------------------ pd_gui ------------------------------
     #######################################################
     app = QtWidgets.QApplication(sys.argv)
 

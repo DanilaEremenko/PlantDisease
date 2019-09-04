@@ -1,13 +1,8 @@
 import numpy as np
-from addition import train_on_dir
-from conv_network import get_CNN
+from pd_lib.addition import train_on_dir
+from pd_lib.conv_network import get_CNN
 
 
-def save_to_json(model, path):
-    json_string = model.to_json()
-    json_file = open(path, "w")
-    json_file.write(json_string)
-    json_file.close()
 
 
 if __name__ == '__main__':

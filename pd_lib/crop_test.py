@@ -1,6 +1,6 @@
-from addition import get_full_model, predict_and_localize_on_image
-from conv_network import get_CNN
-from data_maker import get_x_from_croped_img
+from pd_lib.addition import predict_and_localize_on_image
+from pd_lib.conv_network import get_CNN
+from pd_lib.data_maker import get_x_from_croped_img
 
 if __name__ == '__main__':
     path_img_in = "Datasets/PotatoFields/plan_train/DJI_0246.JPG"

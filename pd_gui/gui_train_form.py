@@ -1,9 +1,8 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QWidget, QLineEdit, QMainWindow, QLabel
+from PyQt5.QtWidgets import QWidget, QLabel
 from PyQt5.QtGui import QPixmap, QImage
-import data_maker as dmk
-from img_proc import draw_rect
+from pd_lib import data_maker as dmk
+from pd_lib.img_proc import draw_rect
 import numpy as np
 import os
 

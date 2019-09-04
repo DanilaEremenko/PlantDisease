@@ -1,10 +1,18 @@
 # coding=utf-8
 from keras.optimizers import Adam
 from keras.models import model_from_json
-from data_maker import get_data_full, get_x_from_dir
-from img_proc import plot_image_from_arr, draw_rect
-import gui_reporter as gr
+from pd_lib.data_maker import get_data_full, get_x_from_dir
+from pd_lib.img_proc import plot_image_from_arr, draw_rect
+from pd_lib import gui_reporter as gr
+import pd_lib.data_maker as dmk
 import os
+
+
+def save_to_json(model, path):
+    json_string = model.to_json()
+    json_file = open(path, "w")
+    json_file.write(json_string)
+    json_file.close()
 
 
 def get_model_from_json(path):
@@ -21,7 +29,7 @@ def get_full_model(json_path, h5_path):
     return model
 
 
-def train_on_dir(model, data, title, img_shape, max_ing_num=None, verbose=False, history_show=True):
+def train_on_dir(model, data, title, img_shape, verbose=False, history_show=True):
     if not data.keys().__contains__("epochs"):
         raise Exception("no key epochs in train data")
 
@@ -47,6 +55,30 @@ def train_on_dir(model, data, title, img_shape, max_ing_num=None, verbose=False,
             validation_split=validation_split,
             verbose=verbose,
         )
+
+    gr.plot_history_separte(history=history,
+                            save_path_acc=None,
+                            save_path_loss=None,
+                            show=history_show,
+                            save=False
+                            )
+
+    return model
+
+
+def train_on_json(model, json_list, epochs, img_shape, class_num, verbose=False, history_show=True):
+    x_train, y_train = dmk.get_data_from_json_list(json_list, img_shape, class_num)
+
+    batch_size = int(y_train.shape[0] * 0.005)
+    validation_split = 0.1
+
+    history = model.fit(
+        x=x_train, y=y_train,
+        epochs=epochs,
+        batch_size=batch_size, shuffle=True,
+        validation_split=validation_split,
+        verbose=verbose,
+    )
 
     gr.plot_history_separte(history=history,
                             save_path_acc=None,
