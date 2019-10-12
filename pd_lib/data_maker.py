@@ -132,11 +132,11 @@ def get_data_from_json_list(json_list, img_shape, class_num):
     return x_train, y_train
 
 
-def json_create(path, x_data, y_data):
+def json_create(path, x_data, y_data, img_shape):
     if x_data.shape[0] != y_data.shape[0]:
         raise Exception("bad shape")
     with open(path, "w") as fp:
-        json.dump({"x_data": x_data.tolist(), "y_data": y_data.tolist()}, fp)
+        json.dump({"x_data": x_data.tolist(), "y_data": y_data.tolist(), "img_shape": img_shape}, fp)
         fp.close()
 
     pass
@@ -146,4 +146,4 @@ def json_load(path):
     with open(path, "r") as fp:
         data_dict = json.load(fp)
         fp.close()
-        return np.array(data_dict.get("x_data")), np.array(data_dict.get("y_data"))
+        return np.array(data_dict.get("x_data")), np.array(data_dict.get("y_data")), data_dict.get("img_shape")
