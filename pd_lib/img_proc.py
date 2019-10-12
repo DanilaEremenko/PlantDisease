@@ -93,3 +93,12 @@ def plot_image_from_arr(arr):
     imshow(im)
     plt.show()
     pass
+
+
+def plot_full_from_multiple(x_data, img_shape):
+    img_shape = (int(img_shape[0] / x_data.shape[1]) * x_data.shape[1],
+                 int(img_shape[1] / x_data.shape[2]) * x_data.shape[2],
+                 3)
+    img = Image.fromarray(x_data.reshape(img_shape), mode='RGB')
+    img.show()
+    pass
