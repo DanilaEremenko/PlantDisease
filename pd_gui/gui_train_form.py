@@ -7,6 +7,7 @@ import numpy as np
 import os
 
 
+# TODO problem with json formation
 class WindowClassificationPicture(QWidget):
     img_shape = (768, 768)
     btn_size = int(img_shape[0] / 100)
@@ -120,7 +121,8 @@ class WindowClassificationPicture(QWidget):
         dmk.json_create(
             path="%s.json" % self.picture_name,
             x_data=self.x_data,
-            y_data=y_data
+            y_data=y_data,
+            img_shape=self.draw_image.size
         )
 
         print("OKAY")
