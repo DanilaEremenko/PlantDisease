@@ -38,6 +38,7 @@ class WindowClassificationPicture(QWidget):
         )
         self.x_data = x_data
         self.draw_image = draw_image
+        self.full_image = full_img
         self.x_coord = x_coord
         self.colors = np.full(shape=self.x_data.shape[0], fill_value=self.color_good)
         width, height = self.update_image()
@@ -122,7 +123,7 @@ class WindowClassificationPicture(QWidget):
             path="%s.json" % self.picture_name,
             x_data=self.x_data,
             y_data=y_data,
-            img_shape=self.draw_image.size
+            img_shape=self.full_image.size
         )
 
         print("OKAY")
