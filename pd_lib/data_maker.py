@@ -86,8 +86,8 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
 
     p1_x, p1_y, p2_x, p2_y = 0, 0, window_shape[0], window_shape[1]
     i = 0
-    x_data = np.empty(0)
-    x_coord = np.empty(0)
+    x_data = np.empty(0, dtype='uint8')
+    x_coord = np.empty(0, dtype='uint8')
 
     while p2_y <= full_img.size[1]:
         while p2_x <= full_img.size[0]:
