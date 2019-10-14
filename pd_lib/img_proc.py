@@ -44,6 +44,31 @@ def crop_multiply_data(img, name, crop_area, path_out_dir):
 
 
 #############################################################################
+# --------------------------- 'decropping' ----------------------------------
+#############################################################################
+
+def get_full_image_from_pieces(x_data, img_shape):
+    x_len = int(img_shape[0] / x_data.shape[1])
+    y_len = int(img_shape[1] / x_data.shape[2])
+
+    img_shape = (x_len * x_data.shape[1],
+                 y_len * x_data.shape[2],
+                 3)
+
+    res_image = np.empty(img_shape, dtype='uint8')
+
+    window_shape = x_data[0].shape
+    i = 0
+    for x in range(0, x_len):
+        for y in range(0, y_len):
+            res_image[x * window_shape[0]:(x + 1) * window_shape[1], y * window_shape[1]:(y + 1) * window_shape[1]] = \
+                x_data[i]
+            i += 1
+    img = Image.fromarray(res_image, mode='RGB')
+    return img
+
+
+#############################################################################
 # --------------------------- localizing ---------------------------------------
 #############################################################################
 def draw_rect(img, points, color):
@@ -92,13 +117,4 @@ def plot_image_from_arr(arr):
     im = Image.fromarray(arr)
     imshow(im)
     plt.show()
-    pass
-
-
-def plot_full_from_multiple(x_data, img_shape):
-    img_shape = (int(img_shape[0] / x_data.shape[1]) * x_data.shape[1],
-                 int(img_shape[1] / x_data.shape[2]) * x_data.shape[2],
-                 3)
-    img = Image.fromarray(x_data.reshape(img_shape), mode='RGB')
-    img.show()
     pass
