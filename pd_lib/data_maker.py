@@ -86,8 +86,8 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
 
     p1_x, p1_y, p2_x, p2_y = 0, 0, window_shape[0], window_shape[1]
     i = 0
-    x_data = np.empty(0)
-    x_coord = np.empty(0)
+    x_data = np.empty(0, dtype='uint8')
+    x_coord = np.empty(0, dtype='uint8')
 
     while p2_y <= full_img.size[1]:
         while p2_x <= full_img.size[0]:
@@ -132,11 +132,11 @@ def get_data_from_json_list(json_list, img_shape, class_num):
     return x_train, y_train
 
 
-def json_create(path, x_data, y_data):
+def json_create(path, x_data, y_data, img_shape):
     if x_data.shape[0] != y_data.shape[0]:
         raise Exception("bad shape")
     with open(path, "w") as fp:
-        json.dump({"x_data": x_data.tolist(), "y_data": y_data.tolist()}, fp)
+        json.dump({"x_data": x_data.tolist(), "y_data": y_data.tolist(), "img_shape": img_shape}, fp)
         fp.close()
 
     pass
@@ -146,4 +146,4 @@ def json_load(path):
     with open(path, "r") as fp:
         data_dict = json.load(fp)
         fp.close()
-        return np.array(data_dict.get("x_data")), np.array(data_dict.get("y_data"))
+        return np.array(data_dict.get("x_data")), np.array(data_dict.get("y_data")), data_dict.get("img_shape")
