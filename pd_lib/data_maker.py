@@ -2,7 +2,8 @@ import numpy as np
 import os
 from pd_lib.img_proc import get_pxs_full
 from PIL import Image
-from pd_lib.img_proc import crop_multiply_data, draw_rect_on_image, get_full_image_from_pieces
+from pd_lib.img_proc import crop_multiply_data, draw_rect_on_image, get_full_repaired_image_from_pieces, noise_arr, \
+    deform_arr
 import json
 
 
@@ -125,7 +126,7 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
     img_shape = (0, 0, 0)
     for train_json in json_list:
         cur_class_1_num, cur_class_2_num, img_shape, curr_x_train, curr_y_train = json_load(train_json)
-        curr_img = get_full_image_from_pieces(curr_x_train, img_shape)
+        curr_img = get_full_repaired_image_from_pieces(curr_x_train, img_shape)
         curr_img.show()
         x_train = np.append(x_train, curr_x_train)
         y_train = np.append(y_train, curr_y_train)
@@ -156,3 +157,49 @@ def json_load(path):
         fp.close()
         return data_dict.get("class_1_num"), data_dict.get("class_2_num"), data_dict.get("img_shape"), \
                np.array(data_dict.get("x_data")), np.array(data_dict.get("y_data"))
+
+
+################################################################################
+# --------------------------------- multiple class -----------------------------
+################################################################################
+
+def multiple_class(x_train, y_train, class_for_multiple, use_noise=False, use_deform=False):
+    class_for_multiple_ids = []
+
+    i = 0
+    for y in y_train:
+        if ((y.__eq__(class_for_multiple)).all()):
+            class_for_multiple_ids.append(i)
+        i += 1
+
+    class_2_num = class_for_multiple_ids.__len__()
+    class_1_num = y_train.shape[0] - class_2_num
+    class_multiplayer = 1
+    # --------------- make noised examples ----------------------------------
+    if use_noise:
+        noised_x = x_train.copy()
+        for i in class_for_multiple_ids:
+            noised_x[i] = noise_arr(arr=noised_x[i].flatten(), intensity=50).reshape((32, 32, 3))
+
+        class_multiplayer += 1
+    # --------------- make deformed examples ----------------------------------
+    if use_deform:
+        deformed_x = x_train.copy()
+        for i in class_for_multiple_ids:
+            deformed_x[i] = deform_arr(arr=deformed_x[i], k=0.5, n=0, m=32)
+
+        class_multiplayer += 1
+    # ---------------  join arrays -------------------------------------------
+    if use_noise or use_deform:
+        for i in class_for_multiple_ids:
+            if use_noise:
+                x_train = np.append(x_train, noised_x[i])
+                y_train = np.append(y_train, np.array([1, 0]))
+            if use_deform:
+                x_train = np.append(x_train, deformed_x[i])
+                y_train = np.append(y_train, np.array([1, 0]))
+
+    x_train.shape = (class_1_num + class_2_num * class_multiplayer, 32, 32, 3)
+    y_train.shape = (class_1_num + class_2_num * class_multiplayer, 2)
+
+    return x_train, y_train
