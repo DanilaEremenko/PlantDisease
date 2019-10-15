@@ -35,14 +35,8 @@ def noise_img_from_arr(img, intensity):
 
 
 def noise_arr(arr, intensity):
-    for i in range(1, arr.size):
-        i += intensity * np.random.randint(0, 3)
-        if i > 780:
-            i = 780
-        if arr[i] > 0.5:
-            arr[i] = 0.0
-        else:
-            arr[i] = 1.0
+    for i in range(0, arr.size):
+        arr[i] = (arr[i] + np.random.randint(0, intensity)) % 255
     return arr
 
 
@@ -70,7 +64,7 @@ def crop_multiply_data(img, name, crop_area, path_out_dir):
 # --------------------------- 'decropping' ----------------------------------
 #############################################################################
 
-def get_full_image_from_pieces(x_data, img_shape):
+def get_full_repaired_image_from_pieces(x_data, img_shape):
     x_len = int(img_shape[0] / x_data.shape[1])
     y_len = int(img_shape[1] / x_data.shape[2])
 
@@ -89,6 +83,23 @@ def get_full_image_from_pieces(x_data, img_shape):
             i += 1
     img = Image.fromarray(res_image, mode='RGB')
     return img
+
+
+def get_full_rect_image_from_pieces(x_data):
+    rect_size = int(np.sqrt(x_data.shape[0]) + 1)
+
+    res_image = np.empty((x_data.shape[1] * rect_size, x_data.shape[2] * rect_size, x_data.shape[3]), dtype='uint8')
+
+    window_shape = x_data[0].shape
+    i = 0
+    for x in range(0, rect_size):
+        for y in range(0, rect_size):
+            res_image[x * window_shape[0]:(x + 1) * window_shape[1], y * window_shape[1]:(y + 1) * window_shape[1]] = \
+                x_data[i]
+            i += 1
+            if i == x_data.shape[0]:
+                return Image.fromarray(res_image, mode='RGB')
+    return Image.fromarray(res_image, mode='RGB')
 
 
 #############################################################################
