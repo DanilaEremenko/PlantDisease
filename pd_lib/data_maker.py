@@ -102,7 +102,7 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
             x_data = np.append(x_data, curr_x)
             x_coord = np.append(x_coord, (p1_x, p1_y, p2_x, p2_y))
 
-            draw_image = draw_rect_on_image(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
+            draw_image = draw_rect_on_image(draw_image, (p1_x - 1, p1_y - 1, p2_x - 1, p2_y - 1), color=color)
 
             p1_x += int(window_shape[0] * step)
             p2_x += int(window_shape[0] * step)
@@ -117,26 +117,34 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
     return x_data, x_coord, full_img, draw_image
 
 
-def get_data_from_json_list(json_list, img_shape, class_num):
+def get_data_from_json_list(json_list, ex_shape, class_num):
     test_num = 0
-    x_train = np.empty(0)
-    y_train = np.empty(0)
+    x_train = np.empty(0, dtype='uint8')
+    y_train = np.empty(0, dtype='uint8')
+    class_1_num = class_2_num = 0
+    img_shape = (0, 0, 0)
     for train_json in json_list:
-        curr_x_train, curr_y_train = json_load(train_json)
+        cur_class_1_num, cur_class_2_num, img_shape, curr_x_train, curr_y_train = json_load(train_json)
+        curr_img = get_full_image_from_pieces(curr_x_train, img_shape)
+        curr_img.show()
         x_train = np.append(x_train, curr_x_train)
         y_train = np.append(y_train, curr_y_train)
         test_num += curr_y_train.shape[0]
-    x_train.shape = (test_num, img_shape[0], img_shape[1], img_shape[2])
+        class_1_num += cur_class_1_num
+        class_2_num += cur_class_2_num
+    x_train.shape = (test_num, ex_shape[0], ex_shape[1], ex_shape[2])
     y_train.shape = (test_num, class_num)
 
-    return x_train, y_train
+    return class_1_num, class_2_num, img_shape, x_train, y_train
 
 
-def json_create(path, x_data, y_data, img_shape):
+def json_create(path, x_data, y_data, img_shape, class_1_num, class_2_num):
     if x_data.shape[0] != y_data.shape[0]:
         raise Exception("bad shape")
     with open(path, "w") as fp:
-        json.dump({"img_shape": img_shape, "x_data": x_data.tolist(), "y_data": y_data.tolist()}, fp)
+        json.dump(
+            {"class_1_num": class_1_num, "class_2_num": class_2_num, "img_shape": img_shape,
+             "x_data": x_data.tolist(), "y_data": y_data.tolist()}, fp)
         fp.close()
 
     pass
@@ -146,4 +154,5 @@ def json_load(path):
     with open(path, "r") as fp:
         data_dict = json.load(fp)
         fp.close()
-        return np.array(data_dict.get("x_data")), np.array(data_dict.get("y_data")), data_dict.get("img_shape")
+        return data_dict.get("class_1_num"), data_dict.get("class_2_num"), data_dict.get("img_shape"), \
+               np.array(data_dict.get("x_data")), np.array(data_dict.get("y_data"))

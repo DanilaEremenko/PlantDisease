@@ -67,7 +67,7 @@ def train_on_dir(model, data, title, img_shape, verbose=False, history_show=True
 
 
 def train_on_json(model, json_list, epochs, img_shape, class_num, verbose=False, history_show=True):
-    x_train, y_train = dmk.get_data_from_json_list(json_list, img_shape, class_num)
+    class_1_num, class_2_num, img_shape, x_train, y_train = dmk.get_data_from_json_list(json_list, img_shape, class_num)
 
     batch_size = int(y_train.shape[0] * 0.005)
     validation_split = 0.1

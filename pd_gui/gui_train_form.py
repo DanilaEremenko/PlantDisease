@@ -88,7 +88,7 @@ class WindowClassificationPicture(QWidget):
             hbox_new = QtWidgets.QHBoxLayout()
             hbox_new.addStretch(1)
             for x in range(0, x_len):
-                label_new = TrainExLabel(self.x_data[i])
+                label_new = TrainExLabel(self.x_data[i].copy())
                 hbox_new.addWidget(label_new)
                 self.label_list.append(label_new)
                 i += 1
@@ -117,12 +117,15 @@ class WindowClassificationPicture(QWidget):
 
         y_data = np.empty(0)
         i = 0
+        class_1_num = class_2_num = 0
         for label in self.label_list:
             if label.type == 0:
                 y_data = np.append(y_data, [0, 1])
+                class_1_num += 1
                 self.draw_image = draw_rect_on_image(self.draw_image, self.x_coord[i], color=COLOR_GOOD)
             elif label.type == 1:
                 y_data = np.append(y_data, [1, 0])
+                class_2_num += 1
                 self.draw_image = draw_rect_on_image(self.draw_image, self.x_coord[i], color=COLOR_BAD)
             i += 1
 
@@ -132,10 +135,14 @@ class WindowClassificationPicture(QWidget):
             path="%s.json" % self.picture_name,
             x_data=self.x_data,
             y_data=y_data,
-            img_shape=self.full_img.size
+            img_shape=self.full_img.size,
+            class_1_num=class_1_num,
+            class_2_num=class_2_num
         )
 
         self.draw_image.save("%s_net.JPG" % self.picture_name)
+
+        print("class_1_num = %d, class_2_num = %d" % (class_1_num, class_2_num))
 
         print("OKAY")
 
