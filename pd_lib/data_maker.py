@@ -2,7 +2,7 @@ import numpy as np
 import os
 from pd_lib.img_proc import get_pxs_full
 from PIL import Image
-from pd_lib.img_proc import crop_multiply_data, draw_rect
+from pd_lib.img_proc import crop_multiply_data, draw_rect_on_image, get_full_image_from_pieces
 import json
 
 
@@ -102,7 +102,7 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
             x_data = np.append(x_data, curr_x)
             x_coord = np.append(x_coord, (p1_x, p1_y, p2_x, p2_y))
 
-            draw_image = draw_rect(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
+            draw_image = draw_rect_on_image(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
 
             p1_x += int(window_shape[0] * step)
             p2_x += int(window_shape[0] * step)
@@ -136,7 +136,7 @@ def json_create(path, x_data, y_data, img_shape):
     if x_data.shape[0] != y_data.shape[0]:
         raise Exception("bad shape")
     with open(path, "w") as fp:
-        json.dump({"x_data": x_data.tolist(), "y_data": y_data.tolist(), "img_shape": img_shape}, fp)
+        json.dump({"img_shape": img_shape, "x_data": x_data.tolist(), "y_data": y_data.tolist()}, fp)
         fp.close()
 
     pass

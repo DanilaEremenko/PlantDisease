@@ -10,7 +10,10 @@ import os
 # --------------------------- deform image ----------------------------------
 #############################################################################
 def deform_image(img, k, n, m):
-    arr = np.array(img)
+    return Image.fromarray(deform_arr(np.asarray(img), k, n, m))
+
+
+def deform_arr(arr, k, n, m):
     if n > m:
         c = n
         n = m
@@ -20,7 +23,27 @@ def deform_image(img, k, n, m):
     shift = lambda x: A * np.sin(2.0 * np.pi * x * w)
     for i in range(n, m):
         arr[:, i] = np.roll(arr[:, i], int(shift(i) * k))
-    return Image.fromarray(arr)
+
+    return arr
+
+
+#############################################################################
+# --------------------------- noise image -----------------------------------
+#############################################################################
+def noise_img_from_arr(img, intensity):
+    return Image.fromarray(noise_arr(np.asarray(img), intensity))
+
+
+def noise_arr(arr, intensity):
+    for i in range(1, arr.size):
+        i += intensity * np.random.randint(0, 3)
+        if i > 780:
+            i = 780
+        if arr[i] > 0.5:
+            arr[i] = 0.0
+        else:
+            arr[i] = 1.0
+    return arr
 
 
 #############################################################################
@@ -71,18 +94,21 @@ def get_full_image_from_pieces(x_data, img_shape):
 #############################################################################
 # --------------------------- localizing ---------------------------------------
 #############################################################################
-def draw_rect(img, points, color):
+def draw_rect_on_image(img, points, color):
+    return Image.fromarray(draw_rect_on_array(img_arr=np.array(img), points=points, color=color))
+
+
+def draw_rect_on_array(img_arr, points, color):
     if points.__len__() != 4:
         raise Exception("points.__len__()!=4")
     px1, py1, px2, py2 = points[0:4]
     px1, py1, px2, py2 = int(px1), int(py1), int(px2), int(py2)
-    img_arr = np.array(img)
-    # img_arr.setflags(write=1)
+
     img_arr[py1:py1 + 1, px1:px2] = color  # top
     img_arr[py2:py2 + 1, px1:px2] = color  # bottom
     img_arr[py1:py2, px1:px1 + 1] = color  # left
     img_arr[py1:py2, px2:px2 + 1] = color  # left
-    return Image.fromarray(img_arr)
+    return img_arr
 
 
 #############################################################################

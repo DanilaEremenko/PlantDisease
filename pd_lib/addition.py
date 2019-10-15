@@ -2,7 +2,7 @@
 from keras.optimizers import Adam
 from keras.models import model_from_json
 from pd_lib.data_maker import get_data_full, get_x_from_dir
-from pd_lib.img_proc import plot_image_from_arr, draw_rect
+from pd_lib.img_proc import plot_image_from_arr, draw_rect_on_image
 from pd_lib import gui_reporter as gr
 import pd_lib.data_maker as dmk
 import os
@@ -122,5 +122,5 @@ def predict_and_localize_on_image(model, x_data, x_coord, image, color=255):
         pred = model.predict(curr_window)
         print("%d %d" % (pred[0][0], pred[0][1]))
         if pred[0][0] > pred[0][1]:
-            image = draw_rect(image, coord, color)
+            image = draw_rect_on_image(image, coord, color)
     return image
