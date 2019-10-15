@@ -1,121 +1,133 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QWidget, QLabel
+from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
 from PyQt5.QtGui import QPixmap, QImage
 from pd_lib import data_maker as dmk
-from pd_lib.img_proc import draw_rect
 import numpy as np
 import os
+from pd_lib.img_proc import draw_rect_on_image, draw_rect_on_array
+
+COLOR_BAD = 0
+COLOR_GOOD = 255
 
 
-# TODO problem with json formation
+class TrainExLabel(QLabel):
+    def __init__(self, x_data):
+        super(TrainExLabel, self).__init__()
+        self.type = 0
+
+        self.x_data = x_data
+
+        x_img_good = draw_rect_on_array(x_data, (1, 1, x_data.shape[0] - 1, x_data.shape[1] - 1), color=COLOR_GOOD)
+        self.good_pixmap = QPixmap.fromImage(QImage(x_img_good, x_data.shape[0], x_data.shape[1],
+                                                    QImage.Format_RGB888))
+
+        x_img_bad = draw_rect_on_array(x_data, (1, 1, x_data.shape[0] - 1, x_data.shape[1] - 1), color=COLOR_BAD)
+        self.bad_pixmap = QPixmap.fromImage(QImage(x_img_bad, x_data.shape[0], x_data.shape[1],
+                                                   QImage.Format_RGB888))
+
+        self.setPixmap(self.good_pixmap)
+        self.resize(x_data.shape[0], x_data.shape[1])
+
+    def mouseDoubleClickEvent(self, ev):
+        self.change_type()
+
+    def change_type(self):
+        self.type = int(not self.type)
+        if self.type == 0:
+            self.setPixmap(self.good_pixmap)
+        elif self.type == 1:
+            self.setPixmap(self.bad_pixmap)
+
+        print("type = %d" % self.type)
+
+
+class ControlButton(QPushButton):
+    def __init__(self, text, connect_func):
+        super(ControlButton, self).__init__()
+        btn_width = 64
+        btn_height = 32
+        self.resize(btn_width, btn_height)
+        self.setText(text)
+        self.clicked.connect(connect_func)
+
+
 class WindowClassificationPicture(QWidget):
-    img_shape = (768, 768)
-    btn_size = int(img_shape[0] / 100)
-    window_shape = (32, 32, 3)
-    step = 1.0
-    color_bad = 125
-    color_good = 255
-
     def __init__(self):
         super(WindowClassificationPicture, self).__init__()
         self.setWindowTitle("Plant Disease Recognizer")
         self.img_label = QLabel(self)
-        self.home()
-        pass
-
-    def home(self):
         self.setMouseTracking(True)
-
         picture_path = self.choose_picture()
         self.picture_name = os.path.splitext(picture_path)[0]
 
-        x_data, x_coord, full_img, draw_image = dmk.get_x_from_croped_img(
+        self.x_data, self.x_coord, self.full_img, self.draw_image = dmk.get_x_from_croped_img(
             path_img_in=picture_path,
-            img_shape=self.img_shape,
-            window_shape=self.window_shape,
-            step=self.step,
-            color=self.color_good
+            img_shape=(768, 768),
+            window_shape=(32, 32, 3),
+            step=1.0,
+            color=COLOR_GOOD
         )
-        self.x_data = x_data
-        self.draw_image = draw_image
-        self.full_image = full_img
-        self.x_coord = x_coord
-        self.colors = np.full(shape=self.x_data.shape[0], fill_value=self.color_good)
-        width, height = self.update_image()
-        self.resize(width + 1, height + self.btn_size * 4)
-        self.img_label.setGeometry(0, 0, width, height)
+        self.label_list = []
         self.button_init()
         self.show()
         pass
 
-    def update_image(self):
-        im_np = np.asarray(self.draw_image)
-        pixmap = QPixmap.fromImage(QImage(im_np, im_np.shape[1], im_np.shape[0],
-                                          QImage.Format_RGB888))
-        self.img_label.setPixmap(QPixmap(pixmap))
-        return pixmap.width(), pixmap.height()
-
     def button_init(self):
-        btn_okay = QtWidgets.QPushButton("Okay")
-        btn_okay.pressed.connect(self.okay_pressed)
-        btn_okay.resize(self.btn_size, self.btn_size)
 
-        btn_quit = QtWidgets.QPushButton("Quit")
-        btn_quit.clicked.connect(self.quit_pressed)
-        btn_quit.resize(self.btn_size, self.btn_size)
+        hbox_control = QtWidgets.QHBoxLayout()
+        hbox_control.addStretch(1)
+        hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
+        hbox_control.addWidget(ControlButton("Quit", self.quit_pressed))
 
-        hbox = QtWidgets.QHBoxLayout()
-        hbox.addStretch(1)
-        hbox.addWidget(btn_okay)
-        hbox.addWidget(btn_quit)
+        x_len = int(self.full_img.size[0] / self.x_data.shape[1])
+        y_len = int(self.full_img.size[1] / self.x_data.shape[2])
+
+        hbox_list = []
+        i = 0
+        for y in range(0, y_len):
+            hbox_new = QtWidgets.QHBoxLayout()
+            hbox_new.addStretch(1)
+            for x in range(0, x_len):
+                label_new = TrainExLabel(self.x_data[i].copy())
+                hbox_new.addWidget(label_new)
+                self.label_list.append(label_new)
+                i += 1
+            hbox_list.append(hbox_new)
 
         vbox = QtWidgets.QVBoxLayout()
         vbox.addStretch(1)
-        vbox.addLayout(hbox)
+
+        for hbox in hbox_list:
+            vbox.addLayout(hbox)
+        vbox.addLayout(hbox_control)
+
         vbox.setContentsMargins(0, 0, 0, 0)
         vbox.setSpacing(0)
         self.setLayout(vbox)
+
+        self.setLayout(vbox)
+        self.show()
 
     def choose_picture(self):
         return str(
             QtWidgets.QFileDialog.getOpenFileName(self, "Open *.png, *.jpg file with potato field", None,
                                                   "*.png *.PNG *.jpg *.JPG")[0])
 
-    def mouseDoubleClickEvent(self, QMouseEvent):
-
-        px2 = self.window_shape[0] * (int(QMouseEvent.x() / self.window_shape[0])) + self.window_shape[0]
-        py2 = self.window_shape[1] * (int(QMouseEvent.y() / self.window_shape[1])) + self.window_shape[1]
-        px1 = px2 - self.window_shape[0]
-        py1 = py2 - self.window_shape[1]
-
-        point = (px1, py1, px2, py2)
-
-        color = None
-        for i in range(0, self.colors.__len__()):
-            if point.__eq__(tuple(self.x_coord[i])):
-                print("%s found" % str(point))
-                if self.colors[i] == self.color_good:
-                    self.colors[i] = self.color_bad
-                else:
-                    self.colors[i] = self.color_good
-                color = self.colors[i]
-
-        if color == None:
-            print("%s not found " % str(point))
-        else:
-            self.draw_image = draw_rect(self.draw_image, point, color=color)
-            self.update_image()
-        pass
-
     def okay_pressed(self):
-        self.draw_image.save("%s_net.JPG" % self.picture_name)
-        y_data = np.empty(0)
 
-        for i in range(0, self.colors.__len__()):
-            if self.colors[i] == self.color_good:
+        y_data = np.empty(0)
+        i = 0
+        class_1_num = class_2_num = 0
+        for label in self.label_list:
+            if label.type == 0:
                 y_data = np.append(y_data, [0, 1])
-            else:
+                class_1_num += 1
+                self.draw_image = draw_rect_on_image(self.draw_image, self.x_coord[i], color=COLOR_GOOD)
+            elif label.type == 1:
                 y_data = np.append(y_data, [1, 0])
+                class_2_num += 1
+                self.draw_image = draw_rect_on_image(self.draw_image, self.x_coord[i], color=COLOR_BAD)
+            i += 1
 
         y_data.shape = (self.x_data.shape[0], 2)
 
@@ -123,8 +135,14 @@ class WindowClassificationPicture(QWidget):
             path="%s.json" % self.picture_name,
             x_data=self.x_data,
             y_data=y_data,
-            img_shape=self.full_image.size
+            img_shape=self.full_img.size,
+            class_1_num=class_1_num,
+            class_2_num=class_2_num
         )
+
+        self.draw_image.save("%s_net.JPG" % self.picture_name)
+
+        print("class_1_num = %d, class_2_num = %d" % (class_1_num, class_2_num))
 
         print("OKAY")
 

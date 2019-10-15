@@ -2,7 +2,7 @@
 from keras.optimizers import Adam
 from keras.models import model_from_json
 from pd_lib.data_maker import get_data_full, get_x_from_dir
-from pd_lib.img_proc import plot_image_from_arr, draw_rect
+from pd_lib.img_proc import plot_image_from_arr, draw_rect_on_image
 from pd_lib import gui_reporter as gr
 import pd_lib.data_maker as dmk
 import os
@@ -67,7 +67,7 @@ def train_on_dir(model, data, title, img_shape, verbose=False, history_show=True
 
 
 def train_on_json(model, json_list, epochs, img_shape, class_num, verbose=False, history_show=True):
-    x_train, y_train = dmk.get_data_from_json_list(json_list, img_shape, class_num)
+    class_1_num, class_2_num, img_shape, x_train, y_train = dmk.get_data_from_json_list(json_list, img_shape, class_num)
 
     batch_size = int(y_train.shape[0] * 0.005)
     validation_split = 0.1
@@ -122,5 +122,5 @@ def predict_and_localize_on_image(model, x_data, x_coord, image, color=255):
         pred = model.predict(curr_window)
         print("%d %d" % (pred[0][0], pred[0][1]))
         if pred[0][0] > pred[0][1]:
-            image = draw_rect(image, coord, color)
+            image = draw_rect_on_image(image, coord, color)
     return image
