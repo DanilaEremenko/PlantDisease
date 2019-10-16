@@ -103,7 +103,7 @@ def get_full_rect_image_from_pieces(x_data):
 
 
 #############################################################################
-# --------------------------- localizing ---------------------------------------
+# --------------------------- drawing ---------------------------------------
 #############################################################################
 def draw_rect_on_image(img, points, color):
     return Image.fromarray(draw_rect_on_array(img_arr=np.array(img), points=points, color=color))
