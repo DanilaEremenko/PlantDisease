@@ -2,7 +2,7 @@ import numpy as np
 import os
 from pd_lib.img_proc import get_pxs_full
 from PIL import Image
-from pd_lib.img_proc import crop_multiply_data, draw_rect_on_image, get_full_repaired_image_from_pieces, noise_arr, \
+from pd_lib.img_proc import crop_multiply_data, draw_rect_on_image, get_full_rect_image_from_pieces, noise_arr, \
     deform_arr
 import json
 
@@ -126,8 +126,6 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
     img_shape = (0, 0, 0)
     for train_json in json_list:
         cur_class_1_num, cur_class_2_num, img_shape, curr_x_train, curr_y_train = json_load(train_json)
-        curr_img = get_full_repaired_image_from_pieces(curr_x_train, img_shape)
-        curr_img.show()
         x_train = np.append(x_train, curr_x_train)
         y_train = np.append(y_train, curr_y_train)
         test_num += curr_y_train.shape[0]

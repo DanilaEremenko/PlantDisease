@@ -10,7 +10,7 @@ import logging
 logging.getLogger('tensorflow').disabled = True
 
 
-def get_CNN(img_shape, out_neurons_num, lr=0.1):
+def get_CNN(img_shape, out_neurons_num):
     model = Sequential()
 
     # 1 conv layer
@@ -47,7 +47,5 @@ def get_CNN(img_shape, out_neurons_num, lr=0.1):
     model.add(Dropout(0.5))
 
     model.add(Dense(out_neurons_num, activation='softmax'))
-
-    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=lr), metrics=['accuracy'])
 
     return model
