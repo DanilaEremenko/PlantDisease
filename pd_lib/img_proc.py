@@ -92,6 +92,8 @@ def get_full_rect_image_from_pieces(x_data, color_mode='RGB'):
         res_image = np.empty((x_data.shape[1] * rect_size, x_data.shape[2] * rect_size, x_data.shape[3]), dtype='uint8')
     elif color_mode == 'L':
         res_image = np.empty((x_data.shape[1] * rect_size, x_data.shape[2] * rect_size), dtype='uint8')
+    else:
+        raise Exception("Undefined color_mode = %s" % color_mode)
 
     window_shape = x_data[0].shape
     i = 0
