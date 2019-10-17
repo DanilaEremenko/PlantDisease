@@ -161,41 +161,42 @@ def json_load(path):
 # --------------------------------- multiple class -----------------------------
 ################################################################################
 
-def multiple_class(x_train, y_train, class_for_multiple, use_noise=False, use_deform=False):
-    class_for_multiple_ids = []
-
+def multiple_class_examples(x_train, y_train, class_for_multiple,
+                            use_noise=False, intensity_noise_list=(50,), use_deform=False, k_deform_list=(0.5,)):
+    class_for_multiple_examples = np.empty(0)
     i = 0
+    class_2_num = 0
     for y in y_train:
         if ((y.__eq__(class_for_multiple)).all()):
-            class_for_multiple_ids.append(i)
+            class_for_multiple_examples = np.append(class_for_multiple_examples, x_train[i])
+            class_2_num += 1
         i += 1
 
-    class_2_num = class_for_multiple_ids.__len__()
+    class_for_multiple_examples.shape = (class_2_num, x_train.shape[1], x_train.shape[2], x_train.shape[3])
+
     class_1_num = y_train.shape[0] - class_2_num
+    class_multiplied_result = np.empty(0)
     class_multiplayer = 1
     # --------------- make noised examples ----------------------------------
     if use_noise:
-        noised_x = x_train.copy()
-        for i in class_for_multiple_ids:
-            noised_x[i] = noise_arr(arr=noised_x[i].flatten(), intensity=50).reshape((32, 32, 3))
+        for intensity in intensity_noise_list:
+            class_multiplayer += 1
+            for multiple_ex in class_for_multiple_examples:
+                class_multiplied_result = \
+                    np.append(class_multiplied_result, noise_arr(arr=multiple_ex.flatten(), intensity=intensity))
 
-        class_multiplayer += 1
     # --------------- make deformed examples ----------------------------------
     if use_deform:
-        deformed_x = x_train.copy()
-        for i in class_for_multiple_ids:
-            deformed_x[i] = deform_arr(arr=deformed_x[i], k=0.5, n=0, m=32)
+        for k in k_deform_list:
+            class_multiplayer += 1
+            for multiple_ex in class_for_multiple_examples:
+                class_multiplied_result = \
+                    np.append(class_multiplied_result, deform_arr(arr=multiple_ex, k=k, n=0, m=x_train.shape[1]))
 
-        class_multiplayer += 1
     # ---------------  join arrays -------------------------------------------
-    if use_noise or use_deform:
-        for i in class_for_multiple_ids:
-            if use_noise:
-                x_train = np.append(x_train, noised_x[i])
-                y_train = np.append(y_train, np.array([1, 0]))
-            if use_deform:
-                x_train = np.append(x_train, deformed_x[i])
-                y_train = np.append(y_train, np.array([1, 0]))
+    x_train = np.append(x_train, class_multiplied_result)
+    for i in range(0, class_2_num * (class_multiplayer - 1)):
+        y_train = np.append(y_train, class_for_multiple)
 
     x_train.shape = (class_1_num + class_2_num * class_multiplayer, 32, 32, 3)
     y_train.shape = (class_1_num + class_2_num * class_multiplayer, 2)
