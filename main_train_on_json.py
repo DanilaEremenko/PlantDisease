@@ -3,37 +3,8 @@ from pd_lib.addition import save_to_json
 import pd_lib.gui_reporter as gr
 import pd_lib.data_maker as dmk
 from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
+from pd_lib.ui_cmd import get_input_int, get_stdin_answer
 from keras.optimizers import Adam
-
-
-def get_stdin_answer(text):
-    while True:
-        res_text = input("%s[y/n]" % text)
-        if res_text == 'y':
-            return True
-        elif res_text == 'n':
-            return False
-
-
-def get_input_int(title=None, min=None, max=None):
-    while True:
-        if title != None:
-            print(title)
-        res = input()
-        if res.isdigit():
-            res = int(res)
-
-            if (min != None) and (max != None):
-                if (res >= min and res <= max):
-                    return res
-                else:
-                    print("%d isn't between [%d,%d]" % (res, min, max))
-            else:
-                return res
-
-        else:
-            print("%s not an integer\n" % res)
-
 
 if __name__ == '__main__':
     #####################################################################
