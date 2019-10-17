@@ -85,10 +85,13 @@ def get_full_repaired_image_from_pieces(x_data, img_shape):
     return img
 
 
-def get_full_rect_image_from_pieces(x_data):
+def get_full_rect_image_from_pieces(x_data, color_mode='RGB'):
     rect_size = int(np.sqrt(x_data.shape[0]) + 1)
 
-    res_image = np.empty((x_data.shape[1] * rect_size, x_data.shape[2] * rect_size, x_data.shape[3]), dtype='uint8')
+    if color_mode == 'RGB':
+        res_image = np.empty((x_data.shape[1] * rect_size, x_data.shape[2] * rect_size, x_data.shape[3]), dtype='uint8')
+    elif color_mode == 'L':
+        res_image = np.empty((x_data.shape[1] * rect_size, x_data.shape[2] * rect_size), dtype='uint8')
 
     window_shape = x_data[0].shape
     i = 0
@@ -98,8 +101,8 @@ def get_full_rect_image_from_pieces(x_data):
                 x_data[i]
             i += 1
             if i == x_data.shape[0]:
-                return Image.fromarray(res_image, mode='RGB')
-    return Image.fromarray(res_image, mode='RGB')
+                return Image.fromarray(res_image, mode=color_mode)
+    return Image.fromarray(res_image, mode=color_mode)
 
 
 #############################################################################
