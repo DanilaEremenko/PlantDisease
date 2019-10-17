@@ -14,17 +14,18 @@ def deform_image(img, k, n, m):
 
 
 def deform_arr(arr, k, n, m):
+    res_arr = arr.copy()
     if n > m:
         c = n
         n = m
         m = c
-    A = arr.shape[0] / 3.0
-    w = 2.0 / arr.shape[1]
+    A = res_arr.shape[0] / 3.0
+    w = 2.0 / res_arr.shape[1]
     shift = lambda x: A * np.sin(2.0 * np.pi * x * w)
     for i in range(n, m):
-        arr[:, i] = np.roll(arr[:, i], int(shift(i) * k))
+        res_arr[:, i] = np.roll(res_arr[:, i], int(shift(i) * k))
 
-    return arr
+    return res_arr
 
 
 #############################################################################
@@ -35,9 +36,10 @@ def noise_img_from_arr(img, intensity):
 
 
 def noise_arr(arr, intensity):
-    for i in range(0, arr.size):
-        arr[i] = (arr[i] + np.random.randint(0, intensity)) % 255
-    return arr
+    res_arr = arr.copy()
+    for i in range(0, res_arr.size):
+        res_arr[i] = (res_arr[i] + np.random.randint(0, intensity)) % 255
+    return res_arr
 
 
 #############################################################################
