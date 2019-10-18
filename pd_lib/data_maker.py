@@ -162,7 +162,8 @@ def json_load(path):
 ################################################################################
 
 def multiple_class_examples(x_train, y_train, class_for_multiple,
-                            use_noise=False, intensity_noise_list=(50,), use_deform=False, k_deform_list=(0.5,)):
+                            use_noise=False, intensity_noise_list=(50,), use_deform=False, k_deform_list=(0.5,),
+                            max_class_num=None):
     class_for_multiple_examples = np.empty(0)
     i = 0
     class_2_num = 0
@@ -200,5 +201,9 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
 
     x_train.shape = (class_1_num + class_2_num * class_multiplayer, 32, 32, 3)
     y_train.shape = (class_1_num + class_2_num * class_multiplayer, 2)
+
+    if max_class_num is not None:
+        if x_train.shape[0] > max_class_num:
+            return x_train[0:max_class_num], y_train[0:max_class_num]
 
     return x_train, y_train

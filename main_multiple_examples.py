@@ -16,7 +16,8 @@ if __name__ == '__main__':
 
     x_train, y_train = multiple_class_examples(x_train=x_train, y_train=y_train, class_for_multiple=[1, 0],
                                                use_noise=False, intensity_noise_list=(50, 150),
-                                               use_deform=True, k_deform_list=(0.11, 0.12, 0.13))
+                                               use_deform=True, k_deform_list=(0.09, 0.10, 0.11, 0.12, 0.13),
+                                               max_class_num=max([class_1_num, class_2_num]) * 2)
 
     class_2_num = y_train.shape[0] - class_1_num
 
@@ -31,6 +32,7 @@ if __name__ == '__main__':
     train_img_from_pieces.show()
 
     out_json_path = "Datasets/PotatoFields/plan_train/DJI_0246_multiple.json"
+    print("class_1_num = %d, class_2_num = %d" % (class_1_num, class_2_num))
     if get_stdin_answer("Save result to %s?" % out_json_path):
         json_create(path=out_json_path,
                     x_data=x_train, y_data=y_train,
