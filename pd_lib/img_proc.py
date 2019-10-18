@@ -2,7 +2,6 @@ from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-from keras.preprocessing import image as kimage
 import os
 
 
@@ -132,8 +131,8 @@ def draw_rect_on_array(img_arr, points, color):
 #############################################################################
 # --------------------------- getters ---------------------------------------
 #############################################################################
-def get_pxs(path):
-    return kimage.img_to_array(kimage.load_img(path, color_mode="grayscale"))
+# def get_pxs(path):
+#     return kimage.img_to_array(kimage.load_img(path, color_mode="grayscale"))
 
 
 def get_pxs_full(path, shape=None):
