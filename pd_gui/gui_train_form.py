@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
 from PyQt5.QtGui import QPixmap, QImage
-from pd_lib import data_maker as dmk
+from pd_lib.data_maker import get_x_from_croped_img, json_create
 import numpy as np
 import os
 from pd_lib.img_proc import draw_rect_on_image, draw_rect_on_array
@@ -28,7 +28,7 @@ class TrainExLabel(QLabel):
         self.setPixmap(self.good_pixmap)
         self.resize(x_data.shape[0], x_data.shape[1])
 
-    def mouseDoubleClickEvent(self, ev):
+    def mousePressEvent(self, ev):
         self.change_type()
 
     def change_type(self):
@@ -60,7 +60,7 @@ class WindowClassificationPicture(QWidget):
         picture_path = self.choose_picture()
         self.picture_name = os.path.splitext(picture_path)[0]
 
-        self.x_data, self.x_coord, self.full_img, self.draw_image = dmk.get_x_from_croped_img(
+        self.x_data, self.x_coord, self.full_img, self.draw_image = get_x_from_croped_img(
             path_img_in=picture_path,
             img_shape=(768, 768),
             window_shape=(32, 32, 3),
@@ -131,7 +131,7 @@ class WindowClassificationPicture(QWidget):
 
         y_data.shape = (self.x_data.shape[0], 2)
 
-        dmk.json_create(
+        json_create(
             path="%s.json" % self.picture_name,
             x_data=self.x_data,
             y_data=y_data,
