@@ -1,54 +1,15 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
-from PyQt5.QtGui import QPixmap, QImage
-from pd_lib import data_maker as dmk
+from PyQt5.QtWidgets import QWidget, QLabel
+
+from .gui_buttons import ControlButton
+from .gui_labels import TrainExLabel
+from .gui_colors import *
+
+from pd_lib.data_maker import get_x_from_croped_img, json_create
+from pd_lib.img_proc import draw_rect_on_image
+
 import numpy as np
 import os
-from pd_lib.img_proc import draw_rect_on_image, draw_rect_on_array
-
-COLOR_BAD = 0
-COLOR_GOOD = 255
-
-
-class TrainExLabel(QLabel):
-    def __init__(self, x_data):
-        super(TrainExLabel, self).__init__()
-        self.type = 0
-
-        self.x_data = x_data
-
-        x_img_good = draw_rect_on_array(x_data, (1, 1, x_data.shape[0] - 1, x_data.shape[1] - 1), color=COLOR_GOOD)
-        self.good_pixmap = QPixmap.fromImage(QImage(x_img_good, x_data.shape[0], x_data.shape[1],
-                                                    QImage.Format_RGB888))
-
-        x_img_bad = draw_rect_on_array(x_data, (1, 1, x_data.shape[0] - 1, x_data.shape[1] - 1), color=COLOR_BAD)
-        self.bad_pixmap = QPixmap.fromImage(QImage(x_img_bad, x_data.shape[0], x_data.shape[1],
-                                                   QImage.Format_RGB888))
-
-        self.setPixmap(self.good_pixmap)
-        self.resize(x_data.shape[0], x_data.shape[1])
-
-    def mouseDoubleClickEvent(self, ev):
-        self.change_type()
-
-    def change_type(self):
-        self.type = int(not self.type)
-        if self.type == 0:
-            self.setPixmap(self.good_pixmap)
-        elif self.type == 1:
-            self.setPixmap(self.bad_pixmap)
-
-        print("type = %d" % self.type)
-
-
-class ControlButton(QPushButton):
-    def __init__(self, text, connect_func):
-        super(ControlButton, self).__init__()
-        btn_width = 64
-        btn_height = 32
-        self.resize(btn_width, btn_height)
-        self.setText(text)
-        self.clicked.connect(connect_func)
 
 
 class WindowClassificationPicture(QWidget):
@@ -60,7 +21,7 @@ class WindowClassificationPicture(QWidget):
         picture_path = self.choose_picture()
         self.picture_name = os.path.splitext(picture_path)[0]
 
-        self.x_data, self.x_coord, self.full_img, self.draw_image = dmk.get_x_from_croped_img(
+        self.x_data, self.x_coord, self.full_img, self.draw_image = get_x_from_croped_img(
             path_img_in=picture_path,
             img_shape=(768, 768),
             window_shape=(32, 32, 3),
@@ -105,9 +66,6 @@ class WindowClassificationPicture(QWidget):
         vbox.setSpacing(0)
         self.setLayout(vbox)
 
-        self.setLayout(vbox)
-        self.show()
-
     def choose_picture(self):
         return str(
             QtWidgets.QFileDialog.getOpenFileName(self, "Open *.png, *.jpg file with potato field", None,
@@ -131,7 +89,7 @@ class WindowClassificationPicture(QWidget):
 
         y_data.shape = (self.x_data.shape[0], 2)
 
-        dmk.json_create(
+        json_create(
             path="%s.json" % self.picture_name,
             x_data=self.x_data,
             y_data=y_data,

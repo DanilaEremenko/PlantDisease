@@ -3,37 +3,9 @@ from pd_lib.addition import save_to_json
 import pd_lib.gui_reporter as gr
 import pd_lib.data_maker as dmk
 from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
+from pd_lib.ui_cmd import get_input_int, get_stdin_answer
 from keras.optimizers import Adam
-
-
-def get_stdin_answer(text):
-    while True:
-        res_text = input("%s[y/n]" % text)
-        if res_text == 'y':
-            return True
-        elif res_text == 'n':
-            return False
-
-
-def get_input_int(title=None, min=None, max=None):
-    while True:
-        if title != None:
-            print(title)
-        res = input()
-        if res.isdigit():
-            res = int(res)
-
-            if (min != None) and (max != None):
-                if (res >= min and res <= max):
-                    return res
-                else:
-                    print("%d isn't between [%d,%d]" % (res, min, max))
-            else:
-                return res
-
-        else:
-            print("%s not an integer\n" % res)
-
+import numpy as np
 
 if __name__ == '__main__':
     #####################################################################
@@ -46,8 +18,6 @@ if __name__ == '__main__':
     #####################################################################
     # ----------------------- set train params --------------------------
     #####################################################################
-    continue_train = True
-
     epochs = epochs_sum = 0
     lr = 0.15
 
@@ -62,12 +32,16 @@ if __name__ == '__main__':
     class_1_num, class_2_num, ex_shape, x_train, y_train = \
         dmk.get_data_from_json_list(json_list, ex_shape, class_num)
 
-    batch_size = int(y_train.shape[0] * 0.005)
+    batch_size = int(y_train.shape[0] * 0.010)
     validation_split = 0.1
+    full_history = {"acc": np.empty(0), "loss": np.empty(0)}
 
+    print("batch_size = %.4f\nvalidation_split = %.4f\ntrain_size = %d\n" %
+          (batch_size, validation_split, x_train.shape[0]))
     #####################################################################
     # ----------------------- train_model -------------------------------
     #####################################################################
+    continue_train = True
     while continue_train:
 
         epochs = get_input_int("How many epochs?", 1, 20)
@@ -80,13 +54,15 @@ if __name__ == '__main__':
             verbose=verbose,
         )
 
-        gr.plot_history_separte(history=history,
-                                save_path_acc=None,
-                                save_path_loss=None,
-                                show=history_show,
-                                save=False
-                                )
+        full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
+        full_history['loss'] = np.append(full_history['loss'], history.history['loss'])
 
+        gr.plot_history_separate_from_dict(history_dict=full_history,
+                                           save_path_acc=None,
+                                           save_path_loss=None,
+                                           show=history_show,
+                                           save=False
+                                           )
         print("\naccuracy on train data\t %.f%%\n" % (history.history['acc'][epochs - 1]))
 
         i = 0
@@ -101,10 +77,13 @@ if __name__ == '__main__':
 
             i += 1
 
-        result_img = get_full_rect_image_from_pieces(x_draw)
-        result_img.show()
+        if get_stdin_answer("Show image of prediction?"):
+            result_img = get_full_rect_image_from_pieces(x_draw)
+            result_img.thumbnail(size=(1024, 1024))
+            result_img.show()
 
         epochs_sum += epochs
+        print("epochs: %d - %d" % (epochs_sum - epochs, epochs_sum))
 
         continue_train = get_stdin_answer(text="Continue?")
 

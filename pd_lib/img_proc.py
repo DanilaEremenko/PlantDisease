@@ -2,7 +2,6 @@ from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-from keras.preprocessing import image as kimage
 import os
 
 
@@ -14,17 +13,18 @@ def deform_image(img, k, n, m):
 
 
 def deform_arr(arr, k, n, m):
+    res_arr = arr.copy()
     if n > m:
         c = n
         n = m
         m = c
-    A = arr.shape[0] / 3.0
-    w = 2.0 / arr.shape[1]
+    A = res_arr.shape[0] / 3.0
+    w = 2.0 / res_arr.shape[1]
     shift = lambda x: A * np.sin(2.0 * np.pi * x * w)
     for i in range(n, m):
-        arr[:, i] = np.roll(arr[:, i], int(shift(i) * k))
+        res_arr[:, i] = np.roll(res_arr[:, i], int(shift(i) * k))
 
-    return arr
+    return res_arr
 
 
 #############################################################################
@@ -35,9 +35,10 @@ def noise_img_from_arr(img, intensity):
 
 
 def noise_arr(arr, intensity):
-    for i in range(0, arr.size):
-        arr[i] = (arr[i] + np.random.randint(0, intensity)) % 255
-    return arr
+    res_arr = arr.copy()
+    for i in range(0, res_arr.size):
+        res_arr[i] = (res_arr[i] + np.random.randint(0, intensity)) % 255
+    return res_arr
 
 
 #############################################################################
@@ -85,10 +86,15 @@ def get_full_repaired_image_from_pieces(x_data, img_shape):
     return img
 
 
-def get_full_rect_image_from_pieces(x_data):
+def get_full_rect_image_from_pieces(x_data, color_mode='RGB'):
     rect_size = int(np.sqrt(x_data.shape[0]) + 1)
 
-    res_image = np.empty((x_data.shape[1] * rect_size, x_data.shape[2] * rect_size, x_data.shape[3]), dtype='uint8')
+    if color_mode == 'RGB':
+        res_image = np.empty((x_data.shape[1] * rect_size, x_data.shape[2] * rect_size, x_data.shape[3]), dtype='uint8')
+    elif color_mode == 'L':
+        res_image = np.empty((x_data.shape[1] * rect_size, x_data.shape[2] * rect_size), dtype='uint8')
+    else:
+        raise Exception("Undefined color_mode = %s" % color_mode)
 
     window_shape = x_data[0].shape
     i = 0
@@ -98,8 +104,8 @@ def get_full_rect_image_from_pieces(x_data):
                 x_data[i]
             i += 1
             if i == x_data.shape[0]:
-                return Image.fromarray(res_image, mode='RGB')
-    return Image.fromarray(res_image, mode='RGB')
+                return Image.fromarray(res_image, mode=color_mode)
+    return Image.fromarray(res_image, mode=color_mode)
 
 
 #############################################################################
@@ -125,8 +131,8 @@ def draw_rect_on_array(img_arr, points, color):
 #############################################################################
 # --------------------------- getters ---------------------------------------
 #############################################################################
-def get_pxs(path):
-    return kimage.img_to_array(kimage.load_img(path, color_mode="grayscale"))
+# def get_pxs(path):
+#     return kimage.img_to_array(kimage.load_img(path, color_mode="grayscale"))
 
 
 def get_pxs_full(path, shape=None):

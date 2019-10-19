@@ -25,6 +25,17 @@ def plot_history_separte(history, save_path_acc, save_path_loss, acc='acc', loss
                  title=acc + ' history', save_path=save_path_acc, save=save, show=show)
 
 
+def plot_history_separate_from_dict(history_dict, save_path_acc, save_path_loss, acc='acc', loss='loss',
+                                    save=False, show=True):
+    epochs = []
+    for i in range(0, history_dict['acc'].__len__()): epochs.append(i)
+
+    plot_graphic(x=epochs, y=np.array(history_dict[loss]), x_label='epochs', y_label='loss',
+                 title=loss + ' history', save_path=save_path_loss, save=save, show=show)
+    plot_graphic(x=epochs, y=np.array(history_dict[acc]), x_label='epochs', y_label='accuracy',
+                 title=acc + ' history', save_path=save_path_acc, save=save, show=show)
+
+
 def plot_graphic(x, y, x_label, y_label, title, save_path=None, save=False, show=False, close_plt=True):
     plt.plot(x, y)
     plt.ylabel(y_label)
