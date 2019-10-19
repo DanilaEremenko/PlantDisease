@@ -77,8 +77,10 @@ if __name__ == '__main__':
 
             i += 1
 
-        result_img = get_full_rect_image_from_pieces(x_draw)
-        result_img.show()
+        if get_stdin_answer("Show image of prediction?"):
+            result_img = get_full_rect_image_from_pieces(x_draw)
+            result_img.thumbnail(size=(1024, 1024))
+            result_img.show()
 
         epochs_sum += epochs
         print("epochs: %d - %d" % (epochs_sum - epochs, epochs_sum))
