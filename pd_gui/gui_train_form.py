@@ -1,7 +1,8 @@
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QWidget, QLabel
 
-from .gui_buttons import ControlButton, TrainExLabel
+from .gui_buttons import ControlButton
+from .gui_labels import TrainExLabel
 from .gui_colors import *
 
 from pd_lib.data_maker import get_x_from_croped_img, json_create
