@@ -6,6 +6,7 @@ from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
 from pd_lib.ui_cmd import get_input_int, get_stdin_answer
 from keras.optimizers import Adam
 import numpy as np
+from pd_lib.arg_parser import parse_json_list_from_cmd
 
 if __name__ == '__main__':
     #####################################################################
@@ -13,7 +14,7 @@ if __name__ == '__main__':
     #####################################################################
     ex_shape = (32, 32, 3)
     class_num = 2
-    json_list = ["Datasets/PotatoFields/plan_train/DJI_0246_multiple.json"]
+    json_list = parse_json_list_from_cmd()
 
     #####################################################################
     # ----------------------- set train params --------------------------
@@ -44,6 +45,7 @@ if __name__ == '__main__':
     continue_train = True
     while continue_train:
 
+        print("class_1_num = %d, class_2_num = %d" % (class_1_num, class_2_num))
         epochs = get_input_int("How many epochs?", 1, 20)
 
         history = model.fit(
@@ -67,16 +69,20 @@ if __name__ == '__main__':
 
         i = 0
         x_draw = x_train.copy()
+        class_1_ans = class_2_ans = 0
         for y, mod_ans in zip(y_train, model.predict(x_train)):
             if y.__eq__([1, 0]).all():
                 draw_rect_on_array(img_arr=x_draw[i], points=(1, 1, 31, 31), color=255)
             if mod_ans.__eq__([1, 0]).all():
                 draw_rect_on_array(img_arr=x_draw[i], points=(10, 10, 20, 20), color=0)
+                class_2_ans += 1
             elif mod_ans.__eq__([0, 1]).all():
                 draw_rect_on_array(img_arr=x_draw[i], points=(10, 10, 20, 20), color=255)
+                class_1_ans += 1
 
             i += 1
 
+        print("class_1_ans = %d, class_2_ans = %d" % (class_1_ans, class_2_ans))
         if get_stdin_answer("Show image of prediction?"):
             result_img = get_full_rect_image_from_pieces(x_draw)
             result_img.thumbnail(size=(1024, 1024))
