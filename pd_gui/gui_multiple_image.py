@@ -20,7 +20,6 @@ class WindowMultipleExamples(QWidget):
     def __init__(self):
         super(WindowMultipleExamples, self).__init__()
         self.setWindowTitle("Plant Disease Recognizer")
-        self.setMouseTracking(True)
         json_for_multiple = self.choose_json()
 
         with open(json_for_multiple) as train_json_fp:

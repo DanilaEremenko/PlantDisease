@@ -16,8 +16,6 @@ class WindowClassificationPicture(QWidget):
     def __init__(self):
         super(WindowClassificationPicture, self).__init__()
         self.setWindowTitle("Plant Disease Recognizer")
-        self.img_label = QLabel(self)
-        self.setMouseTracking(True)
         picture_path = self.choose_picture()
         self.picture_name = os.path.splitext(picture_path)[0]
 
