@@ -1,12 +1,12 @@
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QWidget
 
-from .gui_buttons import ControlButton
-from .gui_labels import ImageLabel
+from pd_gui.components.gui_buttons import ControlButton
+from pd_gui.components.gui_labels import ImageLabel
 
 from pd_lib.data_maker import multiple_class_examples, json_create
 from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
-from .gui_colors import COLOR_GOOD
+from pd_gui.components.gui_colors import COLOR_GOOD
 
 import json
 import os
