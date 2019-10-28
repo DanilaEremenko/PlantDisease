@@ -207,3 +207,18 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
             return x_train[0:max_class_num], y_train[0:max_class_num]
 
     return x_train, y_train
+
+
+def get_pos_from_num(arr, class_num):
+    new_arr = np.zeros((arr.size, class_num))
+
+    curr_new_i = 0
+    for num in arr:
+        num = int(num)
+        i = 0
+        while num != 0:
+            num -= 1
+            i += 1
+        new_arr[curr_new_i][i] = 1
+        curr_new_i += 1
+    return new_arr
