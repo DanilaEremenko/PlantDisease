@@ -116,11 +116,12 @@ def predict_on_dir(model, data_dirs, img_shape):
         answer_file.write(text)
 
 
-def predict_and_localize_on_image(model, x_data, x_coord, image, color=255):
+def predict_and_localize_on_image(model, x_data, x_coord, image, color=255, verbose=False):
     for curr_window, coord in zip(x_data, x_coord):
         curr_window.shape = (1, curr_window.shape[0], curr_window.shape[1], curr_window.shape[2])
         pred = model.predict(curr_window)
-        print("%d %d" % (pred[0][0], pred[0][1]))
+        if verbose:
+            print("%d %d" % (pred[0][0], pred[0][1]))
         if pred[0][0] > pred[0][1]:
             image = draw_rect_on_image(image, coord, color)
     return image
