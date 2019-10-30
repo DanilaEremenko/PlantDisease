@@ -3,9 +3,10 @@ from PyQt5.QtWidgets import QWidget
 
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_colors import *
+from .components.gui_labels import ImageLabel
+
 from pd_lib.data_maker import get_x_from_croped_img
 from pd_lib.addition import get_full_model, predict_and_localize_on_image
-from .components.gui_labels import ImageLabel
 
 import numpy as np
 import os.path
@@ -45,6 +46,7 @@ class WindowPredictOnImage(QWidget):
 
     def predict(self):
         res_image = predict_and_localize_on_image(model=self.model, x_data=self.x_data, x_coord=self.x_coord,
+                                                  color_1=COLOR_GOOD, color_2=COLOR_BAD,
                                                   image=self.full_img)
         self.img_label.setParent(None)
 
