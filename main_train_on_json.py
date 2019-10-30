@@ -6,7 +6,7 @@ from pd_lib.ui_cmd import get_input_int, get_stdin_answer
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 import numpy as np
-from pd_lib.arg_parser import parse_json_list_from_cmd
+from pd_lib.arg_parser import parse_args_for_train
 from pd_lib.data_maker import get_data_from_json_list
 
 if __name__ == '__main__':
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     #####################################################################
     ex_shape = (32, 32, 3)
     class_num = 2
-    json_list = parse_json_list_from_cmd()
+    model, json_list = parse_args_for_train()
 
     #####################################################################
     # ----------------------- set train params --------------------------
@@ -28,7 +28,8 @@ if __name__ == '__main__':
     history_show = True
     title = 'train on ground'
 
-    model = get_CNN(ex_shape, class_num)
+    if model is None:
+        model = get_CNN(ex_shape, class_num)
 
     checkpoint = ModelCheckpoint("model_ground_50.h5",
                                  monitor='val_loss',
