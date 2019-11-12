@@ -127,9 +127,9 @@ def predict_and_localize_on_image(model, x_data, x_coord, image, color_1, color_
         if verbose:
             print("%d %d" % (pred[0][0], pred[0][1]))
         if pred[0][0] > pred[0][1]:
-            image = draw_rect_on_image(image, coord, color_1)
+            image = draw_rect_on_image(image, (coord[0] + 1, coord[1] + 1, coord[2] - 1, coord[3] - 1), color_1)
         elif pred[0][0] < pred[0][1]:
-            image = draw_rect_on_image(image, coord, color_2)
+            image = draw_rect_on_image(image, (coord[0] + 1, coord[1] + 1, coord[2] - 1, coord[3] - 1), color_2)
         else:
             raise Exception("Too rare case")
 
