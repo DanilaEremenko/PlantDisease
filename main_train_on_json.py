@@ -31,7 +31,7 @@ if __name__ == '__main__':
     if model is None:
         model = get_CNN(ex_shape, class_num)
 
-    checkpoint = ModelCheckpoint("model_ground_50.h5",
+    checkpoint = ModelCheckpoint("model_ground.h5",
                                  monitor='val_loss',
                                  verbose=verbose,
                                  save_best_only=True,
@@ -63,7 +63,7 @@ if __name__ == '__main__':
             batch_size=batch_size, shuffle=True,
             validation_split=validation_split,
             verbose=verbose,
-            callbacks=(checkpoint,)
+            callbacks=[checkpoint,]
         )
 
         full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
