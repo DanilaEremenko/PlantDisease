@@ -103,7 +103,7 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
             x_data = np.append(x_data, curr_x)
             x_coord = np.append(x_coord, (p1_x, p1_y, p2_x, p2_y))
 
-            draw_image = draw_rect_on_image(draw_image, (p1_x - 1, p1_y - 1, p2_x - 1, p2_y - 1), color=color)
+            draw_image = draw_rect_on_image(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
 
             p1_x += int(window_shape[0] * step)
             p2_x += int(window_shape[0] * step)
@@ -207,3 +207,18 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
             return x_train[0:max_class_num], y_train[0:max_class_num]
 
     return x_train, y_train
+
+
+def get_pos_from_num(arr, class_num):
+    new_arr = np.zeros((arr.size, class_num))
+
+    curr_new_i = 0
+    for num in arr:
+        num = int(num)
+        i = 0
+        while num != 0:
+            num -= 1
+            i += 1
+        new_arr[curr_new_i][i] = 1
+        curr_new_i += 1
+    return new_arr

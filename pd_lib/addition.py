@@ -1,5 +1,4 @@
 # coding=utf-8
-from keras.optimizers import Adam
 from keras.models import model_from_json
 from pd_lib.data_maker import get_data_full, get_x_from_dir
 from pd_lib.img_proc import plot_image_from_arr, draw_rect_on_image
@@ -22,10 +21,15 @@ def get_model_from_json(path):
     return model_from_json(json_string)
 
 
-def get_full_model(json_path, h5_path):
+def get_full_model(json_path, h5_path, verbose=False):
+    if json_path is None or h5_path is None:
+        return None
+
     model = get_model_from_json(json_path)
     model.load_weights(h5_path)
-    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.05), metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    if verbose:
+        print("model loaded successfully")
     return model
 
 
@@ -116,11 +120,17 @@ def predict_on_dir(model, data_dirs, img_shape):
         answer_file.write(text)
 
 
-def predict_and_localize_on_image(model, x_data, x_coord, image, color=255):
+def predict_and_localize_on_image(model, x_data, x_coord, image, color_1, color_2, verbose=False):
     for curr_window, coord in zip(x_data, x_coord):
         curr_window.shape = (1, curr_window.shape[0], curr_window.shape[1], curr_window.shape[2])
         pred = model.predict(curr_window)
-        print("%d %d" % (pred[0][0], pred[0][1]))
+        if verbose:
+            print("%d %d" % (pred[0][0], pred[0][1]))
         if pred[0][0] > pred[0][1]:
-            image = draw_rect_on_image(image, coord, color)
+            image = draw_rect_on_image(image, (coord[0] + 1, coord[1] + 1, coord[2] - 1, coord[3] - 1), color_1)
+        elif pred[0][0] < pred[0][1]:
+            image = draw_rect_on_image(image, (coord[0] + 1, coord[1] + 1, coord[2] - 1, coord[3] - 1), color_2)
+        else:
+            raise Exception("Too rare case")
+
     return image
