@@ -16,6 +16,7 @@ import os.path
 class WindowPredictOnImage(QWidget):
     def __init__(self):
         super(WindowPredictOnImage, self).__init__()
+        self.window_shape = (32, 32, 3)
         self.setWindowTitle("Plant Disease Recognizer")
         self.elements_init()
         self.choose_picture()
@@ -32,6 +33,7 @@ class WindowPredictOnImage(QWidget):
         hbox_control.addWidget(ControlButton("Choose image", self.choose_picture))
         hbox_control.addWidget(ControlButton("Quit", self.quit_pressed))
 
+        # ------------ adding slider --------------------
         self.hbox_img = QtWidgets.QHBoxLayout()
         self.hbox_img.addStretch(1)
 
@@ -75,7 +77,7 @@ class WindowPredictOnImage(QWidget):
         self.x_data, self.x_coord, self.full_img, self.draw_image = get_x_from_croped_img(
             path_img_in=self.img_path,
             img_shape=self.img_shape,
-            window_shape=(32, 32, 3),
+            window_shape=self.window_shape,
             step=1.0,
             color=COLOR_GOOD
         )
@@ -99,7 +101,7 @@ class WindowPredictOnImage(QWidget):
 
         # self.img_label = ImageLabel(np.asarray(self.full_img, dtype='uint8'))
 
-        self.full_img.show()  # TODO delete
+        self.draw_image.show()  # TODO delete
 
         # self.hbox_img.addWidget(self.img_label)
 
