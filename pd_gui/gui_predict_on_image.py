@@ -17,6 +17,8 @@ class WindowPredictOnImage(QWidget):
     def __init__(self):
         super(WindowPredictOnImage, self).__init__()
         self.window_shape = (32, 32, 3)
+        self.sl_min_val = 512
+        self.sl_max_val = 2048
         self.setWindowTitle("Plant Disease Recognizer")
         self.elements_init()
         self.choose_picture()
@@ -38,7 +40,7 @@ class WindowPredictOnImage(QWidget):
         self.hbox_img.addStretch(1)
 
         vbox_slider = QtWidgets.QVBoxLayout()
-        self.sl = ImgSizeSlider(min_val=512,max_val=2048,step_num=4)
+        self.sl = ImgSizeSlider(min_val=self.sl_min_val, max_val=self.sl_max_val, step_num=4)
         vbox_slider.addWidget(self.sl)
 
         # ------------- main vbox -------------
