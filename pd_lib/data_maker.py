@@ -1,9 +1,8 @@
 import numpy as np
 import os
-from pd_lib.img_proc import get_pxs_full
 from PIL import Image
-from pd_lib.img_proc import crop_multiply_data, draw_rect_on_image, get_full_rect_image_from_pieces, noise_arr, \
-    deform_arr
+from pd_lib import img_proc as img_pr
+from pd_geo import exif_parser as ep
 import json
 
 
@@ -16,9 +15,9 @@ def get_class_from_dir(path_to_dir, class_mark, img_shape, max_img_num=None):
     i = 0
 
     for path_to_img in os.listdir(path_to_dir):
-        img_pxs = get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape)
+        img_pxs = img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape)
         if img_pxs.shape == img_shape:
-            curr_x = np.append(curr_x, get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape))
+            curr_x = np.append(curr_x, img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape))
             curr_y = np.append(curr_y, class_mark)
             i += 1
 
@@ -59,9 +58,9 @@ def get_x_from_dir(path_to_dir, img_shape, max_img_num=None):
     curr_x = np.empty(0)
     i = 0
     for path_to_img in os.listdir(path_to_dir):
-        img_pxs = get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape)
+        img_pxs = img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape)
         if img_pxs.shape == img_shape:
-            curr_x = np.append(curr_x, get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape))
+            curr_x = np.append(curr_x, img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape))
             i += 1
 
             if max_img_num != None:
@@ -82,6 +81,7 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
 
     full_img = Image.open(path_img_in)
     full_img.thumbnail(img_shape)
+    img_exif = ep.get_exif_data(full_img)
 
     draw_image = full_img
 
@@ -89,21 +89,23 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
     i = 0
     x_data = np.empty(0, dtype='uint8')
     x_coord = np.empty(0, dtype='uint8')
+    longitudes = []  # TODO add caluclating
+    latitudes = []  # TODO add caluclating
 
     while p2_y <= full_img.size[1]:
         while p2_x <= full_img.size[0]:
             if path_out_dir != None:
-                crop_multiply_data(img=full_img,
-                                   name="%d" % i,
-                                   crop_area=(p1_x, p1_y, p2_x, p2_y),
-                                   path_out_dir=path_out_dir
-                                   )
+                img_pr.crop_multiply_data(img=full_img,
+                                          name="%d" % i,
+                                          crop_area=(p1_x, p1_y, p2_x, p2_y),
+                                          path_out_dir=path_out_dir
+                                          )
 
             curr_x = np.asarray(full_img.crop((p1_x, p1_y, p2_x, p2_y)))
             x_data = np.append(x_data, curr_x)
             x_coord = np.append(x_coord, (p1_x, p1_y, p2_x, p2_y))
 
-            draw_image = draw_rect_on_image(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
+            draw_image = img_pr.draw_rect_on_image(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
 
             p1_x += int(window_shape[0] * step)
             p2_x += int(window_shape[0] * step)
@@ -115,7 +117,8 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
 
     x_data.shape = (i, window_shape[0], window_shape[1], window_shape[2])
     x_coord.shape = (i, 4)
-    return x_data, x_coord, full_img, draw_image
+    return {"x_data": x_data, "x_coord": x_coord, "longitudes": longitudes, "latitudes": latitudes}, \
+           full_img, draw_image
 
 
 def get_data_from_json_list(json_list, ex_shape, class_num):
@@ -137,13 +140,14 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
     return class_1_num, class_2_num, img_shape, x_train, y_train
 
 
-def json_create(path, x_data, y_data, img_shape, class_1_num, class_2_num):
-    if x_data.shape[0] != y_data.shape[0]:
+def json_create(path, cropped_data, y_data, img_shape, class_1_num, class_2_num):
+    if cropped_data["x_data"].shape[0] != y_data.shape[0]:
         raise Exception("bad shape")
     with open(path, "w") as fp:
         json.dump(
             {"class_1_num": class_1_num, "class_2_num": class_2_num, "img_shape": img_shape,
-             "x_data": x_data.tolist(), "y_data": y_data.tolist()}, fp)
+             "x_data": cropped_data["x_data"].tolist(), "y_data": y_data.tolist(),
+             "longitudes": cropped_data["longitudes"], "latitudes": cropped_data["latitudes"]}, fp)
         fp.close()
 
     pass
@@ -184,7 +188,7 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
             class_multiplayer += 1
             for multiple_ex in class_for_multiple_examples:
                 class_multiplied_result = \
-                    np.append(class_multiplied_result, noise_arr(arr=multiple_ex.flatten(), intensity=intensity))
+                    np.append(class_multiplied_result, img_pr.noise_arr(arr=multiple_ex.flatten(), intensity=intensity))
 
     # --------------- make deformed examples ----------------------------------
     if use_deform:
@@ -192,7 +196,7 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
             class_multiplayer += 1
             for multiple_ex in class_for_multiple_examples:
                 class_multiplied_result = \
-                    np.append(class_multiplied_result, deform_arr(arr=multiple_ex, k=k, n=0, m=x_train.shape[1]))
+                    np.append(class_multiplied_result, img_pr.deform_arr(arr=multiple_ex, k=k, n=0, m=x_train.shape[1]))
 
     # ---------------  join arrays -------------------------------------------
     x_train = np.append(x_train, class_multiplied_result)

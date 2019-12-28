@@ -6,8 +6,8 @@ from pd_gui.components.gui_labels import TrainExLabel
 from pd_gui.components.gui_colors import *
 from pd_gui.components.gui_slider import ImgSizeSlider
 
-from pd_lib.data_maker import get_x_from_croped_img, json_create
-from pd_lib.img_proc import draw_rect_on_image
+from pd_lib import data_maker as dmk
+from pd_lib import img_proc as img_pr
 
 import numpy as np
 import os
@@ -16,22 +16,25 @@ import os
 class WindowClassificationPicture(QWidget):
     def __init__(self):
         super(WindowClassificationPicture, self).__init__()
+        self.setWindowTitle("Plant Disease Recognizer")
+
         self.hbox_image_list = []
         self.label_list = []
-        self.setWindowTitle("Plant Disease Recognizer")
+
         self.img_path = self.choose_picture()
         self.img_name = os.path.splitext(self.img_path)[0]
         self.window_shape = (32, 32, 3)
+
         self.sl_min_val = 640
         self.sl_max_val = 1280
         self.img_shape = (self.sl_min_val, self.sl_min_val)
 
-        self.button_init()
+        self._init_layouts()
         self.update()
         self.show()
         pass
 
-    def button_init(self):
+    def _init_layouts(self):
 
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_control.addStretch(1)
@@ -61,7 +64,7 @@ class WindowClassificationPicture(QWidget):
         self.clear()
 
         self.img_shape = (self.sl.value(), self.sl.value())
-        self.x_data, self.x_coord, self.full_img, self.draw_image = get_x_from_croped_img(
+        self.cropped_data, self.full_img, self.draw_image = dmk.get_x_from_croped_img(
             path_img_in=self.img_path,
             img_shape=self.img_shape,
             window_shape=self.window_shape,
@@ -69,14 +72,14 @@ class WindowClassificationPicture(QWidget):
             color=COLOR_GOOD
         )
         # -------------------- init image --------------------------
-        x_len = int(self.full_img.size[0] / self.x_data.shape[1])
-        y_len = int(self.full_img.size[1] / self.x_data.shape[2])
+        x_len = int(self.full_img.size[0] / self.cropped_data["x_data"].shape[1])
+        y_len = int(self.full_img.size[1] / self.cropped_data["x_data"].shape[2])
         i = 0
         for y in range(0, y_len):
             hbox_new = QtWidgets.QHBoxLayout()
             hbox_new.addStretch(1)
             for x in range(0, x_len):
-                label_new = TrainExLabel(self.x_data[i].copy())
+                label_new = TrainExLabel(self.cropped_data["x_data"][i].copy())
                 hbox_new.addWidget(label_new)
                 self.label_list.append(label_new)
                 i += 1
@@ -102,18 +105,20 @@ class WindowClassificationPicture(QWidget):
             if label.type == 0:
                 y_data = np.append(y_data, [0, 1])
                 class_1_num += 1
-                self.draw_image = draw_rect_on_image(self.draw_image, self.x_coord[i], color=COLOR_GOOD)
+                self.draw_image = img_pr.draw_rect_on_image(self.draw_image, self.cropped_data["x_coord"][i],
+                                                            color=COLOR_GOOD)
             elif label.type == 1:
                 y_data = np.append(y_data, [1, 0])
                 class_2_num += 1
-                self.draw_image = draw_rect_on_image(self.draw_image, self.x_coord[i], color=COLOR_BAD)
+                self.draw_image = img_pr.draw_rect_on_image(self.draw_image, self.cropped_data["x_coord"][i],
+                                                            color=COLOR_BAD)
             i += 1
 
-        y_data.shape = (self.x_data.shape[0], 2)
+        y_data.shape = (self.cropped_data["x_data"].shape[0], 2)
 
-        json_create(
+        dmk.json_create(
             path="%s.json" % self.img_name,
-            x_data=self.x_data,
+            cropped_data=self.cropped_data,
             y_data=y_data,
             img_shape=self.full_img.size,
             class_1_num=class_1_num,

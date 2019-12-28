@@ -1,8 +1,8 @@
 from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
 import os
+from PIL import Image
 
 
 #############################################################################
