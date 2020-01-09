@@ -1,10 +1,9 @@
 # coding=utf-8
 from keras.models import model_from_json
-from pd_lib.data_maker import get_data_full, get_x_from_dir
-from pd_lib.img_proc import plot_image_from_arr, draw_rect_on_image
-from pd_lib import gui_reporter as gr
-import pd_lib.data_maker as dmk
 import os
+from pd_lib import img_proc as img_pr
+from pd_lib import gui_reporter as gr
+from pd_lib import data_maker as dmk
 
 
 def save_to_json(model, path):
@@ -37,10 +36,10 @@ def train_on_dir(model, data, title, img_shape, verbose=False, history_show=True
     if not data.keys().__contains__("epochs"):
         raise Exception("no key epochs in train data")
 
-    (x_train, y_train) = get_data_full(data, img_shape)
+    (x_train, y_train) = dmk.get_data_full(data, img_shape)
 
     # plot example
-    plot_image_from_arr(x_train[0].transpose()[0].transpose())
+    img_pr.plot_image_from_arr(x_train[0].transpose()[0].transpose())
 
     ##############################################################################
     # --------------------- model compiling & fitting ----------------------------
@@ -95,9 +94,9 @@ def train_on_json(model, json_list, epochs, img_shape, class_num, verbose=False,
 
 
 def examine_on_dir(model, data, title, img_shape, max_img_num=None):
-    (x_test, y_test) = get_data_full(data, img_shape, max_img_num=max_img_num)
+    (x_test, y_test) = dmk.get_data_full(data, img_shape, max_img_num=max_img_num)
 
-    plot_image_from_arr(x_test[0].transpose()[0].transpose())
+    img_pr.plot_image_from_arr(x_test[0].transpose()[0].transpose())
 
     verbose = False
     scores = model.evaluate(x_test, y_test, verbose=verbose)
@@ -107,7 +106,7 @@ def examine_on_dir(model, data, title, img_shape, max_img_num=None):
 def predict_on_dir(model, data_dirs, img_shape):
     text = ""
     for data_dir in data_dirs:
-        x_data = get_x_from_dir(data_dir, img_shape)
+        x_data = dmk.get_x_from_dir(data_dir, img_shape)
         for file, prediction in zip(os.listdir(data_dir), model.predict(x_data)):
             if prediction[0] > prediction[1]:
                 answer = "healthy"
@@ -120,16 +119,16 @@ def predict_on_dir(model, data_dirs, img_shape):
         answer_file.write(text)
 
 
-def predict_and_localize_on_image(model, x_data, x_coord, image, color_1, color_2, verbose=False):
-    for curr_window, coord in zip(x_data, x_coord):
+def predict_and_localize_on_image(model, cropped_data, image, color_1, color_2, verbose=False):
+    for curr_window, coord in zip(cropped_data["x_data"], cropped_data["x_coord"]):
         curr_window.shape = (1, curr_window.shape[0], curr_window.shape[1], curr_window.shape[2])
         pred = model.predict(curr_window)
         if verbose:
             print("%d %d" % (pred[0][0], pred[0][1]))
         if pred[0][0] > pred[0][1]:
-            image = draw_rect_on_image(image, (coord[0] + 1, coord[1] + 1, coord[2] - 1, coord[3] - 1), color_1)
+            image = img_pr.draw_rect_on_image(image, (coord[0] + 1, coord[1] + 1, coord[2] - 1, coord[3] - 1), color_1)
         elif pred[0][0] < pred[0][1]:
-            image = draw_rect_on_image(image, (coord[0] + 1, coord[1] + 1, coord[2] - 1, coord[3] - 1), color_2)
+            image = img_pr.draw_rect_on_image(image, (coord[0] + 1, coord[1] + 1, coord[2] - 1, coord[3] - 1), color_2)
         else:
             raise Exception("Too rare case")
 

@@ -4,8 +4,13 @@ import numpy as np
 
 
 class ImgSizeSlider(QSlider):
-    def __init__(self, min_val=1024, max_val=4096, step_num=6):
-        super(ImgSizeSlider, self).__init__(Qt.Vertical)
+    def __init__(self, min_val=1024, max_val=4096, step_num=6, orientation='vertical'):
+        if orientation == 'vertical':
+            super(ImgSizeSlider, self).__init__(Qt.Vertical)
+        elif orientation == 'horizontal':
+            super(ImgSizeSlider, self).__init__(Qt.Horizontal)
+        else:
+            raise Exception("orientation can be vertical or horizontal")
         step = int((max_val - min_val) / step_num)
 
         self.val_list = np.arange(min_val, max_val + 1, step)
