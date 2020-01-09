@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QWidget
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_labels import ImageLabel
 
-from pd_lib.data_maker import multiple_class_examples, json_create
+from pd_lib.data_maker import multiple_class_examples, json_train_create
 from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
 from pd_gui.components.gui_colors import COLOR_GOOD
 
@@ -38,11 +38,11 @@ class WindowMultipleExamples(QWidget):
     def init_data_from_json(self, json_for_multiple):
         with open(json_for_multiple) as train_json_fp:
             train_json = dict(json.load(train_json_fp))
-            self.class_1_num, self.class_2_num, self.x_train, self.y_train, img_shape = \
-                train_json.get("class_1_num"), train_json.get("class_2_num"), \
-                np.array(train_json.get("x_data"), dtype='uint8'), \
-                np.array(train_json.get("y_data")), \
-                train_json.get("img_shape")
+            self.class_1_num, self.class_2_num = train_json.get("class_1_num"), train_json.get("class_2_num")
+            self.x_train = np.array(train_json.get("x_data"), dtype='uint8')
+            self.y_train = np.array(train_json.get("y_data"))
+            self.longitudes, self.latitudes = train_json["longitudes"], train_json["latitudes"]
+            img_shape = train_json.get("img_shape")
 
     def define_mult_class(self):
         if self.class_1_num < self.class_2_num:
@@ -92,10 +92,12 @@ class WindowMultipleExamples(QWidget):
         out_json_path = "%s_multiple.json" % self.json_name
         print("class_1_num = %d, class_2_num = %d" % (self.class_1_num, self.class_2_num))
         print("Save to %s" % out_json_path)
-        json_create(path=out_json_path,
-                    x_data=self.x_train, y_data=self.y_train,
-                    img_shape=None,
-                    class_1_num=self.class_1_num, class_2_num=self.class_2_num)
+        json_train_create(path=out_json_path,
+                          cropped_data=
+                          {"x_data": self.x_train, "longitudes": self.longitudes, "latitudes": self.latitudes},
+                          y_data=self.y_train,
+                          img_shape=None,
+                          class_1_num=self.class_1_num, class_2_num=self.class_2_num)
 
         self.quit_pressed()
 

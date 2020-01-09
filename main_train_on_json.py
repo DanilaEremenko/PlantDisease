@@ -1,5 +1,5 @@
 from pd_lib.conv_network import get_CNN
-from pd_lib.addition import save_to_json
+from pd_lib.addition import save_model_to_json
 import pd_lib.gui_reporter as gr
 from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
 from pd_lib.ui_cmd import get_input_int, get_stdin_answer
@@ -106,5 +106,5 @@ if __name__ == '__main__':
     save_model = get_stdin_answer(text='Save model?')
 
     if save_model:
-        save_to_json(model, "models/model_ground_%d.json" % epochs_sum)
+        save_model_to_json(model, "models/model_ground_%d.json" % epochs_sum)
         model.save_weights('models/model_ground_%d.h5' % epochs_sum)

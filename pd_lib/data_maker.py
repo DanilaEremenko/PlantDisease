@@ -7,72 +7,6 @@ import json
 
 
 ################################################################################
-# --------------------------------- for train & test on dirs -------------------
-################################################################################
-def get_class_from_dir(path_to_dir, class_mark, img_shape, max_img_num=None):
-    curr_x = np.empty(0)
-    curr_y = np.empty(0)
-    i = 0
-
-    for path_to_img in os.listdir(path_to_dir):
-        img_pxs = img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape)
-        if img_pxs.shape == img_shape:
-            curr_x = np.append(curr_x, img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape))
-            curr_y = np.append(curr_y, class_mark)
-            i += 1
-
-            if max_img_num != None:
-                if i == max_img_num:
-                    break
-
-    curr_x.shape = (i, img_shape[0], img_shape[1], img_shape[2])
-
-    return curr_x, curr_y, i
-
-
-def get_data_full(data, img_shape, max_img_num=None):
-    if not data.keys().__contains__("class_marks"):
-        raise Exception("no class_marks key in data")
-    if not data.keys().__contains__("data_dirs"):
-        raise Exception("no data_dirs key in data")
-    if data.get("class_marks").__len__() != data.get("data_dirs").__len__():
-        raise Exception("class_marks and data_dirs must have the same size")
-
-    x_train = np.empty(0)
-    y_train = np.empty(0)
-    im_sum = 0
-    for path_to_dir, class_mark in zip(data.get("data_dirs"), data.get("class_marks")):
-        (curr_x, curr_y, i) = get_class_from_dir(path_to_dir, class_mark, img_shape, max_img_num)
-        x_train = np.append(x_train, curr_x)
-        y_train = np.append(y_train, curr_y)
-        im_sum += i
-    x_train.shape = (im_sum, img_shape[0], img_shape[1], img_shape[2])
-    y_train.shape = (im_sum, data.get("class_marks")[0].shape[0])
-    return x_train, y_train
-
-
-################################################################################
-# --------------------------------- for predict on dir -------------------------
-################################################################################
-def get_x_from_dir(path_to_dir, img_shape, max_img_num=None):
-    curr_x = np.empty(0)
-    i = 0
-    for path_to_img in os.listdir(path_to_dir):
-        img_pxs = img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape)
-        if img_pxs.shape == img_shape:
-            curr_x = np.append(curr_x, img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape))
-            i += 1
-
-            if max_img_num != None:
-                if i == max_img_num:
-                    break
-
-    curr_x.shape = (i, img_shape[0], img_shape[1], img_shape[2])
-
-    return curr_x
-
-
-################################################################################
 # --------------------------------- for predict on image -----------------------
 ################################################################################
 def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=255, path_out_dir=None):
@@ -128,7 +62,7 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
     class_1_num = class_2_num = 0
     img_shape = (0, 0, 0)
     for train_json in json_list:
-        cur_class_1_num, cur_class_2_num, img_shape, curr_x_train, curr_y_train = json_load(train_json)
+        cur_class_1_num, cur_class_2_num, img_shape, curr_x_train, curr_y_train = json_train_load(train_json)
         x_train = np.append(x_train, curr_x_train)
         y_train = np.append(y_train, curr_y_train)
         test_num += curr_y_train.shape[0]
@@ -140,7 +74,7 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
     return class_1_num, class_2_num, img_shape, x_train, y_train
 
 
-def json_create(path, cropped_data, y_data, img_shape, class_1_num, class_2_num):
+def json_train_create(path, cropped_data, y_data, img_shape, class_1_num, class_2_num):
     if cropped_data["x_data"].shape[0] != y_data.shape[0]:
         raise Exception("bad shape")
     with open(path, "w") as fp:
@@ -153,7 +87,7 @@ def json_create(path, cropped_data, y_data, img_shape, class_1_num, class_2_num)
     pass
 
 
-def json_load(path):
+def json_train_load(path):
     with open(path, "r") as fp:
         data_dict = json.load(fp)
         fp.close()
@@ -164,7 +98,6 @@ def json_load(path):
 ################################################################################
 # --------------------------------- multiple class -----------------------------
 ################################################################################
-
 def multiple_class_examples(x_train, y_train, class_for_multiple,
                             use_noise=False, intensity_noise_list=(50,), use_deform=False, k_deform_list=(0.5,),
                             max_class_num=None):

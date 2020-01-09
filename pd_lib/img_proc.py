@@ -13,6 +13,13 @@ def deform_image(img, k, n, m):
 
 
 def deform_arr(arr, k, n, m):
+    """
+    :param arr: img as array
+    :param k: intensity
+    :param n: from pixel
+    :param m: to pixel
+    :return: deformed image
+    """
     res_arr = arr.copy()
     if n > m:
         c = n
@@ -44,8 +51,6 @@ def noise_arr(arr, intensity):
 #############################################################################
 # --------------------------- cropping --------------------------------------
 #############################################################################
-
-
 def crop_img(img, crop_area):
     return img.crop(crop_area)
 
@@ -64,7 +69,6 @@ def crop_multiply_data(img, name, crop_area, path_out_dir):
 #############################################################################
 # --------------------------- 'decropping' ----------------------------------
 #############################################################################
-
 def get_full_repaired_image_from_pieces(x_data, img_shape):
     x_len = int(img_shape[0] / x_data.shape[1])
     y_len = int(img_shape[1] / x_data.shape[2])

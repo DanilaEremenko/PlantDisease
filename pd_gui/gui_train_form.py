@@ -116,7 +116,7 @@ class WindowClassificationPicture(QWidget):
 
         y_data.shape = (self.cropped_data["x_data"].shape[0], 2)
 
-        dmk.json_create(
+        dmk.json_train_create(
             path="%s.json" % self.img_name,
             cropped_data=self.cropped_data,
             y_data=y_data,
