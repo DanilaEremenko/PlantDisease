@@ -56,7 +56,7 @@ class WindowPredictOnImage(QWidget):
         self.setLayout(vbox)
 
     def predict(self):
-        res_image = predict_and_localize_on_image(model=self.model, x_data=self.x_data, x_coord=self.x_coord,
+        res_image = predict_and_localize_on_image(model=self.model, cropped_data=self.cropped_data,
                                                   color_1=COLOR_GOOD, color_2=COLOR_BAD,
                                                   image=self.full_img)
         # self.img_label.setParent(None)# TODO add
@@ -76,7 +76,7 @@ class WindowPredictOnImage(QWidget):
 
         self.img_shape = (self.sl.value(), self.sl.value())
 
-        self.x_data, self.x_coord, self.full_img, self.draw_image = get_x_from_croped_img(
+        self.cropped_data, self.full_img, self.draw_image = get_x_from_croped_img(
             path_img_in=self.img_path,
             img_shape=self.img_shape,
             window_shape=self.window_shape,
@@ -90,7 +90,7 @@ class WindowPredictOnImage(QWidget):
 
         self.img_shape = (self.sl.value(), self.sl.value())
 
-        self.x_data, self.x_coord, self.full_img, self.draw_image = get_x_from_croped_img(
+        self.cropped_data, self.full_img, self.draw_image = get_x_from_croped_img(
             path_img_in=self.img_path,
             img_shape=self.img_shape,
             window_shape=(32, 32, 3),
