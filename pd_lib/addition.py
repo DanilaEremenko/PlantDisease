@@ -72,6 +72,6 @@ def predict_and_localize_on_image(model, cropped_data, image, color_1, color_2, 
         elif pred[0][0] < pred[0][1]:
             image = img_pr.draw_rect_on_image(image, (coord[0] + 1, coord[1] + 1, coord[2] - 1, coord[3] - 1), color_2)
         else:
-            raise Exception("Too rare case")
+            print("Too rare case")
 
     return image

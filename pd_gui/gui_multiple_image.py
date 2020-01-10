@@ -29,6 +29,8 @@ class WindowMultipleExamples(QWidget):
         print(self.mult_class)
 
         self.max_class_num = max([self.class_1_num, self.class_2_num]) * 2
+        print("class_1_num = %d, class_2_num = %d\nmax_class_num = %d" % (
+            self.class_1_num, self.class_2_num, self.max_class_num))
         self.json_name = os.path.splitext(json_for_multiple)[0]
         self.button_init()
         self.update_img()
@@ -112,8 +114,12 @@ class WindowMultipleExamples(QWidget):
                                                                  use_deform=True, k_deform_list=k_deform_list,
                                                                  max_class_num=max(
                                                                      [self.class_1_num, self.class_2_num]) * 2)
-
-            self.class_2_num = self.y_train.shape[0] - self.class_1_num
+            if self.mult_class == (1, 0):
+                self.class_2_num = self.y_train.shape[0] - self.class_1_num
+            elif self.mult_class == (0, 1):
+                self.class_1_num = self.y_train.shape[0] - self.class_2_num
+            else:
+                raise Exception("Unexpected class %s" % str(self.mult_class))
             self.update_img()
         else:
             print("class_1_num = %d, class_2_num = %d" % (self.class_1_num, self.class_2_num))
