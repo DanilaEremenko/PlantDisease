@@ -5,6 +5,7 @@ from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
 from pd_lib.ui_cmd import get_input_int, get_stdin_answer
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
+from keras.preprocessing.image import ImageDataGenerator
 import numpy as np
 from pd_lib.arg_parser import parse_args_for_train
 from pd_lib.data_maker import get_data_from_json_list
@@ -48,6 +49,20 @@ if __name__ == '__main__':
 
     print("batch_size = %.4f\nvalidation_split = %.4f\ntrain_size = %d\n" %
           (batch_size, validation_split, x_train.shape[0]))
+
+    #####################################################################
+    # ----------------------- creating train datagen --------------------
+    #####################################################################
+    train_generator = ImageDataGenerator(
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        validation_split=validation_split) \
+        .flow(
+        x=x_train,
+        y=y_train,
+        batch_size=batch_size
+    )
     #####################################################################
     # ----------------------- train_model -------------------------------
     #####################################################################
@@ -57,13 +72,13 @@ if __name__ == '__main__':
         print("class_1_num = %d, class_2_num = %d" % (class_1_num, class_2_num))
         epochs = get_input_int("How many epochs?", 1, 100)
 
-        history = model.fit(
-            x=x_train, y=y_train,
+        history = model.fit_generator(
+            generator=train_generator,
+            steps_per_epoch=x_train.shape[0] / batch_size,
             epochs=epochs,
-            batch_size=batch_size, shuffle=True,
-            validation_split=validation_split,
+            shuffle=True,
             verbose=verbose,
-            callbacks=[checkpoint,]
+            callbacks=[checkpoint, ]
         )
 
         full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
@@ -80,19 +95,28 @@ if __name__ == '__main__':
         i = 0
         x_draw = x_train.copy()
         class_1_ans = class_2_ans = 0
+        right_ans = 0
         for y, mod_ans in zip(y_train[0:MAX_DRAW_IMG_SIZE], model.predict(x_train[0:MAX_DRAW_IMG_SIZE])):
             if y.__eq__([1, 0]).all():
                 draw_rect_on_array(img_arr=x_draw[i], points=(1, 1, 31, 31), color=255)
-            if mod_ans.__eq__([1, 0]).all():
-                draw_rect_on_array(img_arr=x_draw[i], points=(10, 10, 20, 20), color=0)
+            if mod_ans[1] > mod_ans[0]:
+                draw_rect_on_array(img_arr=x_draw[i], points=(10, 10, 20, 20), color=255 * mod_ans[1])
                 class_2_ans += 1
-            elif mod_ans.__eq__([0, 1]).all():
-                draw_rect_on_array(img_arr=x_draw[i], points=(10, 10, 20, 20), color=255)
+                if y.__eq__([1, 0]).all():
+                    right_ans += 1
+
+            elif mod_ans[0] > mod_ans[1]:
+                draw_rect_on_array(img_arr=x_draw[i], points=(10, 10, 20, 20), color=0)
                 class_1_ans += 1
+                if y.__eq__([0, 1]).all():
+                    right_ans += 1
+            else:
+                print("Too rare case")
 
             i += 1
+        print("class_1_ans = %d, class_2_ans = %d\nright = %d (%.4f)" %
+              (class_1_ans, class_2_ans, right_ans, right_ans / x_train.shape[0]))
 
-        print("class_1_ans = %d, class_2_ans = %d" % (class_1_ans, class_2_ans))
         if get_stdin_answer("Show image of prediction?"):
             result_img = get_full_rect_image_from_pieces(x_draw[0:MAX_DRAW_IMG_SIZE])
             result_img.thumbnail(size=(1024, 1024))
