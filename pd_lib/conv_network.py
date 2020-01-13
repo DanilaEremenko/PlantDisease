@@ -5,6 +5,7 @@ from keras.layers import Dense, Flatten
 from keras.layers import Dropout
 from keras.layers.convolutional import Conv2D, MaxPooling2D, Convolution2D, ZeroPadding2D
 from keras.optimizers import Adam
+from keras.applications.vgg16 import VGG16
 import logging
 
 logging.getLogger('tensorflow').disabled = True
@@ -16,7 +17,7 @@ def get_CNN(input_shape, output_shape):
     # 1 conv layer
     model.add(
         Conv2D(input_shape[0], kernel_size=3, padding='same',
-               input_shape=(input_shape[0], input_shape[1], input_shape[2]),
+               input_shape=input_shape,
                activation='relu'))
 
     # 2 conv layer
@@ -52,7 +53,18 @@ def get_CNN(input_shape, output_shape):
     return model
 
 
-def get_VGG16(input, out_neurons_num):
+def get_VGG16(input_shape, output_shape):
+    model = Sequential()
+
+    model.add(VGG16(include_top=False, input_shape=input_shape))
+
+    model.add(Flatten())
+    model.add(Dense(output_shape))
+
+    return model
+
+
+def get_new_VGG16(input, out_neurons_num):
     model = Sequential()
     model.add(ZeroPadding2D((1, 1), input_shape=(3, 224, 224)))
     model.add(Convolution2D(64, 3, 3, activation='relu'))
