@@ -1,28 +1,60 @@
-from pd_lib.conv_network import get_CNN
-from pd_lib.addition import save_model_to_json
+import argparse
+from pd_lib.conv_network import get_CNN, get_VGG16
+from pd_lib.addition import save_model_to_json, get_full_model
 import pd_lib.gui_reporter as gr
 from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
 from pd_lib.ui_cmd import get_input_int, get_stdin_answer
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from keras.preprocessing.image import ImageDataGenerator
+from keras.utils import plot_model
 import numpy as np
-from pd_lib.arg_parser import parse_args_for_train
 from pd_lib.data_maker import get_data_from_json_list
 
-if __name__ == '__main__':
+
+def parse_args_for_train():
+    parser = argparse.ArgumentParser(description="Some description")
+
+    parser.add_argument("-j", "--json_list", type=str, action="append",
+                        help="json with train data")
+
+    parser.add_argument("-w", "--weights_path", type=str, help="file with weigths of NN")
+
+    parser.add_argument("-s", "--structure_path", type=str, help="file with structure of NN")
+
+    parser.add_argument("-t", "--new_model_type", type=str, help="type of new model")
+
+    args = parser.parse_args()
+
+    weights_path = args.weights_path
+
+    structure_path = args.structure_path
+
+    model = get_full_model(json_path=structure_path, h5_path=weights_path, verbose=True)
+
+    new_model_type = args.new_model_type
+
+    json_list = args.json_list
+
+    if json_list is None:
+        raise Exception("Nor one json file passed")
+
+    return model, json_list, new_model_type
+
+
+def main():
     MAX_DRAW_IMG_SIZE = 1600
     #####################################################################
     # ----------------------- set data params ---------------------------
     #####################################################################
     ex_shape = (32, 32, 3)
     class_num = 2
-    model, json_list = parse_args_for_train()
+    model, json_list, new_model_type = parse_args_for_train()
 
     #####################################################################
     # ----------------------- set train params --------------------------
     #####################################################################
-    epochs = epochs_sum = 0
+    epochs_sum = 0
     lr = 1.0e-5
 
     verbose = True
@@ -30,7 +62,14 @@ if __name__ == '__main__':
     title = 'train on ground'
 
     if model is None:
-        model = get_CNN(ex_shape, class_num)
+        if new_model_type == 'VGG16':
+            model = get_VGG16(ex_shape, class_num)
+            print("new VGG model created")
+        else:
+            model = get_CNN(ex_shape, class_num)
+            print("new CNN model created")
+
+    plot_model(model, show_shapes=True, to_file='model.png')
 
     checkpoint = ModelCheckpoint("model_ground.h5",
                                  monitor='val_loss',
@@ -132,3 +171,7 @@ if __name__ == '__main__':
     if save_model:
         save_model_to_json(model, "models/model_ground_%d.json" % epochs_sum)
         model.save_weights('models/model_ground_%d.h5' % epochs_sum)
+
+
+if __name__ == '__main__':
+    main()
