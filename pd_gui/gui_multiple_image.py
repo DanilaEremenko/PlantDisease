@@ -40,7 +40,9 @@ class WindowMultipleExamples(QWidget):
     def init_data_from_json(self, json_for_multiple):
         with open(json_for_multiple) as train_json_fp:
             train_json = dict(json.load(train_json_fp))
-            self.class_1_num, self.class_2_num = train_json.get("class_1_num"), train_json.get("class_2_num")
+            class_num = train_json.get("class_nums")  # TODO make self and delete usage of self.class_%d_num
+            self.class_1_num = class_num[0]
+            self.class_2_num = class_num[1]
             self.x_train = np.array(train_json.get("x_data"), dtype='uint8')
             self.y_train = np.array(train_json.get("y_data"))
             self.longitudes, self.latitudes = train_json["longitudes"], train_json["latitudes"]
@@ -48,12 +50,11 @@ class WindowMultipleExamples(QWidget):
 
     def define_mult_class(self):
         if self.class_1_num < self.class_2_num:
-            self.mult_class = (0, 1)
-        elif self.class_2_num < self.class_1_num:
             self.mult_class = (1, 0)
+        elif self.class_2_num < self.class_1_num:
+            self.mult_class = (0, 1)
         else:
-            print("class_1_num == class_2_num, exiting...")
-            self.quit_pressed()
+            self.mult_class = (1, 0)
 
     def button_init(self):
         hbox_control = QtWidgets.QHBoxLayout()
@@ -99,7 +100,7 @@ class WindowMultipleExamples(QWidget):
                           {"x_data": self.x_train, "longitudes": self.longitudes, "latitudes": self.latitudes},
                           y_data=self.y_train,
                           img_shape=None,
-                          class_1_num=self.class_1_num, class_2_num=self.class_2_num)
+                          class_nums=[self.class_1_num, self.class_2_num])
 
         self.quit_pressed()
 
@@ -115,9 +116,9 @@ class WindowMultipleExamples(QWidget):
                                                                  max_class_num=max(
                                                                      [self.class_1_num, self.class_2_num]) * 2)
             if self.mult_class == (1, 0):
-                self.class_2_num = self.y_train.shape[0] - self.class_1_num
-            elif self.mult_class == (0, 1):
                 self.class_1_num = self.y_train.shape[0] - self.class_2_num
+            elif self.mult_class == (0, 1):
+                self.class_2_num = self.y_train.shape[0] - self.class_1_num
             else:
                 raise Exception("Unexpected class %s" % str(self.mult_class))
             self.update_img()

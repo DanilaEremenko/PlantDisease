@@ -20,6 +20,7 @@ class WindowClassificationPicture(QWidget):
 
         self.hbox_image_list = []
         self.label_list = []
+        self.class_colors = (COLOR_GOOD, COLOR_BAD)
 
         self.img_path = self.choose_picture()
         self.img_name = os.path.splitext(self.img_path)[0]
@@ -79,7 +80,8 @@ class WindowClassificationPicture(QWidget):
             hbox_new = QtWidgets.QHBoxLayout()
             hbox_new.addStretch(1)
             for x in range(0, x_len):
-                label_new = TrainExLabel(self.cropped_data["x_data"][i].copy())
+                label_new = TrainExLabel(self.cropped_data["x_data"][i].copy(), class_num=len(self.class_colors),
+                                         colors=self.class_colors)
                 hbox_new.addWidget(label_new)
                 self.label_list.append(label_new)
                 i += 1
@@ -100,34 +102,28 @@ class WindowClassificationPicture(QWidget):
 
         y_data = np.empty(0)
         i = 0
-        class_1_num = class_2_num = 0
+        class_nums = np.zeros(len(self.class_colors), dtype=int)
         for label in self.label_list:
-            if label.type == 0:
-                y_data = np.append(y_data, [0, 1])
-                class_1_num += 1
-                self.draw_image = img_pr.draw_rect_on_image(self.draw_image, self.cropped_data["x_coord"][i],
-                                                            color=COLOR_GOOD)
-            elif label.type == 1:
-                y_data = np.append(y_data, [1, 0])
-                class_2_num += 1
-                self.draw_image = img_pr.draw_rect_on_image(self.draw_image, self.cropped_data["x_coord"][i],
-                                                            color=COLOR_BAD)
+            y_data = np.append(y_data, label.type)
+            class_nums[label.type] += 1
+            self.draw_image = img_pr.draw_rect_on_image(self.draw_image, self.cropped_data["x_coord"][i],
+                                                        color=self.class_colors[label.type])
             i += 1
 
-        y_data.shape = (self.cropped_data["x_data"].shape[0], 2)
+        y_data = dmk.get_pos_from_num(arr=y_data, class_num=len(self.class_colors))
 
         dmk.json_train_create(
             path="%s.json" % self.img_name,
             cropped_data=self.cropped_data,
             y_data=y_data,
             img_shape=self.full_img.size,
-            class_1_num=class_1_num,
-            class_2_num=class_2_num
+            class_nums=class_nums
         )
 
         self.draw_image.save("%s_net.JPG" % self.img_name)
 
-        print("class_1_num = %d, class_2_num = %d" % (class_1_num, class_2_num))
+        for i, class_num in enumerate(class_nums):
+            print("class_%d_num = %d" % (i, class_num))
 
         print("OKAY")
 
