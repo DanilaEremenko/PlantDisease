@@ -20,6 +20,7 @@ class WindowClassificationPicture(QWidget):
 
         self.hbox_image_list = []
         self.label_list = []
+        self.pre_rendered_img_dict = {}
         self.class_colors = (COLOR_GOOD, COLOR_BAD)
 
         self.img_path = self.choose_picture()
@@ -30,27 +31,47 @@ class WindowClassificationPicture(QWidget):
         self.sl_max_val = 1280
         self.img_shape = (self.sl_min_val, self.sl_min_val)
 
+        self.hbox_control = QtWidgets.QHBoxLayout()
+        self.sl = ImgSizeSlider(min_val=self.sl_min_val, max_val=self.sl_max_val, step_num=4, orientation='horizontal')
+        self.main_box = QtWidgets.QVBoxLayout()
         self._init_layouts()
+
+        self._pre_render_images()
         self.update()
         self.show()
         pass
 
     def _init_layouts(self):
 
-        self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_control.addStretch(1)
-        self.sl = ImgSizeSlider(min_val=self.sl_min_val, max_val=self.sl_max_val, step_num=4, orientation='horizontal')
         self.hbox_control.addWidget(self.sl)
         self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
         self.hbox_control.addWidget(ControlButton("Update", self.update))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_pressed))
 
-        self.main_box = QtWidgets.QVBoxLayout()
         self.main_box.addStretch(1)
-
         self.main_box.setContentsMargins(0, 0, 0, 0)
         self.main_box.setSpacing(0)
+
         self.setLayout(self.main_box)
+
+    def _pre_render_images(self):
+        print("rendering images...", end="")
+        for img_size in self.sl.val_list:
+            img_size = int(img_size)
+            self.pre_rendered_img_dict[img_size] = {}
+
+            (self.pre_rendered_img_dict[img_size]["cropped_data"],
+             self.pre_rendered_img_dict[img_size]["full_img"],
+             self.pre_rendered_img_dict[img_size]["draw_image"]) = \
+                dmk.get_x_from_croped_img(
+                    path_img_in=self.img_path,
+                    img_shape=(img_size, img_size),
+                    window_shape=self.window_shape,
+                    step=1.0,
+                    color=COLOR_GOOD
+                )
+        print("ok")
 
     def clear(self):
         for hbox in self.hbox_image_list:
@@ -65,13 +86,12 @@ class WindowClassificationPicture(QWidget):
         self.clear()
 
         self.img_shape = (self.sl.value(), self.sl.value())
-        self.cropped_data, self.full_img, self.draw_image = dmk.get_x_from_croped_img(
-            path_img_in=self.img_path,
-            img_shape=self.img_shape,
-            window_shape=self.window_shape,
-            step=1.0,
-            color=COLOR_GOOD
-        )
+        (self.cropped_data,
+         self.full_img,
+         self.draw_image) = \
+            (self.pre_rendered_img_dict[self.img_shape[0]]["cropped_data"],
+             self.pre_rendered_img_dict[self.img_shape[0]]["full_img"],
+             self.pre_rendered_img_dict[self.img_shape[0]]["draw_image"])
         # -------------------- init image --------------------------
         x_len = int(self.full_img.size[0] / self.cropped_data["x_data"].shape[1])
         y_len = int(self.full_img.size[1] / self.cropped_data["x_data"].shape[2])
