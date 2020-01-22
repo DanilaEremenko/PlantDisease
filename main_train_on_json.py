@@ -210,6 +210,8 @@ def main():
             callbacks=[checkpoint, early_stopping]
         )
 
+        epochs = len(history.history['acc'])
+
         full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
         full_history['loss'] = np.append(full_history['loss'], history.history['loss'])
 
@@ -246,7 +248,7 @@ def main():
         print("class_1_ans = %d, class_2_ans = %d\nright = %d (%.4f)" %
               (class_1_ans, class_2_ans, right_ans, right_ans / x_train.shape[0]))
 
-        epochs_sum += len(history.history['acc'])
+        epochs_sum += epochs
         print("epochs: %d - %d" % (epochs_sum - epochs, epochs_sum))
 
         if get_stdin_answer("Show image of prediction?"):
