@@ -62,7 +62,7 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
     class_1_num = class_2_num = 0
     img_shape = (0, 0, 0)
     for train_json in json_list:
-        cur_class_1_num, cur_class_2_num, img_shape, curr_x_train, curr_y_train = json_train_load(train_json)
+        (cur_class_1_num, cur_class_2_num), img_shape, curr_x_train, curr_y_train = json_train_load(train_json)
         x_train = np.append(x_train, curr_x_train)
         y_train = np.append(y_train, curr_y_train)
         test_num += curr_y_train.shape[0]
@@ -91,8 +91,8 @@ def json_train_load(path):
     with open(path, "r") as fp:
         data_dict = json.load(fp)
         fp.close()
-        return data_dict.get("class_1_num"), data_dict.get("class_2_num"), data_dict.get("img_shape"), \
-               np.array(data_dict.get("x_data")), np.array(data_dict.get("y_data"))
+        return data_dict["class_nums"], data_dict["img_shape"], \
+               np.array(data_dict["x_data"]), np.array(data_dict["y_data"])
 
 
 ################################################################################

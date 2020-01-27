@@ -1,6 +1,5 @@
 # coding=utf-8
 from keras.models import model_from_json
-import os
 from pd_lib import img_proc as img_pr
 from pd_lib import gui_reporter as gr
 from pd_lib import data_maker as dmk
