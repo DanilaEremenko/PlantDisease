@@ -1,15 +1,18 @@
 import argparse
+
 from pd_lib.conv_network import get_CNN, get_VGG16
 from pd_lib.addition import save_model_to_json, get_full_model
-import pd_lib.gui_reporter as gr
 from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
 from pd_lib.ui_cmd import get_input_int, get_stdin_answer
+
+import pd_lib.data_maker as dmk
+import pd_lib.gui_reporter as gr
+
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import plot_model
 import numpy as np
-from pd_lib.data_maker import get_data_from_json_list
 
 
 def parse_args_for_train():
@@ -126,7 +129,7 @@ def main():
     #####################################################################
     validation_split = 0.1
     class_1_num, class_2_num, ex_shape, x_data, y_data = \
-        get_data_from_json_list(json_list, ex_shape, class_num)
+        dmk.get_data_from_json_list(json_list, ex_shape, class_num)
 
     # TODO need fix test and train data formation(it works incorrect and equality of class_examples_num isn't guaranteed
     (x_train, y_train, train_class_1_num, train_class_2_num), \
@@ -158,13 +161,13 @@ def main():
     #####################################################################
     # ----------------------- creating callbacks ------------------------
     #####################################################################
-    checkpoint = ModelCheckpoint("model_ground.h5",
+    callbacks = [ModelCheckpoint("model_ground.h5",
                                  monitor='val_loss',
-                                 verbose=verbose,
-                                 save_best_only=True,
-                                 mode='auto')
-    early_stopping = EarlyStopping(monitor='val_acc', min_delta=1, patience=10,
-                                   baseline=80, verbose=True)
+                                 verbose=True,
+                                 save_best_only=True),
+                 EarlyStopping(monitor='val_acc', patience=0,
+                               baseline=0.95, verbose=True),
+                 ]
 
     model.compile(loss='categorical_crossentropy', optimizer=Adam(lr), metrics=['accuracy'])
 
@@ -207,7 +210,7 @@ def main():
             epochs=epochs,
             shuffle=True,
             verbose=verbose,
-            callbacks=[checkpoint, early_stopping]
+            callbacks=callbacks
         )
 
         epochs = len(history.history['acc'])
