@@ -60,7 +60,6 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
     x_train = np.empty(0, dtype='uint8')
     y_train = np.empty(0, dtype='uint8')
     class_1_num = class_2_num = 0
-    img_shape = (0, 0, 0)
     for train_json in json_list:
         (cur_class_1_num, cur_class_2_num), img_shape, curr_x_train, curr_y_train = json_train_load(train_json)
         x_train = np.append(x_train, curr_x_train)
@@ -71,7 +70,7 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
     x_train.shape = (test_num, ex_shape[0], ex_shape[1], ex_shape[2])
     y_train.shape = (test_num, class_num)
 
-    return class_1_num, class_2_num, img_shape, x_train, y_train
+    return class_1_num, class_2_num, x_train, y_train
 
 
 def json_train_create(path, cropped_data, y_data, img_shape, class_nums):
