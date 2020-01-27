@@ -16,10 +16,14 @@ import numpy as np
 
 
 def parse_args_for_train():
+    # -------------------- initialize arguments ----------------------------------
     parser = argparse.ArgumentParser(description="Some description")
 
     parser.add_argument("-j", "--json_list", type=str, action="append",
-                        help="json with train data")
+                        help="path to json with train data")
+
+    parser.add_argument("-e", "--evaluate_list", type=str, action="append",
+                        help="path to json with evaluate data")
 
     parser.add_argument("-w", "--weights_path", type=str, help="file with weigths of NN")
 
@@ -27,25 +31,29 @@ def parse_args_for_train():
 
     parser.add_argument("-t", "--new_model_type", type=str, help="type of new model")
 
+    # -------------------- parsing arguments ----------------------------------
     args = parser.parse_args()
-
-    weights_path = args.weights_path
-
-    structure_path = args.structure_path
-
-    model = get_full_model(json_path=structure_path, h5_path=weights_path, verbose=True)
-
-    new_model_type = args.new_model_type
 
     json_list = args.json_list
 
+    evaluate_list = args.evaluate_list
+
+    weights_path = args.weights_path
+    structure_path = args.structure_path
+    model = get_full_model(json_path=structure_path, h5_path=weights_path, verbose=True)
+
+    new_model_type = args.new_model_type
+    # -------------------- validation check ----------------------------------
     if json_list is None:
         raise Exception("Nor one json file passed")
 
-    if new_model_type is None:
-        new_model_type = 'cnn'
+    if evaluate_list is None:
+        raise Exception("Nor one evaluate json file passed")
 
-    return model, json_list, new_model_type
+    if new_model_type is None:
+        new_model_type = 'CNN'
+
+    return model, json_list, evaluate_list, new_model_type
 
 
 def unison_shuffled_copies(a, b):
@@ -102,6 +110,35 @@ def get_train_and_test(x_data, y_data, classes, validation_split):
            (x_test, y_test, test_class_1_num, test_class_2_num)
 
 
+def predict_and_draw_on_data(model, x, y):
+    i = 0
+    res = {'x_draw': x.copy(), 'class_1_ans': 0, 'class_2_ans': 0, 'right_ans': 0}
+
+    for y, mod_ans in zip(y, model.predict(x)):
+        if y.__eq__([1, 0]).all():
+            draw_rect_on_array(img_arr=res['x_draw'][i], points=(1, 1, 31, 31), color=255)
+        if mod_ans[0] > mod_ans[1]:
+            draw_rect_on_array(img_arr=res['x_draw'][i], points=(10, 10, 20, 20), color=255)
+            res['class_2_ans'] += 1
+            if y.__eq__([1, 0]).all():
+                res['right_ans'] += 1
+
+        elif mod_ans[1] > mod_ans[0]:
+            draw_rect_on_array(img_arr=res['x_draw'][i], points=(10, 10, 20, 20), color=0)
+            res['class_1_ans'] += 1
+            if y.__eq__([0, 1]).all():
+                res['right_ans'] += 1
+        else:
+            print("Too rare case")
+
+        i += 1
+
+    return res
+
+
+################################################################################
+# --------------------------------- MAIN ---------------------------------------
+################################################################################
 def main():
     MAX_DRAW_IMG_SIZE = 1600
     #####################################################################
@@ -109,7 +146,7 @@ def main():
     #####################################################################
     ex_shape = (32, 32, 3)
     class_num = 2
-    model, json_list, new_model_type = parse_args_for_train()
+    model, json_list, evaluate_list, new_model_type = parse_args_for_train()
 
     #####################################################################
     # ----------------------- model initializing ------------------------
@@ -117,10 +154,12 @@ def main():
     if model is None:
         if new_model_type.lower() == 'vgg16':
             model = get_VGG16(ex_shape, class_num)
-            print("new VGG model created\n")
+            print("new VGG16 model created\n")
+            new_model_type = 'VGG16'
         else:
             model = get_CNN(ex_shape, class_num)
             print("new CNN model created\n")
+            new_model_type = 'CNN'
 
     plot_model(model, show_shapes=True, to_file='model.png')
 
@@ -128,18 +167,31 @@ def main():
     # ----------------------- data initializing --------------------------
     #####################################################################
     validation_split = 0.1
-    class_1_num, class_2_num, ex_shape, x_data, y_data = \
+    train = {}
+    test = {}
+    eval = {}
+
+    train["class_1_num"], train["class_2_num"], train["x"], train["y"] = \
         dmk.get_data_from_json_list(json_list, ex_shape, class_num)
 
-    # TODO need fix test and train data formation(it works incorrect and equality of class_examples_num isn't guaranteed
-    (x_train, y_train, train_class_1_num, train_class_2_num), \
-    (x_test, y_test, test_class_1_num, test_class_2_num) = get_train_and_test(x_data=x_data,
-                                                                              y_data=y_data,
-                                                                              classes=np.array([[1, 0], [0, 1]]),
-                                                                              validation_split=validation_split)
+    eval["class_1_num"], eval["class_2_num"], eval["x"], eval["y"] = \
+        dmk.get_data_from_json_list(evaluate_list, ex_shape, class_num)
 
-    print("train_size = %d (class_1_num = %d, class_2_num = %d)" % (len(x_train), train_class_1_num, train_class_2_num))
-    print("test_size = %d (class_1_num = %d, class_2_num = %d)\n" % (len(x_test), test_class_1_num, test_class_2_num))
+    (train["x"], train["y"], train["class_1_num"], train["class_2_num"]), \
+    (test["x"], test["y"], test["class_1_num"], test["class_2_num"]) = get_train_and_test(x_data=train["x"],
+                                                                                          y_data=train["y"],
+                                                                                          classes=np.array(
+                                                                                              [[1, 0], [0, 1]]),
+                                                                                          validation_split=validation_split)
+
+    print("train_size       = %d (class_1_num = %d, class_2_num = %d)" % (
+        len(train["x"]), train["class_1_num"], train["class_2_num"]))
+
+    print("test_size        = %d (class_1_num = %d, class_2_num = %d)" % (
+        len(test["x"]), test["class_1_num"], test["class_2_num"]))
+
+    print("evaluate_size    = %d (class_1_num = %d, class_2_num = %d)\n" % (
+        len(eval["x"]), eval["class_1_num"], eval["class_2_num"]))
 
     #####################################################################
     # ----------------------- set train params --------------------------
@@ -149,25 +201,30 @@ def main():
 
     verbose = True
     history_show = True
-    title = 'train on ground'
 
-    batch_size = max(1, int(y_train.shape[0] * 0.010))
-    validation_steps = max(1, int(y_test.shape[0] * 0.010))
+    train['batch_size'] = max(1, int(train["y"].shape[0] * 0.010))
+    test['batch_size'] = max(1, int(test["y"].shape[0] * 0.010))
+    eval['batch_size'] = max(1, int(eval["y"].shape[0] * 0.010))
     full_history = {"acc": np.empty(0), "loss": np.empty(0)}
 
-    print("batch_size = %d\nvalidation_steps = %d\n" %
-          (batch_size, validation_steps))
+    print("train.batch_size = %d\ntest.batch_size = %d\neval.batch_size = %d\n" %
+          (train['batch_size'], test['batch_size'], eval['batch_size']))
 
     #####################################################################
     # ----------------------- creating callbacks ------------------------
     #####################################################################
-    callbacks = [ModelCheckpoint("model_ground.h5",
-                                 monitor='val_loss',
-                                 verbose=True,
-                                 save_best_only=True),
-                 EarlyStopping(monitor='val_acc', patience=0,
-                               baseline=0.95, verbose=True),
-                 ]
+    baseline = 0.95
+    callbacks = [
+        # ModelCheckpoint("model_ground.h5",
+        #                          monitor='val_acc',
+        #                          verbose=True,
+        #                          save_best_only=True),
+        EarlyStopping(monitor='val_acc',
+                      patience=0,
+                      baseline=baseline,
+                      verbose=True,
+                      ),
+    ]
 
     model.compile(loss='categorical_crossentropy', optimizer=Adam(lr), metrics=['accuracy'])
 
@@ -180,9 +237,9 @@ def main():
         horizontal_flip=True,
     ) \
         .flow(
-        x=x_train,
-        y=y_train,
-        batch_size=batch_size
+        x=train['x'],
+        y=train['y'],
+        batch_size=train['batch_size']
     )
     validation_generator = ImageDataGenerator(
         shear_range=0.2,
@@ -190,22 +247,35 @@ def main():
         horizontal_flip=True,
     ) \
         .flow(
-        x=x_test,
-        y=y_test,
-        batch_size=batch_size
+        x=test['x'],
+        y=test['y'],
+        batch_size=test['batch_size']
+    )
+
+    evaluate_generator = ImageDataGenerator(
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+    ) \
+        .flow(
+        x=eval['x'],
+        y=eval['y'],
+        batch_size=eval['batch_size']
     )
     #####################################################################
     # ----------------------- train_model -------------------------------
     #####################################################################
     continue_train = True
+    bad_early_stop = False
     while continue_train:
 
-        epochs = get_input_int("How many epochs?", 1, 100)
+        if not bad_early_stop:
+            epochs = get_input_int("How many epochs?", 1, 100)
 
         history = model.fit_generator(
             generator=train_generator,
-            steps_per_epoch=x_train.shape[0] / batch_size,
-            validation_steps=validation_steps,
+            steps_per_epoch=train['x'].shape[0] / train['batch_size'],
+            validation_steps=test['batch_size'],
             validation_data=validation_generator,
             epochs=epochs,
             shuffle=True,
@@ -213,10 +283,29 @@ def main():
             callbacks=callbacks
         )
 
-        epochs = len(history.history['acc'])
-
         full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
         full_history['loss'] = np.append(full_history['loss'], history.history['loss'])
+        epochs_sum = len(full_history['acc'])
+
+        #####################################################################
+        # ----------------------- evaluate model ----------------------------
+        #####################################################################
+        eval['loss'], eval['acc'] = model.evaluate_generator(
+            generator=evaluate_generator,
+            steps=train['x'].shape[0] / eval['batch_size']
+        )
+
+        print("\nacc        %.2f%%\n" % (history.history['acc'][-1] * 100), end='')
+        print("val_acc      %.2f%%\n" % (history.history['val_acc'][-1] * 100), end='')
+        print("eval_acc     %.2f%%\n" % (eval['acc'] * 100))
+
+        if history.history['acc'][-1] < baseline and epochs > len(history.history['acc']):
+            bad_early_stop = True
+            print("EarlyStopping by val_acc without acc, continue...")
+            continue
+        bad_early_stop = False
+
+        epochs = len(history.history['acc'])
 
         gr.plot_history_separate_from_dict(history_dict=full_history,
                                            save_path_acc=None,
@@ -224,44 +313,34 @@ def main():
                                            show=history_show,
                                            save=False
                                            )
-        print("\naccuracy on test data\t %.f%%\n" % (history.history['acc'][-1]))
 
-        i = 0
-        x_draw = x_train.copy()
-        class_1_ans = class_2_ans = 0
-        right_ans = 0
-        for y, mod_ans in zip(y_train[0:MAX_DRAW_IMG_SIZE], model.predict(x_train[0:MAX_DRAW_IMG_SIZE])):
-            if y.__eq__([1, 0]).all():
-                draw_rect_on_array(img_arr=x_draw[i], points=(1, 1, 31, 31), color=255)
-            if mod_ans[0] > mod_ans[1]:
-                draw_rect_on_array(img_arr=x_draw[i], points=(10, 10, 20, 20), color=255)
-                class_2_ans += 1
-                if y.__eq__([1, 0]).all():
-                    right_ans += 1
+        predict_result = predict_and_draw_on_data(
+            model=model,
+            x=train['x'][0:MAX_DRAW_IMG_SIZE],
+            y=train['y'][0:MAX_DRAW_IMG_SIZE]
+        )
 
-            elif mod_ans[1] > mod_ans[0]:
-                draw_rect_on_array(img_arr=x_draw[i], points=(10, 10, 20, 20), color=0)
-                class_1_ans += 1
-                if y.__eq__([0, 1]).all():
-                    right_ans += 1
-            else:
-                print("Too rare case")
-
-            i += 1
         print("class_1_ans = %d, class_2_ans = %d\nright = %d (%.4f)" %
-              (class_1_ans, class_2_ans, right_ans, right_ans / x_train.shape[0]))
+              (predict_result['class_1_ans'],
+               predict_result['class_2_ans'],
+               predict_result['right_ans'],
+               predict_result['right_ans'] / train['x'].shape[0]
+               )
+              )
 
-        epochs_sum += epochs
         print("epochs: %d - %d" % (epochs_sum - epochs, epochs_sum))
 
+        #####################################################################
+        # ----------------------- CMD UI ------------------------------------
+        #####################################################################
         if get_stdin_answer("Show image of prediction?"):
-            result_img = get_full_rect_image_from_pieces(x_draw[0:MAX_DRAW_IMG_SIZE])
+            result_img = get_full_rect_image_from_pieces(predict_result['x_draw'][0:MAX_DRAW_IMG_SIZE])
             result_img.thumbnail(size=(1024, 1024))
             result_img.show()
 
         if get_stdin_answer(text='Save model?'):
-            save_model_to_json(model, "models/model_ground_%d.json" % epochs_sum)
-            model.save_weights('models/model_ground_%d.h5' % epochs_sum)
+            save_model_to_json(model, "models/model_ground_%s_%d.json" % (new_model_type, epochs_sum))
+            model.save_weights('models/model_ground_%s_%d.h5' % (new_model_type, epochs_sum))
 
         continue_train = get_stdin_answer(text="Continue?")
 
