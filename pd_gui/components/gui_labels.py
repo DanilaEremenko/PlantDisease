@@ -1,35 +1,39 @@
-from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QLabel, QWidget, QComboBox, QHBoxLayout
 from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtCore import Qt
 
-from pd_lib.img_proc import draw_rect_on_array
 
-
-class TrainExLabel(QLabel):
-    def __init__(self, x_data, class_num, colors):
-        if len(colors) != class_num:
-            raise TypeError("len(colors) = %d, class_num = %d" % (len(colors), class_num))
+class TrainExLabel(QWidget):
+    def __init__(self, x_data, classes):
         super(TrainExLabel, self).__init__()
-        self.type = 0
+
+        self.class_name = list(classes.keys())[0]
 
         self.x_data = x_data
-        self.class_num = class_num
-        self.class_pixmaps = []
+        self.class_num = len(classes)
+        self.img_label = QLabel()
 
-        for color in colors:
-            x_img = draw_rect_on_array(x_data, (1, 1, x_data.shape[0] - 1, x_data.shape[1] - 1), color=color)
-            self.class_pixmaps.append(QPixmap.fromImage(QImage(x_img, x_data.shape[0], x_data.shape[1],
-                                                               QImage.Format_RGB888)))
-        self.setPixmap(self.class_pixmaps[0])
+        self.img_label.setPixmap(QPixmap.fromImage(QImage(self.x_data, x_data.shape[0], x_data.shape[1],
+                                                          QImage.Format_RGB888)))
+
         self.resize(x_data.shape[0], x_data.shape[1])
+
+        self.cb = QComboBox()
+        self.cb.addItems(list(classes.keys()))
+        self.cb.currentIndexChanged.connect(self.change_type)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.img_label, alignment=Qt.AlignTop)
+        layout.addWidget(self.cb, alignment=Qt.AlignBottom)
+
+        self.setLayout(layout)
 
     def mousePressEvent(self, ev):
         self.change_type()
 
     def change_type(self):
-        self.type += 1
-        self.type %= self.class_num
-        self.setPixmap(self.class_pixmaps[self.type])
-        print("type = %d" % self.type)
+        self.class_name = self.cb.currentText()
+        print("type changed to %s" % self.class_name)
 
 
 class ImageLabel(QLabel):

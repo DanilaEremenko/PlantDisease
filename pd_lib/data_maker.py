@@ -78,7 +78,7 @@ def json_train_create(path, cropped_data, y_data, img_shape, class_nums):
         raise Exception("bad shape")
     with open(path, "w") as fp:
         json.dump(
-            {"class_nums": list(map(int, class_nums)), "img_shape": img_shape,
+            {"class_nums": class_nums, "img_shape": img_shape,
              "x_data": cropped_data["x_data"].tolist(), "y_data": y_data.tolist(),
              "longitudes": cropped_data["longitudes"], "latitudes": cropped_data["latitudes"]}, fp)
         fp.close()

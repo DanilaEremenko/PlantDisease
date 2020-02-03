@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QScrollBar
 
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_labels import TrainExLabel
@@ -14,22 +14,29 @@ import os
 
 
 class WindowClassificationPicture(QWidget):
-    def __init__(self):
+    def __init__(self, config_dict):
         super(WindowClassificationPicture, self).__init__()
         self.setWindowTitle("Plant Disease Recognizer")
 
         self.hbox_image_list = []
         self.label_list = []
         self.pre_rendered_img_dict = {}
-        self.class_colors = (COLOR_GOOD, COLOR_BAD)
 
         self.img_path = self.choose_picture()
         self.img_name = os.path.splitext(self.img_path)[0]
-        self.window_shape = (32, 32, 3)
+
+        self.window_shape = config_dict['windows_shape']
+        self.classes = config_dict['classes']
 
         self.sl_min_val = 640
         self.sl_max_val = 1280
         self.img_shape = (self.sl_min_val, self.sl_min_val)
+
+        # TODO works incorrect
+        self.scroll_right_box = QtWidgets.QVBoxLayout()
+        self.scroll_bar = QScrollBar()
+        self.scroll_bar.setMaximum(255)
+        self.scroll_right_box.addWidget(self.scroll_bar)
 
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.sl = ImgSizeSlider(min_val=self.sl_min_val, max_val=self.sl_max_val, step_num=4, orientation='horizontal')
@@ -100,8 +107,10 @@ class WindowClassificationPicture(QWidget):
             hbox_new = QtWidgets.QHBoxLayout()
             hbox_new.addStretch(1)
             for x in range(0, x_len):
-                label_new = TrainExLabel(self.cropped_data["x_data"][i].copy(), class_num=len(self.class_colors),
-                                         colors=self.class_colors)
+                label_new = TrainExLabel(
+                    x_data=self.cropped_data["x_data"][i].copy(),
+                    classes=self.classes
+                )
                 hbox_new.addWidget(label_new)
                 self.label_list.append(label_new)
                 i += 1
@@ -121,16 +130,12 @@ class WindowClassificationPicture(QWidget):
     def okay_pressed(self):
 
         y_data = np.empty(0)
-        i = 0
-        class_nums = np.zeros(len(self.class_colors), dtype=int)
+        class_nums = dict(zip(self.classes.keys(), list(map(int, np.zeros(len(self.classes.keys()))))))
         for label in self.label_list:
-            y_data = np.append(y_data, label.type)
-            class_nums[label.type] += 1
-            self.draw_image = img_pr.draw_rect_on_image(self.draw_image, self.cropped_data["x_coord"][i],
-                                                        color=self.class_colors[label.type])
-            i += 1
+            y_data = np.append(y_data, self.classes[label.class_name])
+            class_nums[label.class_name] += 1
 
-        y_data = dmk.get_pos_from_num(arr=y_data, class_num=len(self.class_colors))
+        y_data.shape = (len(self.cropped_data['x_data']), len(self.classes))
 
         dmk.json_train_create(
             path="%s.json" % self.img_name,
@@ -141,9 +146,6 @@ class WindowClassificationPicture(QWidget):
         )
 
         self.draw_image.save("%s_net.JPG" % self.img_name)
-
-        for i, class_num in enumerate(class_nums):
-            print("class_%d_num = %d" % (i, class_num))
 
         print("OKAY")
 
