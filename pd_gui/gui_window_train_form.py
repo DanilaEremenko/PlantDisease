@@ -65,13 +65,13 @@ class WindowClassificationPicture(WindowInterface):
         self.main_layout = MyGridLayout(hbox_control=self.hbox_control)
         self.setLayout(self.main_layout)
 
-        self.update()
+        self.update_main_layout()
         self.show()
 
     def clear(self):
         self.main_layout.clear()
 
-    def update(self):
+    def update_main_layout(self):
         self.clear()
 
         self.img_shape = (self.sl.value(), self.sl.value())
