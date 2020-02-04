@@ -37,21 +37,23 @@ class TrainExLabel(QWidget):
 
 
 class ImageTextLabel(QWidget):
-    def __init__(self, img_arr, text):
+    def __init__(self, x, text):
         super(ImageTextLabel, self).__init__()
 
-        # self.text_label = QLabel()
-        # self.text_label.setText(text)
+        self.text_label = QLabel()
+        self.text_label.setText(text)
 
         self.img_label = QLabel()
         self.img_label.setPixmap(
             QPixmap.fromImage(
-                QImage(img_arr, img_arr.shape[0], img_arr.shape[1], QImage.Format_RGB888)
+                QImage(x, x.shape[0], x.shape[1], QImage.Format_RGB888)
             )
         )
-        self.img_label.resize(img_arr.shape[0], img_arr.shape[1])
+        self.img_label.resize(x.shape[0], x.shape[1])
 
         layout = QHBoxLayout()
-        # layout.addWidget(self.text_label)
         layout.addWidget(self.img_label)
+        layout.addWidget(self.text_label)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 5, 0, 5)
         self.setLayout(layout)
