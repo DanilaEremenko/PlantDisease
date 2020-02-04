@@ -130,10 +130,13 @@ class WindowClassificationPicture(QWidget):
     def okay_pressed(self):
 
         y_data = np.empty(0)
-        class_nums = dict(zip(self.classes.keys(), list(map(int, np.zeros(len(self.classes.keys()))))))
+        new_classes = {}
+        for key, value in self.classes.items():
+            new_classes[key] = {'num': 0, 'value': value}
+
         for label in self.label_list:
             y_data = np.append(y_data, self.classes[label.class_name])
-            class_nums[label.class_name] += 1
+            new_classes[label.class_name]['num'] += 1
 
         y_data.shape = (len(self.cropped_data['x_data']), len(self.classes))
 
@@ -142,7 +145,7 @@ class WindowClassificationPicture(QWidget):
             cropped_data=self.cropped_data,
             y_data=y_data,
             img_shape=self.full_img.size,
-            class_nums=class_nums
+            classes=new_classes
         )
 
         self.draw_image.save("%s_net.JPG" % self.img_name)

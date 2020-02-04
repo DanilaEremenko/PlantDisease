@@ -73,12 +73,12 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
     return class_1_num, class_2_num, x_train, y_train
 
 
-def json_train_create(path, cropped_data, y_data, img_shape, class_nums):
+def json_train_create(path, cropped_data, y_data, img_shape, classes):
     if cropped_data["x_data"].shape[0] != y_data.shape[0]:
         raise Exception("bad shape")
     with open(path, "w") as fp:
         json.dump(
-            {"class_nums": class_nums, "img_shape": img_shape,
+            {"classes": classes, "img_shape": img_shape,
              "x_data": cropped_data["x_data"].tolist(), "y_data": y_data.tolist(),
              "longitudes": cropped_data["longitudes"], "latitudes": cropped_data["latitudes"]}, fp)
         fp.close()
