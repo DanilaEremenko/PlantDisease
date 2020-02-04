@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtWidgets
-from pd_gui.gui_train_form import WindowClassificationPicture
+from pd_gui.gui_window_train_form import WindowClassificationPicture
 import json
 import os
 

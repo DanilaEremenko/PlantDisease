@@ -36,11 +36,22 @@ class TrainExLabel(QWidget):
         print("type changed to %s" % self.class_name)
 
 
-class ImageLabel(QLabel):
-    def __init__(self, img_arr):
-        super(ImageLabel, self).__init__()
+class ImageTextLabel(QWidget):
+    def __init__(self, img_arr, text):
+        super(ImageTextLabel, self).__init__()
 
-        self.pixmap = QPixmap.fromImage(QImage(img_arr, img_arr.shape[0], img_arr.shape[1],
-                                               QImage.Format_RGB888))
-        self.setPixmap(self.pixmap)
-        self.resize(img_arr.shape[0], img_arr.shape[1])
+        # self.text_label = QLabel()
+        # self.text_label.setText(text)
+
+        self.img_label = QLabel()
+        self.img_label.setPixmap(
+            QPixmap.fromImage(
+                QImage(img_arr, img_arr.shape[0], img_arr.shape[1], QImage.Format_RGB888)
+            )
+        )
+        self.img_label.resize(img_arr.shape[0], img_arr.shape[1])
+
+        layout = QHBoxLayout()
+        # layout.addWidget(self.text_label)
+        layout.addWidget(self.img_label)
+        self.setLayout(layout)

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QWidget
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_colors import *
 from pd_gui.components.gui_slider import ImgSizeSlider
-from .components.gui_labels import ImageLabel
+from .components.gui_labels import ImageTextLabel
 
 from pd_lib.data_maker import get_x_from_croped_img
 from pd_lib.addition import get_full_model, predict_and_localize_on_image
