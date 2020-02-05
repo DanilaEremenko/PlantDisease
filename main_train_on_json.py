@@ -14,6 +14,8 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import plot_model
 import numpy as np
 
+import sys
+
 
 def parse_args_for_train():
     # -------------------- initialize arguments ----------------------------------
@@ -68,9 +70,9 @@ def get_train_and_test(x_data, y_data, classes, validation_split):
         test_size += 1
     train_size = len(x_data) - test_size
 
-    x_train = np.zeros(shape=(train_size, x_data.shape[1], x_data.shape[2], x_data.shape[3]))
+    x_train = np.zeros(shape=(train_size, x_data.shape[1], x_data.shape[2], x_data.shape[3]), dtype='uint8')
     y_train = np.zeros(shape=(train_size, y_data.shape[1]))
-    x_test = np.zeros(shape=(test_size, x_data.shape[1], x_data.shape[2], x_data.shape[3]))
+    x_test = np.zeros(shape=(test_size, x_data.shape[1], x_data.shape[2], x_data.shape[3]), dtype='uint8')
     y_test = np.zeros(shape=(test_size, y_data.shape[1]))
 
     train_clasess = {}
@@ -127,6 +129,23 @@ def predict_and_draw_on_data(model, x, y):
         i += 1
 
     return res
+
+
+def show_predict_on_window(model, x_data, y_data, classes):
+    # TODO works incorrect
+    from pd_gui.gui_train_examine import WindowMultipleExamples
+    from PyQt5 import QtWidgets
+
+    app = QtWidgets.QApplication(sys.argv)
+
+    window_class_pctr = WindowMultipleExamples(
+        model=model,
+        x_data=x_data,
+        y_data=y_data,
+        classes=classes
+    )
+
+    print("GUI EXITED WITH CODE = %d" % app.exec_())
 
 
 ################################################################################
@@ -321,10 +340,12 @@ def main():
         # ----------------------- CMD UI ------------------------------------
         #####################################################################
         if get_stdin_answer("Show image of prediction?"):
-            result_img = get_full_rect_image_from_pieces(predict_result['x_draw'][0:MAX_DRAW_IMG_SIZE])
-            result_img.thumbnail(size=(1024, 1024))
-            result_img.show()
-
+            show_predict_on_window(
+                model=model,
+                x_data=eval['x'],
+                y_data=eval['y'],
+                classes=eval['classes']
+            )
         if get_stdin_answer(text='Save model?'):
             save_model_to_json(model, "models/model_ground_%s_%d.json" % (new_model_type, epochs_sum))
             model.save_weights('models/model_ground_%s_%d.h5' % (new_model_type, epochs_sum))
