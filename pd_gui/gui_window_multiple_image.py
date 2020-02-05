@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouts import MyGridLayout
 
@@ -19,6 +19,7 @@ class WindowMultipleExamples(WindowInterface):
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_control.addStretch(1)
         self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
+        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
         self.hbox_control.addWidget(ControlButton("Multiple", self.multiple_pressed))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
 
@@ -33,11 +34,14 @@ class WindowMultipleExamples(WindowInterface):
 
     def _define_max_class(self):
         self.max_class = {'name': None, 'num': 0, 'value': None}
+        self.max_key_len = 0
         for key, value in self.classes.items():
             if self.classes[key]['num'] > self.max_class['num']:
                 self.max_class['name'] = key
                 self.max_class['num'] = self.classes[key]['num']
                 self.max_class['value'] = self.classes[key]['value']
+            if len(key) > self.max_key_len:
+                self.max_key_len = len(key)
 
     def __init__(self):
         super(WindowMultipleExamples, self).__init__()
@@ -66,16 +70,23 @@ class WindowMultipleExamples(WindowInterface):
                     return key
             raise Exception('No value == %s' % str(value))
 
+        def add_spaces(word, new_size):  # TODO fix gui label alignment
+            while len(word) < new_size:
+                word += '_'
+            return word
+
         label_list = []
         for x, y in zip(self.x_data, self.y_data):
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text=get_key_by_value(value=y)
+                    text=add_spaces(get_key_by_value(value=y), new_size=self.max_key_len)
                 )
             )
         rect_len = int(np.sqrt(len(self.x_data)))
         self.main_layout.update_grid(
+            windows_width=self.frameGeometry().width(),
+            window_height=self.frameGeometry().height(),
             x_len=rect_len,
             y_len=rect_len,
             label_list=label_list
@@ -95,7 +106,6 @@ class WindowMultipleExamples(WindowInterface):
         self.quit_default()
 
     def multiple_pressed(self):
-        got_changes = False
         print("---------------------------------")
         for key, value in self.classes.items():
             if self.classes[key]['num'] < self.max_class['num']:
@@ -110,10 +120,5 @@ class WindowMultipleExamples(WindowInterface):
                     if ((y.__eq__(self.classes[key]['value'])).all()):
                         self.classes[key]['num'] += 1
 
-                got_changes = True
             else:
                 print("%s class  = %s (max_class_num = %d)" % (key, self.classes[key]['num'], self.max_class['num']))
-
-            if got_changes:
-                self.update_main_layout()
-                got_changes = False

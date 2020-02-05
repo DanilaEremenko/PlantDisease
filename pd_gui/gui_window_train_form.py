@@ -26,7 +26,7 @@ class WindowClassificationPicture(WindowInterface):
         self.hbox_control.addStretch(1)
         self.hbox_control.addWidget(self.sl)
         self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
-        self.hbox_control.addWidget(ControlButton("Update", self.update))
+        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
 
     def _init_images(self):
@@ -92,6 +92,8 @@ class WindowClassificationPicture(WindowInterface):
             )
 
         self.main_layout.update_grid(
+            windows_width=self.frameGeometry().width(),
+            window_height=self.frameGeometry().height(),
             x_len=int(self.full_img.size[0] / self.cropped_data["x_data"].shape[1]),
             y_len=int(self.full_img.size[1] / self.cropped_data["x_data"].shape[2]),
             label_list=label_list
