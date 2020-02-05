@@ -73,41 +73,34 @@ def get_train_and_test(x_data, y_data, classes, validation_split):
     x_test = np.zeros(shape=(test_size, x_data.shape[1], x_data.shape[2], x_data.shape[3]))
     y_test = np.zeros(shape=(test_size, y_data.shape[1]))
 
-    test_class_1_num = 0
-    test_class_2_num = 0
-    train_class_1_num = 0
-    train_class_2_num = 0
+    train_clasess = {}
+    test_clasess = {}
+    for key in classes.keys():
+        train_clasess[key] = classes[key].copy()
+        train_clasess[key]['num'] = 0
+
+        test_clasess[key] = classes[key].copy()
+        test_clasess[key]['num'] = 0
 
     test_i = 0
     train_i = 0
 
     for i, (x, y) in enumerate(zip(x_data, y_data)):
-        if (y == classes[0]).all() and test_class_1_num < test_size / 2:
-            x_test[test_i] = x
-            y_test[test_i] = y
-            test_i += 1
-            test_class_1_num += 1
+        for key in classes.keys():
+            if (y == classes[key]['value']).all() and test_clasess[key]['num'] < test_size / len(classes.keys()):
+                x_test[test_i] = x
+                y_test[test_i] = y
+                test_i += 1
+                test_clasess[key]['num'] += 1
+                break
 
-        elif (y == classes[1]).all() and test_class_2_num < test_size / 2:
-            x_test[test_i] = x
-            y_test[test_i] = y
-            test_i += 1
-            test_class_2_num += 1
-
-        elif (y == classes[0]).all():
-            x_train[train_i] = x
-            y_train[train_i] = y
-            train_i += 1
-            train_class_1_num += 1
-
-        elif (y == classes[1]).all():
-            x_train[train_i] = x
-            y_train[train_i] = y
-            train_i += 1
-            train_class_2_num += 1
-
-    return (x_train, y_train, train_class_1_num, train_class_2_num), \
-           (x_test, y_test, test_class_1_num, test_class_2_num)
+            elif (y == classes[key]['value']).all():
+                x_train[train_i] = x
+                y_train[train_i] = y
+                train_i += 1
+                train_clasess[key]['num'] += 1
+    return (x_train, y_train, train_clasess), \
+           (x_test, y_test, test_clasess)
 
 
 def predict_and_draw_on_data(model, x, y):
@@ -171,27 +164,21 @@ def main():
     test = {}
     eval = {}
 
-    train["class_1_num"], train["class_2_num"], train["x"], train["y"] = \
+    train['classes'], train["x"], train["y"] = \
         dmk.get_data_from_json_list(json_list, ex_shape, class_num)
 
-    eval["class_1_num"], eval["class_2_num"], eval["x"], eval["y"] = \
+    eval['classes'], eval["x"], eval["y"] = \
         dmk.get_data_from_json_list(evaluate_list, ex_shape, class_num)
 
-    (train["x"], train["y"], train["class_1_num"], train["class_2_num"]), \
-    (test["x"], test["y"], test["class_1_num"], test["class_2_num"]) = get_train_and_test(x_data=train["x"],
-                                                                                          y_data=train["y"],
-                                                                                          classes=np.array(
-                                                                                              [[1, 0], [0, 1]]),
-                                                                                          validation_split=validation_split)
+    (train["x"], train["y"], train['classes']), \
+    (test["x"], test["y"], test['classes']) = get_train_and_test(x_data=train["x"],
+                                                                 y_data=train["y"],
+                                                                 classes=train['classes'],
+                                                                 validation_split=validation_split)
 
-    print("train_size       = %d (class_1_num = %d, class_2_num = %d)" % (
-        len(train["x"]), train["class_1_num"], train["class_2_num"]))
-
-    print("test_size        = %d (class_1_num = %d, class_2_num = %d)" % (
-        len(test["x"]), test["class_1_num"], test["class_2_num"]))
-
-    print("evaluate_size    = %d (class_1_num = %d, class_2_num = %d)\n" % (
-        len(eval["x"]), eval["class_1_num"], eval["class_2_num"]))
+    print("train = %s" % str(train['classes']))
+    print("test  = %s" % str(test['classes']))
+    print("eval  = %s" % str(eval['classes']))
 
     #####################################################################
     # ----------------------- set train params --------------------------

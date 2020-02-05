@@ -59,18 +59,25 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
     test_num = 0
     x_train = np.empty(0, dtype='uint8')
     y_train = np.empty(0, dtype='uint8')
-    class_1_num = class_2_num = 0
+    classes = None
     for train_json in json_list:
-        (cur_class_1_num, cur_class_2_num), img_shape, curr_x_train, curr_y_train = json_train_load(train_json)
+        cur_classes, img_shape, curr_x_train, curr_y_train = json_train_load(train_json)
+        if classes is None:
+            classes = cur_classes
+        else:
+            for key in classes.keys():
+                if (classes[key]['value'] == cur_classes[key]['value']).all():
+                    classes[key]['num'] += cur_classes[key]['num']
+                else:
+                    raise Exception("cur_classes.key.value = %s" % str(cur_classes[key]['value']))
+
         x_train = np.append(x_train, curr_x_train)
         y_train = np.append(y_train, curr_y_train)
         test_num += curr_y_train.shape[0]
-        class_1_num += cur_class_1_num
-        class_2_num += cur_class_2_num
     x_train.shape = (test_num, ex_shape[0], ex_shape[1], ex_shape[2])
     y_train.shape = (test_num, class_num)
 
-    return class_1_num, class_2_num, x_train, y_train
+    return classes, x_train, y_train
 
 
 def json_train_create(path, cropped_data, y_data, img_shape, classes):
@@ -90,7 +97,7 @@ def json_train_load(path):
     with open(path, "r") as fp:
         data_dict = json.load(fp)
         fp.close()
-        return data_dict["class_nums"], data_dict["img_shape"], \
+        return data_dict["classes"], data_dict["img_shape"], \
                np.array(data_dict["x_data"]), np.array(data_dict["y_data"])
 
 
