@@ -102,13 +102,12 @@ class WindowClassificationPicture(WindowInterface):
     def okay_pressed(self):
 
         y_data = np.empty(0)
-        new_classes = {}
-        for key, value in self.classes.items():
-            new_classes[key] = {'num': 0, 'value': value}
+        for key in self.classes.keys():
+            self.classes[key]['num'] = 0
 
         for label in self.main_layout.label_list:
-            y_data = np.append(y_data, self.classes[label.class_name])
-            new_classes[label.class_name]['num'] += 1
+            y_data = np.append(y_data, self.classes[label.class_name]['value'])
+            self.classes[label.class_name]['num'] += 1
 
         y_data.shape = (len(self.cropped_data['x_data']), len(self.classes))
 
@@ -117,7 +116,7 @@ class WindowClassificationPicture(WindowInterface):
             cropped_data=self.cropped_data,
             y_data=y_data,
             img_shape=self.full_img.size,
-            classes=new_classes
+            classes=self.classes
         )
 
         self.draw_image.save("%s_net.JPG" % self.img_name)
