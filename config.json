@@ -1,8 +1,8 @@
 {
 
   "classes": {
-    "potato": [0,1],
-    "earth": [1,0]
+    "potato": {"value":[0,1]},
+    "earth": {"value":[1,0]}
   },
   "windows_shape": [32,32,3]
 }
