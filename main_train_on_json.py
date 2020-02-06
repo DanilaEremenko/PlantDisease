@@ -189,6 +189,8 @@ def main():
     eval['classes'], eval["x"], eval["y"] = \
         dmk.get_data_from_json_list(evaluate_list, ex_shape, class_num)
 
+    eval['x'] = np.array(eval['x'], dtype='uint8')
+
     (train["x"], train["y"], train['classes']), \
     (test["x"], test["y"], test['classes']) = get_train_and_test(x_data=train["x"],
                                                                  y_data=train["y"],
@@ -276,49 +278,50 @@ def main():
     while continue_train:
 
         if not bad_early_stop:
-            epochs = get_input_int("How many epochs?", 1, 100)
+            epochs = get_input_int("How many epochs?", 0, 100)
 
-        history = model.fit_generator(
-            generator=train_generator,
-            steps_per_epoch=train['x'].shape[0] / train['batch_size'],
-            validation_steps=test['batch_size'],
-            validation_data=validation_generator,
-            epochs=epochs,
-            shuffle=True,
-            verbose=verbose,
-            callbacks=callbacks
-        )
+        if epochs != 0:
+            history = model.fit_generator(
+                generator=train_generator,
+                steps_per_epoch=train['x'].shape[0] / train['batch_size'],
+                validation_steps=test['batch_size'],
+                validation_data=validation_generator,
+                epochs=epochs,
+                shuffle=True,
+                verbose=verbose,
+                callbacks=callbacks
+            )
 
-        full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
-        full_history['loss'] = np.append(full_history['loss'], history.history['loss'])
-        epochs_sum = len(full_history['acc'])
+            full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
+            full_history['loss'] = np.append(full_history['loss'], history.history['loss'])
+            epochs_sum = len(full_history['acc'])
 
-        #####################################################################
-        # ----------------------- evaluate model ----------------------------
-        #####################################################################
-        eval['loss'], eval['acc'] = model.evaluate_generator(
-            generator=evaluate_generator,
-            steps=train['x'].shape[0] / eval['batch_size']
-        )
+            #####################################################################
+            # ----------------------- evaluate model ----------------------------
+            #####################################################################
+            eval['loss'], eval['acc'] = model.evaluate_generator(
+                generator=evaluate_generator,
+                steps=train['x'].shape[0] / eval['batch_size']
+            )
 
-        print("\nacc        %.2f%%\n" % (history.history['acc'][-1] * 100), end='')
-        print("val_acc      %.2f%%\n" % (history.history['val_acc'][-1] * 100), end='')
-        print("eval_acc     %.2f%%\n" % (eval['acc'] * 100))
+            print("\nacc        %.2f%%\n" % (history.history['acc'][-1] * 100), end='')
+            print("val_acc      %.2f%%\n" % (history.history['val_acc'][-1] * 100), end='')
+            print("eval_acc     %.2f%%\n" % (eval['acc'] * 100))
 
-        if history.history['acc'][-1] < baseline and epochs > len(history.history['acc']):
-            bad_early_stop = True
-            print("EarlyStopping by val_acc without acc, continue...")
-            continue
-        bad_early_stop = False
+            if history.history['acc'][-1] < baseline and epochs > len(history.history['acc']):
+                bad_early_stop = True
+                print("EarlyStopping by val_acc without acc, continue...")
+                continue
+            bad_early_stop = False
 
-        epochs = len(history.history['acc'])
+            epochs = len(history.history['acc'])
 
-        gr.plot_history_separate_from_dict(history_dict=full_history,
-                                           save_path_acc=None,
-                                           save_path_loss=None,
-                                           show=history_show,
-                                           save=False
-                                           )
+            gr.plot_history_separate_from_dict(history_dict=full_history,
+                                               save_path_acc=None,
+                                               save_path_loss=None,
+                                               show=history_show,
+                                               save=False
+                                               )
 
         predict_result = predict_and_draw_on_data(
             model=model,

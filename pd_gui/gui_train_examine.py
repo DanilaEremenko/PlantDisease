@@ -12,6 +12,7 @@ class WindowMultipleExamples(WindowInterface):
     def _init_hbox_control(self):
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_control.addStretch(1)
+        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
 
     def _define_max_key_len(self):
@@ -47,6 +48,16 @@ class WindowMultipleExamples(WindowInterface):
                     return key
             raise Exception('No value == %s' % str(value))
 
+        def get_key_by_answer(pos_code):
+            answer = {'mae': 9999, 'key': None, 'value': 0}
+            for key in self.classes.keys():
+                mae = np.average(abs((self.classes[key]['value'] - pos_code)))
+                if mae < answer['mae']:
+                    answer['mae'] = mae
+                    answer['key'] = key
+                    answer['value'] = max(pos_code)
+            return answer
+
         def add_spaces(word, new_size):  # TODO fix gui label alignment
             while len(word) < new_size:
                 word += '_'
@@ -54,10 +65,13 @@ class WindowMultipleExamples(WindowInterface):
 
         label_list = []
         for x, y, y_answer in zip(self.x_data, self.y_data, self.model.predict(self.x_data)):
+            answer = get_key_by_answer(pos_code=y_answer)
+            answer['key'] = add_spaces(answer['key'], new_size=self.max_key_len)
+
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text=add_spaces(get_key_by_value(value=y), new_size=self.max_key_len)
+                    text='%s %.2f' % (answer['key'], answer['value'])
                 )
             )
         rect_len = int(np.sqrt(len(self.x_data)))
