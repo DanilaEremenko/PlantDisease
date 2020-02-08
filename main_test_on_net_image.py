@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtWidgets
-from pd_gui.gui_predict_on_image import WindowPredictOnImage
+from pd_gui.gui_window_predict_on_image import WindowPredictOnImage
 
 
 def main():

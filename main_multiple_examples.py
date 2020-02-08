@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtWidgets
-from pd_gui.gui_multiple_image import WindowMultipleExamples
+from pd_gui.gui_window_multiple_image import WindowMultipleExamples
 
 
 def main():

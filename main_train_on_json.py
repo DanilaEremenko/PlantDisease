@@ -14,6 +14,8 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import plot_model
 import numpy as np
 
+import sys
+
 
 def parse_args_for_train():
     # -------------------- initialize arguments ----------------------------------
@@ -64,50 +66,43 @@ def unison_shuffled_copies(a, b):
 
 def get_train_and_test(x_data, y_data, classes, validation_split):
     test_size = int(len(x_data) * validation_split)
-    if test_size % 2 != 0:
+    while test_size % len(classes.keys()) != 0:
         test_size += 1
     train_size = len(x_data) - test_size
 
-    x_train = np.zeros(shape=(train_size, x_data.shape[1], x_data.shape[2], x_data.shape[3]))
+    x_train = np.zeros(shape=(train_size, x_data.shape[1], x_data.shape[2], x_data.shape[3]), dtype='uint8')
     y_train = np.zeros(shape=(train_size, y_data.shape[1]))
-    x_test = np.zeros(shape=(test_size, x_data.shape[1], x_data.shape[2], x_data.shape[3]))
+    x_test = np.zeros(shape=(test_size, x_data.shape[1], x_data.shape[2], x_data.shape[3]), dtype='uint8')
     y_test = np.zeros(shape=(test_size, y_data.shape[1]))
 
-    test_class_1_num = 0
-    test_class_2_num = 0
-    train_class_1_num = 0
-    train_class_2_num = 0
+    train_clasess = {}
+    test_clasess = {}
+    for key in classes.keys():
+        train_clasess[key] = classes[key].copy()
+        train_clasess[key]['num'] = 0
+
+        test_clasess[key] = classes[key].copy()
+        test_clasess[key]['num'] = 0
 
     test_i = 0
     train_i = 0
 
     for i, (x, y) in enumerate(zip(x_data, y_data)):
-        if (y == classes[0]).all() and test_class_1_num < test_size / 2:
-            x_test[test_i] = x
-            y_test[test_i] = y
-            test_i += 1
-            test_class_1_num += 1
+        for key in classes.keys():
+            if (y == classes[key]['value']).all() and test_clasess[key]['num'] < test_size / len(classes.keys()):
+                x_test[test_i] = x
+                y_test[test_i] = y
+                test_i += 1
+                test_clasess[key]['num'] += 1
+                break
 
-        elif (y == classes[1]).all() and test_class_2_num < test_size / 2:
-            x_test[test_i] = x
-            y_test[test_i] = y
-            test_i += 1
-            test_class_2_num += 1
-
-        elif (y == classes[0]).all():
-            x_train[train_i] = x
-            y_train[train_i] = y
-            train_i += 1
-            train_class_1_num += 1
-
-        elif (y == classes[1]).all():
-            x_train[train_i] = x
-            y_train[train_i] = y
-            train_i += 1
-            train_class_2_num += 1
-
-    return (x_train, y_train, train_class_1_num, train_class_2_num), \
-           (x_test, y_test, test_class_1_num, test_class_2_num)
+            elif (y == classes[key]['value']).all():
+                x_train[train_i] = x
+                y_train[train_i] = y
+                train_i += 1
+                train_clasess[key]['num'] += 1
+    return (x_train, y_train, train_clasess), \
+           (x_test, y_test, test_clasess)
 
 
 def predict_and_draw_on_data(model, x, y):
@@ -136,6 +131,23 @@ def predict_and_draw_on_data(model, x, y):
     return res
 
 
+def show_predict_on_window(model, x_data, y_data, classes):
+    # TODO works incorrect
+    from pd_gui.gui_train_examine import WindowMultipleExamples
+    from PyQt5 import QtWidgets
+
+    app = QtWidgets.QApplication(sys.argv)
+
+    window_class_pctr = WindowMultipleExamples(
+        model=model,
+        x_data=x_data,
+        y_data=y_data,
+        classes=classes
+    )
+
+    print("GUI EXITED WITH CODE = %d" % app.exec_())
+
+
 ################################################################################
 # --------------------------------- MAIN ---------------------------------------
 ################################################################################
@@ -145,23 +157,7 @@ def main():
     # ----------------------- set data params ---------------------------
     #####################################################################
     ex_shape = (32, 32, 3)
-    class_num = 2
     model, json_list, evaluate_list, new_model_type = parse_args_for_train()
-
-    #####################################################################
-    # ----------------------- model initializing ------------------------
-    #####################################################################
-    if model is None:
-        if new_model_type.lower() == 'vgg16':
-            model = get_VGG16(ex_shape, class_num)
-            print("new VGG16 model created\n")
-            new_model_type = 'VGG16'
-        else:
-            model = get_CNN(ex_shape, class_num)
-            print("new CNN model created\n")
-            new_model_type = 'CNN'
-
-    plot_model(model, show_shapes=True, to_file='model.png')
 
     #####################################################################
     # ----------------------- data initializing --------------------------
@@ -171,27 +167,38 @@ def main():
     test = {}
     eval = {}
 
-    train["class_1_num"], train["class_2_num"], train["x"], train["y"] = \
-        dmk.get_data_from_json_list(json_list, ex_shape, class_num)
+    train['classes'], train["x"], train["y"] = \
+        dmk.get_data_from_json_list(json_list, ex_shape)
 
-    eval["class_1_num"], eval["class_2_num"], eval["x"], eval["y"] = \
-        dmk.get_data_from_json_list(evaluate_list, ex_shape, class_num)
+    eval['classes'], eval["x"], eval["y"] = \
+        dmk.get_data_from_json_list(evaluate_list, ex_shape)
 
-    (train["x"], train["y"], train["class_1_num"], train["class_2_num"]), \
-    (test["x"], test["y"], test["class_1_num"], test["class_2_num"]) = get_train_and_test(x_data=train["x"],
-                                                                                          y_data=train["y"],
-                                                                                          classes=np.array(
-                                                                                              [[1, 0], [0, 1]]),
-                                                                                          validation_split=validation_split)
+    eval['x'] = np.array(eval['x'], dtype='uint8')
 
-    print("train_size       = %d (class_1_num = %d, class_2_num = %d)" % (
-        len(train["x"]), train["class_1_num"], train["class_2_num"]))
+    (train["x"], train["y"], train['classes']), \
+    (test["x"], test["y"], test['classes']) = get_train_and_test(x_data=train["x"],
+                                                                 y_data=train["y"],
+                                                                 classes=train['classes'],
+                                                                 validation_split=validation_split)
 
-    print("test_size        = %d (class_1_num = %d, class_2_num = %d)" % (
-        len(test["x"]), test["class_1_num"], test["class_2_num"]))
+    print("train = %s" % str(train['classes']))
+    print("test  = %s" % str(test['classes']))
+    print("eval  = %s" % str(eval['classes']))
 
-    print("evaluate_size    = %d (class_1_num = %d, class_2_num = %d)\n" % (
-        len(eval["x"]), eval["class_1_num"], eval["class_2_num"]))
+    #####################################################################
+    # ----------------------- model initializing ------------------------
+    #####################################################################
+    if model is None:
+        if new_model_type.lower() == 'vgg16':
+            model = get_VGG16(ex_shape, len(train['classes'].keys()))
+            print("new VGG16 model created\n")
+            new_model_type = 'VGG16'
+        else:
+            model = get_CNN(ex_shape, len(train['classes'].keys()))
+            print("new CNN model created\n")
+            new_model_type = 'CNN'
+
+    plot_model(model, show_shapes=True, to_file='model.png')
 
     #####################################################################
     # ----------------------- set train params --------------------------
@@ -270,63 +277,50 @@ def main():
     while continue_train:
 
         if not bad_early_stop:
-            epochs = get_input_int("How many epochs?", 1, 100)
+            epochs = get_input_int("How many epochs?", 0, 100)
 
-        history = model.fit_generator(
-            generator=train_generator,
-            steps_per_epoch=train['x'].shape[0] / train['batch_size'],
-            validation_steps=test['batch_size'],
-            validation_data=validation_generator,
-            epochs=epochs,
-            shuffle=True,
-            verbose=verbose,
-            callbacks=callbacks
-        )
+        if epochs != 0:
+            history = model.fit_generator(
+                generator=train_generator,
+                steps_per_epoch=train['x'].shape[0] / train['batch_size'],
+                validation_steps=test['batch_size'],
+                validation_data=validation_generator,
+                epochs=epochs,
+                shuffle=True,
+                verbose=verbose,
+                callbacks=callbacks
+            )
 
-        full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
-        full_history['loss'] = np.append(full_history['loss'], history.history['loss'])
-        epochs_sum = len(full_history['acc'])
+            full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
+            full_history['loss'] = np.append(full_history['loss'], history.history['loss'])
+            epochs_sum = len(full_history['acc'])
 
-        #####################################################################
-        # ----------------------- evaluate model ----------------------------
-        #####################################################################
-        eval['loss'], eval['acc'] = model.evaluate_generator(
-            generator=evaluate_generator,
-            steps=train['x'].shape[0] / eval['batch_size']
-        )
+            #####################################################################
+            # ----------------------- evaluate model ----------------------------
+            #####################################################################
+            eval['loss'], eval['acc'] = model.evaluate_generator(
+                generator=evaluate_generator,
+                steps=train['x'].shape[0] / eval['batch_size']
+            )
 
-        print("\nacc        %.2f%%\n" % (history.history['acc'][-1] * 100), end='')
-        print("val_acc      %.2f%%\n" % (history.history['val_acc'][-1] * 100), end='')
-        print("eval_acc     %.2f%%\n" % (eval['acc'] * 100))
+            print("\nacc        %.2f%%\n" % (history.history['acc'][-1] * 100), end='')
+            print("val_acc      %.2f%%\n" % (history.history['val_acc'][-1] * 100), end='')
+            print("eval_acc     %.2f%%\n" % (eval['acc'] * 100))
 
-        if history.history['acc'][-1] < baseline and epochs > len(history.history['acc']):
-            bad_early_stop = True
-            print("EarlyStopping by val_acc without acc, continue...")
-            continue
-        bad_early_stop = False
+            if history.history['acc'][-1] < baseline and epochs > len(history.history['acc']):
+                bad_early_stop = True
+                print("EarlyStopping by val_acc without acc, continue...")
+                continue
+            bad_early_stop = False
 
-        epochs = len(history.history['acc'])
+            epochs = len(history.history['acc'])
 
-        gr.plot_history_separate_from_dict(history_dict=full_history,
-                                           save_path_acc=None,
-                                           save_path_loss=None,
-                                           show=history_show,
-                                           save=False
-                                           )
-
-        predict_result = predict_and_draw_on_data(
-            model=model,
-            x=train['x'][0:MAX_DRAW_IMG_SIZE],
-            y=train['y'][0:MAX_DRAW_IMG_SIZE]
-        )
-
-        print("class_1_ans = %d, class_2_ans = %d\nright = %d (%.4f)" %
-              (predict_result['class_1_ans'],
-               predict_result['class_2_ans'],
-               predict_result['right_ans'],
-               predict_result['right_ans'] / train['x'].shape[0]
-               )
-              )
+            gr.plot_history_separate_from_dict(history_dict=full_history,
+                                               save_path_acc=None,
+                                               save_path_loss=None,
+                                               show=history_show,
+                                               save=False
+                                               )
 
         print("epochs: %d - %d" % (epochs_sum - epochs, epochs_sum))
 
@@ -334,10 +328,12 @@ def main():
         # ----------------------- CMD UI ------------------------------------
         #####################################################################
         if get_stdin_answer("Show image of prediction?"):
-            result_img = get_full_rect_image_from_pieces(predict_result['x_draw'][0:MAX_DRAW_IMG_SIZE])
-            result_img.thumbnail(size=(1024, 1024))
-            result_img.show()
-
+            show_predict_on_window(
+                model=model,
+                x_data=eval['x'],
+                y_data=eval['y'],
+                classes=eval['classes']
+            )
         if get_stdin_answer(text='Save model?'):
             save_model_to_json(model, "models/model_ground_%s_%d.json" % (new_model_type, epochs_sum))
             model.save_weights('models/model_ground_%s_%d.h5' % (new_model_type, epochs_sum))
