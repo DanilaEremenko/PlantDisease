@@ -7,72 +7,6 @@ import json
 
 
 ################################################################################
-# --------------------------------- for train & test on dirs -------------------
-################################################################################
-def get_class_from_dir(path_to_dir, class_mark, img_shape, max_img_num=None):
-    curr_x = np.empty(0)
-    curr_y = np.empty(0)
-    i = 0
-
-    for path_to_img in os.listdir(path_to_dir):
-        img_pxs = img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape)
-        if img_pxs.shape == img_shape:
-            curr_x = np.append(curr_x, img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape))
-            curr_y = np.append(curr_y, class_mark)
-            i += 1
-
-            if max_img_num != None:
-                if i == max_img_num:
-                    break
-
-    curr_x.shape = (i, img_shape[0], img_shape[1], img_shape[2])
-
-    return curr_x, curr_y, i
-
-
-def get_data_full(data, img_shape, max_img_num=None):
-    if not data.keys().__contains__("class_marks"):
-        raise Exception("no class_marks key in data")
-    if not data.keys().__contains__("data_dirs"):
-        raise Exception("no data_dirs key in data")
-    if data.get("class_marks").__len__() != data.get("data_dirs").__len__():
-        raise Exception("class_marks and data_dirs must have the same size")
-
-    x_train = np.empty(0)
-    y_train = np.empty(0)
-    im_sum = 0
-    for path_to_dir, class_mark in zip(data.get("data_dirs"), data.get("class_marks")):
-        (curr_x, curr_y, i) = get_class_from_dir(path_to_dir, class_mark, img_shape, max_img_num)
-        x_train = np.append(x_train, curr_x)
-        y_train = np.append(y_train, curr_y)
-        im_sum += i
-    x_train.shape = (im_sum, img_shape[0], img_shape[1], img_shape[2])
-    y_train.shape = (im_sum, data.get("class_marks")[0].shape[0])
-    return x_train, y_train
-
-
-################################################################################
-# --------------------------------- for predict on dir -------------------------
-################################################################################
-def get_x_from_dir(path_to_dir, img_shape, max_img_num=None):
-    curr_x = np.empty(0)
-    i = 0
-    for path_to_img in os.listdir(path_to_dir):
-        img_pxs = img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape)
-        if img_pxs.shape == img_shape:
-            curr_x = np.append(curr_x, img_pr.get_pxs_full("%s/%s" % (path_to_dir, path_to_img), shape=img_shape))
-            i += 1
-
-            if max_img_num != None:
-                if i == max_img_num:
-                    break
-
-    curr_x.shape = (i, img_shape[0], img_shape[1], img_shape[2])
-
-    return curr_x
-
-
-################################################################################
 # --------------------------------- for predict on image -----------------------
 ################################################################################
 def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=255, path_out_dir=None):
@@ -121,31 +55,36 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
            full_img, draw_image
 
 
-def get_data_from_json_list(json_list, ex_shape, class_num):
+def get_data_from_json_list(json_list, ex_shape):
     test_num = 0
     x_train = np.empty(0, dtype='uint8')
     y_train = np.empty(0, dtype='uint8')
-    class_1_num = class_2_num = 0
-    img_shape = (0, 0, 0)
+    classes = None
     for train_json in json_list:
-        cur_class_1_num, cur_class_2_num, img_shape, curr_x_train, curr_y_train = json_load(train_json)
+        cur_classes, img_shape, curr_x_train, curr_y_train = json_train_load(train_json)
+        if classes is None:
+            classes = cur_classes
+        else:
+            for key in classes.keys():
+                if classes[key]['value'] == cur_classes[key]['value']:
+                    classes[key]['num'] += cur_classes[key]['num']
+                else:
+                    raise Exception("cur_classes.key.value = %s" % str(cur_classes[key]['value']))
         x_train = np.append(x_train, curr_x_train)
         y_train = np.append(y_train, curr_y_train)
         test_num += curr_y_train.shape[0]
-        class_1_num += cur_class_1_num
-        class_2_num += cur_class_2_num
     x_train.shape = (test_num, ex_shape[0], ex_shape[1], ex_shape[2])
-    y_train.shape = (test_num, class_num)
+    y_train.shape = (test_num, len(classes))
 
-    return class_1_num, class_2_num, img_shape, x_train, y_train
+    return classes, x_train, y_train
 
 
-def json_create(path, cropped_data, y_data, img_shape, class_1_num, class_2_num):
+def json_train_create(path, cropped_data, y_data, img_shape, classes):
     if cropped_data["x_data"].shape[0] != y_data.shape[0]:
         raise Exception("bad shape")
     with open(path, "w") as fp:
         json.dump(
-            {"class_1_num": class_1_num, "class_2_num": class_2_num, "img_shape": img_shape,
+            {"classes": classes, "img_shape": img_shape,
              "x_data": cropped_data["x_data"].tolist(), "y_data": y_data.tolist(),
              "longitudes": cropped_data["longitudes"], "latitudes": cropped_data["latitudes"]}, fp)
         fp.close()
@@ -153,62 +92,72 @@ def json_create(path, cropped_data, y_data, img_shape, class_1_num, class_2_num)
     pass
 
 
-def json_load(path):
+def json_train_load(path):
     with open(path, "r") as fp:
         data_dict = json.load(fp)
         fp.close()
-        return data_dict.get("class_1_num"), data_dict.get("class_2_num"), data_dict.get("img_shape"), \
-               np.array(data_dict.get("x_data")), np.array(data_dict.get("y_data"))
+        return data_dict["classes"], data_dict["img_shape"], \
+               np.array(data_dict["x_data"]), np.array(data_dict["y_data"])
 
 
 ################################################################################
 # --------------------------------- multiple class -----------------------------
 ################################################################################
-
 def multiple_class_examples(x_train, y_train, class_for_multiple,
                             use_noise=False, intensity_noise_list=(50,), use_deform=False, k_deform_list=(0.5,),
                             max_class_num=None):
-    class_for_multiple_examples = np.empty(0)
-    i = 0
-    class_2_num = 0
-    for y in y_train:
+    original_len = len(y_train)
+
+    class_for_multiple_examples = np.empty(0, dtype='uint8')
+    class_for_mult_num = 0
+
+    for i, y in enumerate(y_train):
         if ((y.__eq__(class_for_multiple)).all()):
             class_for_multiple_examples = np.append(class_for_multiple_examples, x_train[i])
-            class_2_num += 1
-        i += 1
+            class_for_mult_num += 1
 
-    class_for_multiple_examples.shape = (class_2_num, x_train.shape[1], x_train.shape[2], x_train.shape[3])
+    class_for_multiple_examples.shape = (class_for_mult_num, x_train.shape[1], x_train.shape[2], x_train.shape[3])
 
-    class_1_num = y_train.shape[0] - class_2_num
-    class_multiplied_result = np.empty(0)
-    class_multiplayer = 1
+    max_new_examples_num = max_class_num - class_for_mult_num
+    new_examples_num = 0
+
+    x_new_examples = np.empty(0, dtype='uint8')
+
+    stop_augment = False
     # --------------- make noised examples ----------------------------------
     if use_noise:
         for intensity in intensity_noise_list:
-            class_multiplayer += 1
+            if stop_augment:
+                break
             for multiple_ex in class_for_multiple_examples:
-                class_multiplied_result = \
-                    np.append(class_multiplied_result, img_pr.noise_arr(arr=multiple_ex.flatten(), intensity=intensity))
-
+                if new_examples_num < max_new_examples_num:
+                    x_new_examples = \
+                        np.append(x_new_examples, img_pr.noise_arr(arr=multiple_ex.flatten(), intensity=intensity))
+                    new_examples_num += 1
+                else:
+                    stop_augment = True
+                    break
     # --------------- make deformed examples ----------------------------------
     if use_deform:
         for k in k_deform_list:
-            class_multiplayer += 1
+            if stop_augment:
+                break
             for multiple_ex in class_for_multiple_examples:
-                class_multiplied_result = \
-                    np.append(class_multiplied_result, img_pr.deform_arr(arr=multiple_ex, k=k, n=0, m=x_train.shape[1]))
+                if new_examples_num < max_new_examples_num:
+                    x_new_examples = \
+                        np.append(x_new_examples, img_pr.deform_arr(arr=multiple_ex, k=k, n=0, m=x_train.shape[1]))
+                    new_examples_num += 1
+                else:
+                    stop_augment = True
+                    break
 
     # ---------------  join arrays -------------------------------------------
-    x_train = np.append(x_train, class_multiplied_result)
-    for i in range(0, class_2_num * (class_multiplayer - 1)):
+    x_train = np.append(x_train, x_new_examples)
+    for i in range(new_examples_num):
         y_train = np.append(y_train, class_for_multiple)
 
-    x_train.shape = (class_1_num + class_2_num * class_multiplayer, 32, 32, 3)
-    y_train.shape = (class_1_num + class_2_num * class_multiplayer, 2)
-
-    if max_class_num is not None:
-        if x_train.shape[0] > max_class_num:
-            return x_train[0:max_class_num], y_train[0:max_class_num]
+    x_train.shape = (original_len + new_examples_num, 32, 32, 3)
+    y_train.shape = (original_len + new_examples_num, len(class_for_multiple))
 
     return x_train, y_train
 
