@@ -66,7 +66,7 @@ def unison_shuffled_copies(a, b):
 
 def get_train_and_test(x_data, y_data, classes, validation_split):
     test_size = int(len(x_data) * validation_split)
-    if test_size % 2 != 0:
+    while test_size % len(classes.keys()) != 0:
         test_size += 1
     train_size = len(x_data) - test_size
 
@@ -157,23 +157,7 @@ def main():
     # ----------------------- set data params ---------------------------
     #####################################################################
     ex_shape = (32, 32, 3)
-    class_num = 2
     model, json_list, evaluate_list, new_model_type = parse_args_for_train()
-
-    #####################################################################
-    # ----------------------- model initializing ------------------------
-    #####################################################################
-    if model is None:
-        if new_model_type.lower() == 'vgg16':
-            model = get_VGG16(ex_shape, class_num)
-            print("new VGG16 model created\n")
-            new_model_type = 'VGG16'
-        else:
-            model = get_CNN(ex_shape, class_num)
-            print("new CNN model created\n")
-            new_model_type = 'CNN'
-
-    plot_model(model, show_shapes=True, to_file='model.png')
 
     #####################################################################
     # ----------------------- data initializing --------------------------
@@ -184,10 +168,10 @@ def main():
     eval = {}
 
     train['classes'], train["x"], train["y"] = \
-        dmk.get_data_from_json_list(json_list, ex_shape, class_num)
+        dmk.get_data_from_json_list(json_list, ex_shape)
 
     eval['classes'], eval["x"], eval["y"] = \
-        dmk.get_data_from_json_list(evaluate_list, ex_shape, class_num)
+        dmk.get_data_from_json_list(evaluate_list, ex_shape)
 
     eval['x'] = np.array(eval['x'], dtype='uint8')
 
@@ -200,6 +184,21 @@ def main():
     print("train = %s" % str(train['classes']))
     print("test  = %s" % str(test['classes']))
     print("eval  = %s" % str(eval['classes']))
+
+    #####################################################################
+    # ----------------------- model initializing ------------------------
+    #####################################################################
+    if model is None:
+        if new_model_type.lower() == 'vgg16':
+            model = get_VGG16(ex_shape, len(train['classes'].keys()))
+            print("new VGG16 model created\n")
+            new_model_type = 'VGG16'
+        else:
+            model = get_CNN(ex_shape, len(train['classes'].keys()))
+            print("new CNN model created\n")
+            new_model_type = 'CNN'
+
+    plot_model(model, show_shapes=True, to_file='model.png')
 
     #####################################################################
     # ----------------------- set train params --------------------------
@@ -322,20 +321,6 @@ def main():
                                                show=history_show,
                                                save=False
                                                )
-
-        predict_result = predict_and_draw_on_data(
-            model=model,
-            x=train['x'][0:MAX_DRAW_IMG_SIZE],
-            y=train['y'][0:MAX_DRAW_IMG_SIZE]
-        )
-
-        print("class_1_ans = %d, class_2_ans = %d\nright = %d (%.4f)" %
-              (predict_result['class_1_ans'],
-               predict_result['class_2_ans'],
-               predict_result['right_ans'],
-               predict_result['right_ans'] / train['x'].shape[0]
-               )
-              )
 
         print("epochs: %d - %d" % (epochs_sum - epochs, epochs_sum))
 

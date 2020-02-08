@@ -55,7 +55,7 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
            full_img, draw_image
 
 
-def get_data_from_json_list(json_list, ex_shape, class_num):
+def get_data_from_json_list(json_list, ex_shape):
     test_num = 0
     x_train = np.empty(0, dtype='uint8')
     y_train = np.empty(0, dtype='uint8')
@@ -66,16 +66,15 @@ def get_data_from_json_list(json_list, ex_shape, class_num):
             classes = cur_classes
         else:
             for key in classes.keys():
-                if (classes[key]['value'] == cur_classes[key]['value']).all():
+                if classes[key]['value'] == cur_classes[key]['value']:
                     classes[key]['num'] += cur_classes[key]['num']
                 else:
                     raise Exception("cur_classes.key.value = %s" % str(cur_classes[key]['value']))
-
         x_train = np.append(x_train, curr_x_train)
         y_train = np.append(y_train, curr_y_train)
         test_num += curr_y_train.shape[0]
     x_train.shape = (test_num, ex_shape[0], ex_shape[1], ex_shape[2])
-    y_train.shape = (test_num, class_num)
+    y_train.shape = (test_num, len(classes))
 
     return classes, x_train, y_train
 
@@ -158,7 +157,7 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
         y_train = np.append(y_train, class_for_multiple)
 
     x_train.shape = (original_len + new_examples_num, 32, 32, 3)
-    y_train.shape = (original_len + new_examples_num, 2)
+    y_train.shape = (original_len + new_examples_num, len(class_for_multiple))
 
     return x_train, y_train
 

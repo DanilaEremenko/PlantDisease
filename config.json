@@ -1,8 +1,10 @@
 {
 
   "classes": {
-    "potato": {"value":[0,1]},
-    "earth": {"value":[1,0]}
+    "earth": {"value":[1,0,0]},
+    "potato_leaf": {"value":[0,1,0]},
+    "potato_flower": {"value": [0,0,1]}
+
   },
   "windows_shape": [32,32,3]
 }
