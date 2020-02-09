@@ -56,7 +56,7 @@ class WindowClassificationPicture(WindowInterface):
         self.img_path = self.choose_picture()
         self.img_name = os.path.splitext(self.img_path)[0]
 
-        self.window_shape = config_dict['windows_shape']
+        self.window_shape = config_dict['window_shape']
         self.classes = config_dict['classes']
 
         self._init_hbox_control()

@@ -6,5 +6,5 @@
     "potato_flower": {"value": [0,0,1]}
 
   },
-  "windows_shape": [32,32,3]
+  "window_shape": [32,32,3]
 }
