@@ -106,19 +106,23 @@ class WindowMultipleExamples(WindowInterface):
         self.quit_default()
 
     def multiple_pressed(self):
-        print("---------------------------------")
         for key, value in self.classes.items():
             if self.classes[key]['num'] < self.max_class['num']:
+                old_class_size = len(self.x_data)
                 self.x_data, self.y_data = dmk.multiple_class_examples(x_train=self.x_data, y_train=self.y_data,
                                                                        class_for_multiple=self.classes[key]['value'],
                                                                        use_noise=False,
                                                                        intensity_noise_list=intensity_noise_list,
                                                                        use_deform=True, k_deform_list=k_deform_list,
                                                                        max_class_num=self.max_class['num'])
+
+                new_ex_num = len(self.x_data) - old_class_size
+                print('%s : generated %d new examples' % (key, new_ex_num))
                 self.classes[key]['num'] = 0
                 for y in self.y_data:
                     if ((y.__eq__(self.classes[key]['value'])).all()):
                         self.classes[key]['num'] += 1
 
             else:
-                print("%s class  = %s (max_class_num = %d)" % (key, self.classes[key]['num'], self.max_class['num']))
+                print('%s : generated %d new examples (class_size == max_size)' % (key, 0))
+        print("---------------------------------")

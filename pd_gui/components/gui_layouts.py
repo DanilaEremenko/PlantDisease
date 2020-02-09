@@ -54,8 +54,6 @@ class MyGridLayout(QVBoxLayout):
         self.scroll_area.setFixedWidth(windows_width)
         self.scroll_area.setFixedHeight(window_height)
 
-        print("image updated")
-
     def quit_pressed(self):
         QtCore.QCoreApplication.instance().quit()
         pass
