@@ -1,3 +1,5 @@
+import json
+
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouts import MyGridLayout
@@ -23,6 +25,13 @@ class WindowMultipleExamples(WindowInterface):
 
     def __init__(self, model, x_data, y_data, classes):
         super(WindowMultipleExamples, self).__init__()
+
+        while True:
+            with open(self.choose_json(content_title='config data')) as config_fp:
+                config_dict = json.load(config_fp)
+                if 'qt_label_size' in config_dict.keys():
+                    self.label_size = config_dict['qt_label_size']
+                    break
 
         self.model = model
         self.x_data = x_data
@@ -71,7 +80,8 @@ class WindowMultipleExamples(WindowInterface):
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text='%s %.2f' % (answer['key'], answer['value'])
+                    text='%s %.2f' % (answer['key'], answer['value']),
+                    label_size=self.label_size
                 )
             )
         rect_len = int(np.sqrt(len(self.x_data)))
