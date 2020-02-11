@@ -26,12 +26,8 @@ class WindowMultipleExamples(WindowInterface):
     def __init__(self, model, x_data, y_data, classes):
         super(WindowMultipleExamples, self).__init__()
 
-        while True:
-            with open(self.choose_json(content_title='config data')) as config_fp:
-                config_dict = json.load(config_fp)
-                if 'qt_label_size' in config_dict.keys():
-                    self.label_size = config_dict['qt_label_size']
-                    break
+        config_dict = self.load_dict_from_json_with_keys(key_list=['qt_label_size'])
+        self.label_size = config_dict['qt_label_size']
 
         self.model = model
         self.x_data = x_data

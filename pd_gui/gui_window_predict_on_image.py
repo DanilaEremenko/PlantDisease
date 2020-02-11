@@ -44,6 +44,9 @@ class WindowPredictOnImage(WindowInterface):
     def __init__(self):
         super(WindowPredictOnImage, self).__init__()
 
+        config_dict = self.load_dict_from_json_with_keys(key_list=['qt_label_size'])
+        self.label_size = config_dict['qt_label_size']
+
         self.choose_NN()
         self._parse_image()
 
@@ -90,7 +93,8 @@ class WindowPredictOnImage(WindowInterface):
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text='%s %.2f' % (answer['key'], answer['value'])
+                    text='%s %.2f' % (answer['key'], answer['value']),
+                    label_size=self.label_size
                 )
             )
         rect_len = int(np.sqrt(len(self.x_data)))
