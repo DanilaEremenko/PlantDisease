@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 
 
 class TrainExLabel(QWidget):
-    def __init__(self, x_data, classes):
+    def __init__(self, x_data, classes, label_size):
         super(TrainExLabel, self).__init__()
 
         self.class_name = list(classes.keys())[0]
@@ -12,11 +12,11 @@ class TrainExLabel(QWidget):
         self.x_data = x_data
         self.class_num = len(classes)
         self.img_label = QLabel()
-
-        self.img_label.setPixmap(QPixmap.fromImage(QImage(self.x_data, x_data.shape[0], x_data.shape[1],
-                                                          QImage.Format_RGB888)))
-
-        self.resize(x_data.shape[0], x_data.shape[1])
+        self.img_label.setPixmap(
+            QPixmap
+                .fromImage(QImage(self.x_data, x_data.shape[0], x_data.shape[1], QImage.Format_RGB888))
+                .scaled(label_size[0], label_size[1])
+        )
 
         self.cb = QComboBox()
         self.cb.addItems(list(classes.keys()))

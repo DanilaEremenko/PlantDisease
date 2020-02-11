@@ -58,6 +58,7 @@ class WindowClassificationPicture(WindowInterface):
 
         self.window_shape = config_dict['window_shape']
         self.classes = config_dict['classes']
+        self.label_size = config_dict['qt_label_size']
 
         self._init_hbox_control()
         self._init_images()
@@ -87,7 +88,8 @@ class WindowClassificationPicture(WindowInterface):
             label_list.append(
                 TrainExLabel(
                     x_data=x,
-                    classes=self.classes
+                    classes=self.classes,
+                    label_size=self.label_size
                 )
             )
 
