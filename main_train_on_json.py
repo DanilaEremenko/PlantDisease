@@ -202,6 +202,7 @@ def main():
             h5_path=config_dict['model']['exist']['weights'],
             verbose=True
         )
+        new_model_type = 'NN'
     elif config_dict['model']['new']['type'] == 'vgg16':
         model = get_VGG16(ex_shape, len(train['classes'].keys()))
         print("new VGG16 model created\n")
