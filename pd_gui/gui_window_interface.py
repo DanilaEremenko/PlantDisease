@@ -8,9 +8,9 @@ class WindowInterface(QWidget):
             QtWidgets.QFileDialog.getOpenFileName(self, "Open *.png, *.jpg file with potato field", None,
                                                   "*.png *.PNG *.jpg *.JPG")[0])
 
-    def choose_json(self):
+    def choose_json(self, content_title):
         return str(
-            QtWidgets.QFileDialog.getOpenFileName(self, "Open *.json file with train data field", None,
+            QtWidgets.QFileDialog.getOpenFileName(self, "Open *.json file with %s" % content_title, None,
                                                   "*.json *.JSON")[0])
 
     def _init_hbox_control(self):

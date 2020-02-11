@@ -1,3 +1,5 @@
+import json
+
 from PyQt5 import QtWidgets
 
 from pd_gui.components.gui_buttons import ControlButton
@@ -49,9 +51,12 @@ class WindowClassificationPicture(WindowInterface):
                 )
         print("ok")
 
-    def __init__(self, config_dict):
+    def __init__(self):
         super(WindowClassificationPicture, self).__init__()
         self.setWindowTitle("Plant Disease Recognizer")
+
+        with open(self.choose_json(content_title='config data')) as config_fp:
+            config_dict = json.load(config_fp)
 
         self.img_path = self.choose_picture()
         self.img_name = os.path.splitext(self.img_path)[0]

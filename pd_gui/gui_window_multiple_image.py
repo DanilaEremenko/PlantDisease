@@ -46,7 +46,10 @@ class WindowMultipleExamples(WindowInterface):
     def __init__(self):
         super(WindowMultipleExamples, self).__init__()
 
-        json_for_multiple = self.choose_json()
+        with open(self.choose_json(content_title='config data')) as config_fp:
+            self.label_size = json.load(config_fp)['qt_label_size']
+
+        json_for_multiple = self.choose_json(content_title='train_data')
         self.json_name = os.path.splitext(json_for_multiple)[0]
 
         self._init_data_from_json(json_for_multiple)
@@ -80,7 +83,8 @@ class WindowMultipleExamples(WindowInterface):
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text=add_spaces(get_key_by_value(value=y), new_size=self.max_key_len)
+                    text=add_spaces(get_key_by_value(value=y), new_size=self.max_key_len),
+                    label_size=self.label_size
                 )
             )
         rect_len = int(np.sqrt(len(self.x_data)))

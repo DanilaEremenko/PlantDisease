@@ -31,7 +31,7 @@ class WindowPredictOnImage(WindowInterface):
         self.x_data = x_cropped['x_data']
 
     def _init_classes(self):
-        with open(os.path.abspath('config.json')) as config_fp:
+        with open(os.path.abspath('config_gui.json')) as config_fp:
             config_dict = json.load(config_fp)
             self.classes = config_dict['classes']
 
