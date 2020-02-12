@@ -158,7 +158,7 @@ def main():
     # ----------------------- set data params ---------------------------
     #####################################################################
     ex_shape = (32, 32, 3)
-    if len(sys.argv) < 1:
+    if len(sys.argv) < 2:
         raise Exception('Path to config_train should be passed')
     with open(sys.argv[1]) as config_fp:
         config_dict = json.load(config_fp)
