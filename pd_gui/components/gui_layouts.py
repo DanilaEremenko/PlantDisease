@@ -23,6 +23,9 @@ class MyGridLayout(QVBoxLayout):
         self.setContentsMargins(0, 0, 0, 0)
         self.setSpacing(0)
 
+        self.max_width = 1280
+        self.max_height = 960
+
     def clear(self):
         for hbox in self.hbox_image_list:
             hbox.setParent(None)
@@ -51,8 +54,8 @@ class MyGridLayout(QVBoxLayout):
             self.label_layout.addLayout(hbox_line)
 
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFixedWidth(windows_width)
-        self.scroll_area.setFixedHeight(window_height)
+        self.scroll_area.setFixedWidth(min(windows_width, self.max_width))
+        self.scroll_area.setFixedHeight(min(window_height, self.max_height))
 
     def quit_pressed(self):
         QtCore.QCoreApplication.instance().quit()
