@@ -13,7 +13,7 @@ class ImgSizeSlider(QSlider):
             raise Exception("orientation can be vertical or horizontal")
         step = int((max_val - min_val) / step_num)
 
-        self.val_list = np.arange(min_val, max_val + 1, step)
+        self.val_list = np.linspace(min_val, max_val, step_num)
         self.setMinimum(min_val)
         self.setMaximum(max_val)
         self.setTickPosition(QSlider.TicksBelow)
@@ -24,9 +24,9 @@ class ImgSizeSlider(QSlider):
         for i in range(0, len(self.val_list) - 1):
             if self.val_list[i] <= value < self.val_list[i + 1]:
                 self.setValue(self.val_list[i])
-                print("Slider Value = %d" % self.value())
+                # print("Slider Value = %d" % self.value())
                 return
             elif self.val_list[i] < value <= self.val_list[i + 1]:
                 self.setValue(self.val_list[i + 1])
-                print("Slider Value = %d" % self.value())
+                # print("Slider Value = %d" % self.value())
                 return
