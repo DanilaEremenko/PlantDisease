@@ -1,11 +1,15 @@
-from PyQt5.QtWidgets import QLabel, QWidget, QComboBox, QHBoxLayout
+from pd_lib import img_proc
+from PyQt5.QtWidgets import QLabel, QWidget, QComboBox, QHBoxLayout, QMenu
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt
 
 
-class TrainExLabel(QWidget):
+##########################################################
+# ---------------- train data validation -----------------
+##########################################################
+class ApartTrainExLabel(QWidget):
     def __init__(self, x_data, classes, label_size):
-        super(TrainExLabel, self).__init__()
+        super(ApartTrainExLabel, self).__init__()
 
         self.class_name = list(classes.keys())[0]
 
@@ -28,14 +32,60 @@ class TrainExLabel(QWidget):
 
         self.setLayout(layout)
 
-    def mousePressEvent(self, ev):
-        self.change_type()
-
     def change_type(self):
-        self.class_name = self.cb.currentText()
+        self.class_name = self.currentText()
         print("type changed to %s" % self.class_name)
 
 
+##########################################################
+# ---------------- train data initializing ---------------
+##########################################################
+class MergedTrainExLabel(QLabel):
+    def __init__(self, x_data, classes, label_size):
+        super(MergedTrainExLabel, self).__init__()
+
+        self.class_names = list(classes.keys())
+        self.class_name = None
+
+        self.x_data = x_data
+        self.class_num = len(classes)
+        self.setPixmap(
+            QPixmap
+                .fromImage(
+                QImage(
+                    img_proc.draw_rect_on_array(
+                        img_arr=self.x_data.copy(),
+                        points=(1, 1, x_data.shape[0] - 1, x_data.shape[1] - 1),
+                        color=255
+                    ),
+                    x_data.shape[0],
+                    x_data.shape[1],
+                    QImage.Format_RGB888
+                )
+            ).scaled(label_size[0], label_size[1])
+        )
+
+    def contextMenuEvent(self, event):
+        right_click_menu = QMenu(self)
+        actions = []
+
+        def addMenuAction(name):
+            actions.append(right_click_menu.addAction(name))
+            actions[-1].triggered.connect(lambda: self.change_type(name))
+
+        for class_name in self.class_names:
+            addMenuAction(class_name)
+
+        right_click_menu.exec_(event.globalPos())
+
+    def change_type(self, class_name):
+        self.class_name = class_name
+        print("type changed to %s" % self.class_name)
+
+
+##########################################################
+# ---------------- check NN prediction -------------------
+##########################################################
 class ImageTextLabel(QWidget):
     def __init__(self, x, text, label_size):
         super(ImageTextLabel, self).__init__()
