@@ -1,10 +1,10 @@
 import json
 
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import  QMainWindow
 
 
-class WindowInterface(QWidget):
+class WindowInterface(QMainWindow):
     def choose_picture(self):
         return str(
             QtWidgets.QFileDialog.getOpenFileName(self, "Open *.png, *.jpg file with potato field", None,

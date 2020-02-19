@@ -1,27 +1,33 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QScrollArea, QGroupBox
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QScrollArea, QGroupBox, QWidget
 
 
-class MyGridLayout(QVBoxLayout):
+class MyGridWidget(QWidget):
     def __init__(self, hbox_control):
-        super(MyGridLayout, self).__init__()
+        super(MyGridWidget, self).__init__()
         self.hbox_image_list = []
         self.label_list = []
 
-        self.label_layout = QVBoxLayout()
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.label_layout = QVBoxLayout(self)
+        self.label_layout.setContentsMargins(0, 0, 0, 0)
+        self.label_layout.setSpacing(0)
+        self.label_layout.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+
         self.groubBox = QGroupBox()
         self.scroll_area = QScrollArea()
         self.groubBox.setLayout(self.label_layout)
         self.scroll_area.setWidget(self.groubBox)
-        self.addWidget(self.scroll_area)
-        self.addLayout(self.label_layout)
+        self.layout.addWidget(self.scroll_area)
+        self.layout.addLayout(self.label_layout)
 
         self.hbox_control = hbox_control
-        self.addLayout(self.hbox_control)
+        self.layout.addLayout(self.hbox_control)
 
-        self.addStretch(1)
-        self.setContentsMargins(0, 0, 0, 0)
-        self.setSpacing(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
 
         self.max_width = 1280
         self.max_height = 960
@@ -42,16 +48,23 @@ class MyGridLayout(QVBoxLayout):
         # -------------------- init image --------------------------
         i = 0
         for y in range(0, y_len):
-            hbox_new = QHBoxLayout()
-            hbox_new.addStretch(1)
+            hbox_line = QHBoxLayout()
+            hbox_line.setSpacing(0)
+            hbox_line.setContentsMargins(0, 0, 0, 0)
             for x in range(0, x_len):
-                hbox_new.addWidget(self.label_list[i])
+                hbox_line.addWidget(self.label_list[i])
                 i += 1
-            self.hbox_image_list.append(hbox_new)
-
-        # -------------------- add boxes --------------------------
-        for hbox_line in self.hbox_image_list:
+            self.hbox_image_list.append(hbox_line)
             self.label_layout.addLayout(hbox_line)
+
+        last_hbox_line = QHBoxLayout()
+        last_hbox_line.setSpacing(0)
+        last_hbox_line.setContentsMargins(0, 0, 0, 0)
+        while i < len(label_list):
+            last_hbox_line.addWidget(self.label_list[i])
+            i += 1
+        self.hbox_image_list.append(last_hbox_line)
+        self.label_layout.addLayout(last_hbox_line)
 
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFixedWidth(min(windows_width, self.max_width))

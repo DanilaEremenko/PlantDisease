@@ -3,7 +3,7 @@ import os
 
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
-from pd_gui.components.gui_layouts import MyGridLayout
+from pd_gui.components.gui_layouts import MyGridWidget
 
 from pd_lib.addition import get_full_model
 from pd_lib import data_maker as dmk
@@ -26,7 +26,7 @@ class WindowPredictOnImage(WindowInterface):
     def _parse_image(self):
         self.picture_path = self.choose_picture()
         x_cropped, full_img, draw_img = dmk.get_x_from_croped_img(path_img_in=self.picture_path,
-                                                                  img_shape=(1024, 1024),
+                                                                  img_thumb=(1024, 1024),
                                                                   window_shape=(32, 32, 3))
         self.x_data = x_cropped['x_data']
 
@@ -53,8 +53,8 @@ class WindowPredictOnImage(WindowInterface):
         self._init_classes()
         self._define_max_key_len()
 
-        self.main_layout = MyGridLayout(hbox_control=self.hbox_control)
-        self.setLayout(self.main_layout)
+        self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
+        self.setCentralWidget(self.main_layout)
         self.update_main_layout()
         self.show()
 

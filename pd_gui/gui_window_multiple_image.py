@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
-from pd_gui.components.gui_layouts import MyGridLayout
+from pd_gui.components.gui_layouts import MyGridWidget
 
 import pd_lib.data_maker as dmk
 from .gui_window_interface import WindowInterface
@@ -55,8 +55,8 @@ class WindowMultipleExamples(WindowInterface):
         self._init_data_from_json(json_for_multiple)
         self._define_max_class()
 
-        self.main_layout = MyGridLayout(hbox_control=self.hbox_control)
-        self.setLayout(self.main_layout)
+        self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
+        self.setCentralWidget(self.main_layout)
 
         self.update_main_layout()
         self.show()
@@ -101,7 +101,7 @@ class WindowMultipleExamples(WindowInterface):
         print("Save to %s" % out_json_path)
         dmk.json_train_create(
             path=out_json_path,
-            cropped_data={"x_data": self.x_data, "longitudes": self.longitudes, "latitudes": self.latitudes},
+            x_data_full={"x_data": self.x_data, "longitudes": self.longitudes, "latitudes": self.latitudes},
             y_data=self.y_data,
             img_shape=None,
             classes=self.classes

@@ -2,7 +2,7 @@ import json
 
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
-from pd_gui.components.gui_layouts import MyGridLayout
+from pd_gui.components.gui_layouts import MyGridWidget
 
 from .gui_window_interface import WindowInterface
 from pd_gui.components.gui_labels import ImageTextLabel
@@ -36,8 +36,8 @@ class WindowMultipleExamples(WindowInterface):
 
         self._define_max_key_len()
 
-        self.main_layout = MyGridLayout(hbox_control=self.hbox_control)
-        self.setLayout(self.main_layout)
+        self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
+        self.setCentralWidget(self.main_layout)
         self.update_main_layout()
         self.show()
 
