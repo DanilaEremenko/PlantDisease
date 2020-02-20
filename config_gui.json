@@ -6,7 +6,7 @@
     "potato_flower" : {"value" : [0, 0, 1]}
 
   },
-  "window_shape"  : [32, 32, 3],
-  "qt_label_size" : [64, 64],
-  "img_thumb": [2048, 2048]
+  "window_shape"  : [256, 256, 3],
+  "qt_label_size" : [256, 256],
+  "img_thumb": [8192, 8192]
 }
