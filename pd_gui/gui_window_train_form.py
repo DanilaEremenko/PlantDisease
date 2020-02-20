@@ -59,7 +59,7 @@ class WindowClassificationPicture(WindowInterface):
                 step=1.0,
                 color=COLOR_GOOD,
                 verbose=True,
-                # img_thumb=(2500, 2500)
+                img_thumb=self.img_thumb
             )
         print("ok")
 
@@ -76,6 +76,7 @@ class WindowClassificationPicture(WindowInterface):
         self.window_shape = config_dict['window_shape']
         self.classes = config_dict['classes']
         self.label_size = config_dict['qt_label_size']
+        self.img_thumb = config_dict['img_thumb']
 
         self._init_hbox_control()
         self._init_images()

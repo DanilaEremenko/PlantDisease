@@ -25,15 +25,19 @@ class WindowPredictOnImage(WindowInterface):
 
     def _parse_image(self):
         self.picture_path = self.choose_picture()
-        x_cropped, full_img, draw_img = dmk.get_x_from_croped_img(path_img_in=self.picture_path,
-                                                                  img_thumb=(1024, 1024),
-                                                                  window_shape=(32, 32, 3))
+        x_cropped, full_img, draw_img = dmk.get_x_from_croped_img(
+            path_img_in=self.picture_path,
+            window_shape=(32, 32, 3),
+            img_thumb=self.img_thumb
+
+        )
         self.x_data = x_cropped['x_data']
 
     def _init_classes(self):
         with open(os.path.abspath('config_gui.json')) as config_fp:
             config_dict = json.load(config_fp)
             self.classes = config_dict['classes']
+            self.img_thumb = config_dict['img_thumb']
 
     def _define_max_key_len(self):
         self.max_key_len = 0
@@ -48,10 +52,10 @@ class WindowPredictOnImage(WindowInterface):
         self.label_size = config_dict['qt_label_size']
 
         self.choose_NN()
-        self._parse_image()
-
         self._init_classes()
         self._define_max_key_len()
+
+        self._parse_image()
 
         self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
         self.setCentralWidget(self.main_layout)

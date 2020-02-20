@@ -7,5 +7,6 @@
 
   },
   "window_shape"  : [32, 32, 3],
-  "qt_label_size" : [64, 64]
+  "qt_label_size" : [64, 64],
+  "img_thumb": [2048, 2048]
 }
