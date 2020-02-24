@@ -49,20 +49,28 @@ class MergedTrainExLabel(QLabel):
 
         self.x_data = x_data
         self.class_num = len(classes)
+
+        self.label_size = label_size
+        self.zoom = 1
+        self.updateImage(self.label_size)
+
+    def updateImage(self, label_size):
+        self.label_size = label_size
+
         self.setPixmap(
             QPixmap
                 .fromImage(
                 QImage(
                     img_proc.draw_rect_on_array(
                         img_arr=self.x_data.copy(),
-                        points=(1, 1, x_data.shape[0] - 1, x_data.shape[1] - 1),
+                        points=(1, 1, self.x_data.shape[0] - 1, self.x_data.shape[1] - 1),
                         color=255
                     ),
-                    x_data.shape[0],
-                    x_data.shape[1],
+                    self.x_data.shape[0],
+                    self.x_data.shape[1],
                     QImage.Format_RGB888
                 )
-            ).scaled(label_size[0], label_size[1])
+            ).scaled(*list(map(lambda x: x * self.zoom, self.label_size)))
         )
 
     def contextMenuEvent(self, event):
@@ -81,6 +89,8 @@ class MergedTrainExLabel(QLabel):
     def change_type(self, class_name):
         self.class_name = class_name
         print("type changed to %s" % self.class_name)
+        self.zoom = 0.9
+        self.updateImage(label_size=self.label_size)
 
 
 ##########################################################
