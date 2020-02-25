@@ -122,8 +122,9 @@ class WindowClassificationPicture(WindowInterface):
     def okay_pressed(self):
 
         y_data = np.empty(0)
-        for key in self.classes.keys():
-            self.classes[key]['num'] = 0
+        for class_name in self.classes.keys():
+            for sub_class_name in self.classes[class_name]:
+                self.classes[class_name][sub_class_name]['num'] = 0
 
         # Now we're going to store only examples of diseased plants
         x_data_full = {
@@ -137,12 +138,16 @@ class WindowClassificationPicture(WindowInterface):
         for x, label in zip(self.x_data_full['x_data'], self.main_layout.label_list):
             if label.class_name is not None:
                 x_data_full['x_data'] = np.append(x_data_full['x_data'], x)
-                y_data = np.append(y_data, self.classes[label.class_name]['value'])
-                self.classes[label.class_name]['num'] += 1
+                y_data = np.append(y_data, self.classes[label.class_name][label.sub_class_name]['value'])
+                self.classes[label.class_name][label.sub_class_name]['num'] += 1
                 ex_num += 1
 
         x_data_full['x_data'].shape = (ex_num, *self.window_shape)
-        y_data.shape = (len(x_data_full['x_data']), len(self.classes))
+
+        class_num = 0
+        for class_name in self.classes.keys():
+            class_num += len(self.classes[class_name])
+        y_data.shape = (len(x_data_full['x_data']), class_num)
 
         dmk.json_train_create(
             path="%s.json" % self.img_name,

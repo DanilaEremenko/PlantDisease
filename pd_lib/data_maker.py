@@ -106,7 +106,7 @@ def json_train_load(path):
 def multiple_class_examples(x_train, y_train, class_for_multiple,
                             use_noise=False, intensity_noise_list=(50,), use_deform=False, k_deform_list=(0.5,),
                             max_class_num=None):
-    original_len = len(y_train)
+    x_original_shape = x_train.shape
 
     class_for_multiple_examples = np.empty(0, dtype='uint8')
     class_for_mult_num = 0
@@ -156,8 +156,8 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
     for i in range(new_examples_num):
         y_train = np.append(y_train, class_for_multiple)
 
-    x_train.shape = (original_len + new_examples_num, 32, 32, 3)
-    y_train.shape = (original_len + new_examples_num, len(class_for_multiple))
+    x_train.shape = (x_original_shape[0] + new_examples_num, *x_original_shape[1:])
+    y_train.shape = (x_original_shape[0] + new_examples_num, len(class_for_multiple))
 
     return x_train, y_train
 

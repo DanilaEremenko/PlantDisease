@@ -26,7 +26,12 @@ class WindowMultipleExamples(WindowInterface):
     def _init_data_from_json(self, json_for_multiple):
         with open(json_for_multiple) as train_json_fp:
             train_json = dict(json.load(train_json_fp))
-            self.classes = train_json['classes']
+
+            self.classes = {}
+            for class_name in train_json['classes'].keys():
+                for sub_class_name in train_json['classes'][class_name]:
+                    self.classes[sub_class_name] = train_json['classes'][class_name][sub_class_name]
+
             self.x_data = np.array(train_json["x_data"], dtype='uint8')
             self.y_data = np.array(train_json["y_data"])
             self.longitudes, self.latitudes = train_json["longitudes"], train_json["latitudes"]

@@ -44,11 +44,11 @@ class MergedTrainExLabel(QLabel):
     def __init__(self, x_data, classes, label_size):
         super(MergedTrainExLabel, self).__init__()
 
-        self.class_names = list(classes.keys())
+        self.classes = classes
         self.class_name = None
+        self.sub_class_name = None
 
         self.x_data = x_data
-        self.class_num = len(classes)
 
         self.label_size = label_size
         self.zoom = 1
@@ -57,17 +57,21 @@ class MergedTrainExLabel(QLabel):
     def updateImage(self, label_size):
         self.label_size = label_size
 
+        img_arr = self.x_data.copy()
+        for i in range(1, 3):
+            img_arr = img_proc.draw_rect_on_array(
+                img_arr=img_arr,
+                points=(i, i, self.x_data.shape[0] - i, self.x_data.shape[1] - i),
+                color=255
+            )
+
         self.setPixmap(
             QPixmap
                 .fromImage(
                 QImage(
-                    img_proc.draw_rect_on_array(
-                        img_arr=self.x_data.copy(),
-                        points=(1, 1, self.x_data.shape[0] - 1, self.x_data.shape[1] - 1),
-                        color=255
-                    ),
-                    self.x_data.shape[0],
-                    self.x_data.shape[1],
+                    img_arr,
+                    img_arr.shape[0],
+                    img_arr.shape[1],
                     QImage.Format_RGB888
                 )
             ).scaled(*list(map(lambda x: x * self.zoom, self.label_size)))
@@ -76,19 +80,37 @@ class MergedTrainExLabel(QLabel):
     def contextMenuEvent(self, event):
         right_click_menu = QMenu(self)
         actions = []
+        added_menu = []
 
-        def addMenuAction(name):
-            actions.append(right_click_menu.addAction(name))
-            actions[-1].triggered.connect(lambda: self.change_type(name))
+        def addMenuAction(class_name, sub_class_name):
+            for rec_name in cur_rec_list:
+                if rec_name not in added_menu:
+                    right_click_ptr[0] = right_click_ptr[0].addMenu(rec_name)
+                    added_menu.append(rec_name)
 
-        for class_name in self.class_names:
-            addMenuAction(class_name)
+            actions.append(right_click_ptr[0].addAction(sub_class_name))
+            actions[-1].triggered.connect(lambda: self.change_type(class_name, sub_class_name))
+
+        def findValue(cur_sub_dict, key):
+            if 'value' not in cur_sub_dict:
+                right_click_ptr[0] = right_click_menu
+                cur_rec_list.append(key)
+                for next_key in cur_sub_dict.keys():
+                    findValue(cur_sub_dict[next_key], next_key)
+            else:
+                addMenuAction(cur_rec_list[0], key)
+
+        for top_class_key in self.classes.keys():
+            right_click_ptr = [right_click_menu]  # TODO so bad move
+            cur_rec_list = []
+            findValue(self.classes[top_class_key], top_class_key)
 
         right_click_menu.exec_(event.globalPos())
 
-    def change_type(self, class_name):
+    def change_type(self, class_name, sub_class_name):
         self.class_name = class_name
-        print("type changed to %s" % self.class_name)
+        self.sub_class_name = sub_class_name
+        print("type changed to '%s:%s'" % (self.class_name, self.sub_class_name))
         self.zoom = 0.9
         self.updateImage(label_size=self.label_size)
 
