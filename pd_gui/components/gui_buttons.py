@@ -1,3 +1,7 @@
+"""
+Custom PyQt5 GUI buttons
+"""
+
 from PyQt5.QtWidgets import QPushButton
 
 

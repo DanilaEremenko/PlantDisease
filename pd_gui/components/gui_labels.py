@@ -1,3 +1,7 @@
+"""
+Custom PyQt5 GUI labels
+"""
+
 from pd_lib import img_proc
 from PyQt5.QtWidgets import QLabel, QWidget, QComboBox, QHBoxLayout, QMenu
 from PyQt5.QtGui import QPixmap, QImage

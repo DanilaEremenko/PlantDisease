@@ -1,3 +1,7 @@
+"""
+PyQt GUI for main_data_augmentation.py
+"""
+
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouts import MyGridWidget

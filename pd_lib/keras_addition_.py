@@ -1,3 +1,7 @@
+"""
+Contains  functions-wrappers over keras for code readability
+"""
+
 # coding=utf-8
 from keras.models import model_from_json
 from pd_lib import img_proc as img_pr

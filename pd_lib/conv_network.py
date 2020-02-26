@@ -1,3 +1,7 @@
+"""
+Contains functions that return different CNN models
+"""
+
 from __future__ import print_function
 
 from keras.models import Sequential

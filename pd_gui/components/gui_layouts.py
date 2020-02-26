@@ -1,3 +1,7 @@
+"""
+Custom PyQt5.QWidget for cropped image visualizing and processing
+"""
+
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QScrollArea, QGroupBox, QWidget
 

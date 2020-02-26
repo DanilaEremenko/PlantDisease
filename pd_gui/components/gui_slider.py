@@ -1,3 +1,7 @@
+"""
+Custom PyQt5 GUI slider
+"""
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QSlider
 import numpy as np

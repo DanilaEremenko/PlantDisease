@@ -1,6 +1,10 @@
+"""
+Script for train data augmentation via PyQt GUI
+"""
+
 import sys
 from PyQt5 import QtWidgets
-from pd_gui.gui_window_multiple_image import WindowMultipleExamples
+from pd_gui.gui_data_augmentation import WindowMultipleExamples
 
 
 def main():

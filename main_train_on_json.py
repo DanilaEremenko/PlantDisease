@@ -1,8 +1,12 @@
+"""
+Script for train new or early saved NN models via UI CMD
+"""
+
 import argparse
 import json
 
 from pd_lib.conv_network import get_CNN, get_VGG16
-from pd_lib.addition import save_model_to_json, get_full_model
+from pd_lib.keras_addition_ import save_model_to_json, get_full_model
 from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
 from pd_lib.ui_cmd import get_input_int, get_stdin_answer
 
@@ -134,12 +138,12 @@ def predict_and_draw_on_data(model, x, y):
 
 def show_predict_on_window(model, x_data, y_data, classes):
     # TODO works incorrect
-    from pd_gui.gui_train_examine import WindowMultipleExamples
+    from pd_gui.gui_train_examine import WindowShowPredictions
     from PyQt5 import QtWidgets
 
     app = QtWidgets.QApplication(sys.argv)
 
-    window_class_pctr = WindowMultipleExamples(
+    window_class_pctr = WindowShowPredictions(
         model=model,
         x_data=x_data,
         y_data=y_data,

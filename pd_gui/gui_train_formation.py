@@ -1,3 +1,7 @@
+"""
+PyQt GUI for main_create_json_from_image.py
+"""
+
 import json
 
 from PyQt5 import QtWidgets
@@ -5,7 +9,6 @@ from PyQt5.QtWidgets import QAction
 
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_labels import MergedTrainExLabel
-from pd_gui.components.gui_colors import *
 from pd_gui.components.gui_layouts import MyGridWidget
 from pd_gui.gui_window_interface import WindowInterface
 
@@ -57,7 +60,7 @@ class WindowClassificationPicture(WindowInterface):
                 path_img_in=self.img_path,
                 window_shape=self.window_shape,
                 step=1.0,
-                color=COLOR_GOOD,
+                color=255,
                 verbose=True,
                 img_thumb=self.img_thumb
             )

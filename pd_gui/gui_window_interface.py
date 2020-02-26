@@ -1,7 +1,11 @@
+"""
+Parent abstract class for all PyQt5 Windows classes in .
+"""
+
 import json
 
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import  QMainWindow
+from PyQt5.QtWidgets import QMainWindow
 
 
 class WindowInterface(QMainWindow):

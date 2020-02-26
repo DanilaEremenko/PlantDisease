@@ -1,3 +1,7 @@
+"""
+Contains functions for image processing
+"""
+
 from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
 import numpy as np

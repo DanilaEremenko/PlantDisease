@@ -1,3 +1,7 @@
+"""
+Contains functions for train data formation and processing
+"""
+
 import numpy as np
 import os
 from PIL import Image

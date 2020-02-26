@@ -1,3 +1,7 @@
+"""
+Contains functions for plotting history of NN fitting
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 
