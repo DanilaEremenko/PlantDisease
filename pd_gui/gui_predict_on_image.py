@@ -1,3 +1,7 @@
+"""
+PyQt GUI for main_test_on_image.py
+"""
+
 import json
 import os
 
@@ -5,7 +9,7 @@ from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouts import MyGridWidget
 
-from pd_lib.addition import get_full_model
+from pd_lib.keras_addition_ import get_full_model
 from pd_lib import data_maker as dmk
 
 from .gui_window_interface import WindowInterface

@@ -1,3 +1,7 @@
+"""
+Contains functions for parsing geo metadata from images
+"""
+
 import datetime as dt
 from collections import OrderedDict
 from PIL.ExifTags import TAGS, GPSTAGS

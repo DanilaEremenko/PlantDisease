@@ -1,3 +1,8 @@
+"""
+Contains functions for interaction via cmd
+"""
+
+
 def get_stdin_answer(text):
     while True:
         res_text = input("%s[y/n]" % text)

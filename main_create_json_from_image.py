@@ -1,8 +1,10 @@
+"""
+Script for formation train data from image via PyQt GUI
+"""
+
 import sys
 from PyQt5 import QtWidgets
-from pd_gui.gui_window_train_form import WindowClassificationPicture
-import json
-import os
+from pd_gui.gui_train_formation import WindowClassificationPicture
 
 
 def main():

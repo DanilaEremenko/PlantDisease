@@ -1,4 +1,6 @@
-import json
+"""
+PyQt GUI for visualizing predictions of NN in main_train_on_json.py
+"""
 
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
@@ -10,7 +12,7 @@ from pd_gui.components.gui_labels import ImageTextLabel
 import numpy as np
 
 
-class WindowMultipleExamples(WindowInterface):
+class WindowShowPredictions(WindowInterface):
     def _init_hbox_control(self):
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_control.addStretch(1)
@@ -24,7 +26,7 @@ class WindowMultipleExamples(WindowInterface):
                 self.max_key_len = len(key)
 
     def __init__(self, model, x_data, y_data, classes):
-        super(WindowMultipleExamples, self).__init__()
+        super(WindowShowPredictions, self).__init__()
 
         config_dict = self.load_dict_from_json_with_keys(key_list=['qt_label_size'])
         self.label_size = config_dict['qt_label_size']
