@@ -40,6 +40,9 @@ class ApartTrainExLabel(QWidget):
 ##########################################################
 # ---------------- train data initializing ---------------
 ##########################################################
+last_selected = None
+
+
 class MergedTrainExLabel(QLabel):
     def __init__(self, x_data, classes, label_size):
         super(MergedTrainExLabel, self).__init__()
@@ -79,7 +82,10 @@ class MergedTrainExLabel(QLabel):
 
     def contextMenuEvent(self, event):
         right_click_menu = QMenu(self)
-        actions = []
+        if last_selected is not None:
+            action = right_click_menu.addAction(last_selected['sub_class'])
+            right_click_menu.addSeparator()
+            action.triggered.connect(lambda: self.change_type(last_selected['class'], last_selected['sub_class']))
         added_menu = []
 
         def addMenuAction(class_name, sub_class_name):
@@ -88,8 +94,8 @@ class MergedTrainExLabel(QLabel):
                     right_click_ptr[0] = right_click_ptr[0].addMenu(rec_name)
                     added_menu.append(rec_name)
 
-            actions.append(right_click_ptr[0].addAction(sub_class_name))
-            actions[-1].triggered.connect(lambda: self.change_type(class_name, sub_class_name))
+            action = right_click_ptr[0].addAction(sub_class_name)
+            action.triggered.connect(lambda: self.change_type(class_name, sub_class_name))
 
         def findValue(cur_sub_dict, key):
             if 'value' not in cur_sub_dict:
@@ -113,6 +119,9 @@ class MergedTrainExLabel(QLabel):
         print("type changed to '%s:%s'" % (self.class_name, self.sub_class_name))
         self.zoom = 0.9
         self.updateImage(label_size=self.label_size)
+
+        global last_selected
+        last_selected = {'class': class_name, 'sub_class': sub_class_name}
 
 
 ##########################################################
