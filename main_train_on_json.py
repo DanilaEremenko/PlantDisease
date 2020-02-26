@@ -1,4 +1,5 @@
 import argparse
+import json
 
 from pd_lib.conv_network import get_CNN, get_VGG16
 from pd_lib.addition import save_model_to_json, get_full_model
@@ -157,7 +158,14 @@ def main():
     # ----------------------- set data params ---------------------------
     #####################################################################
     ex_shape = (32, 32, 3)
-    model, json_list, evaluate_list, new_model_type = parse_args_for_train()
+    if len(sys.argv) < 2:
+        raise Exception('Path to config_train should be passed')
+    with open(sys.argv[1]) as config_fp:
+        config_dict = json.load(config_fp)
+
+    json_list = config_dict['data']['train_list']
+    eval_list = config_dict['data']['eval_list']
+    # model, json_list, evaluate_list, new_model_type = parse_args_for_train()
 
     #####################################################################
     # ----------------------- data initializing --------------------------
@@ -171,7 +179,7 @@ def main():
         dmk.get_data_from_json_list(json_list, ex_shape)
 
     eval['classes'], eval["x"], eval["y"] = \
-        dmk.get_data_from_json_list(evaluate_list, ex_shape)
+        dmk.get_data_from_json_list(eval_list, ex_shape)
 
     eval['x'] = np.array(eval['x'], dtype='uint8')
 
@@ -188,15 +196,21 @@ def main():
     #####################################################################
     # ----------------------- model initializing ------------------------
     #####################################################################
-    if model is None:
-        if new_model_type.lower() == 'vgg16':
-            model = get_VGG16(ex_shape, len(train['classes'].keys()))
-            print("new VGG16 model created\n")
-            new_model_type = 'VGG16'
-        else:
-            model = get_CNN(ex_shape, len(train['classes'].keys()))
-            print("new CNN model created\n")
-            new_model_type = 'CNN'
+    if not config_dict['model']['create_new']:
+        model = get_full_model(
+            json_path=config_dict['model']['exist']['structure'],
+            h5_path=config_dict['model']['exist']['weights'],
+            verbose=True
+        )
+        new_model_type = 'NN'
+    elif config_dict['model']['new']['type'] == 'vgg16':
+        model = get_VGG16(ex_shape, len(train['classes'].keys()))
+        print("new VGG16 model created\n")
+        new_model_type = 'VGG16'
+    else:
+        model = get_CNN(ex_shape, len(train['classes'].keys()))
+        print("new CNN model created\n")
+        new_model_type = 'CNN'
 
     plot_model(model, show_shapes=True, to_file='model.png')
 
@@ -220,15 +234,16 @@ def main():
     #####################################################################
     # ----------------------- creating callbacks ------------------------
     #####################################################################
-    baseline = 0.95
+    baseline_dict = config_dict['fit']['baseline']
+    print('BASELINES:%s' % str(baseline_dict))
     callbacks = [
-        # ModelCheckpoint("model_ground.h5",
-        #                          monitor='val_acc',
-        #                          verbose=True,
-        #                          save_best_only=True),
+        ModelCheckpoint("model_ground.h5",
+                        monitor='val_acc',
+                        verbose=True,
+                        save_best_only=True),
         EarlyStopping(monitor='val_acc',
                       patience=0,
-                      baseline=baseline,
+                      baseline=baseline_dict['test'],
                       verbose=True,
                       ),
     ]
@@ -307,7 +322,7 @@ def main():
             print("val_acc      %.2f%%\n" % (history.history['val_acc'][-1] * 100), end='')
             print("eval_acc     %.2f%%\n" % (eval['acc'] * 100))
 
-            if history.history['acc'][-1] < baseline and epochs > len(history.history['acc']):
+            if history.history['acc'][-1] < baseline_dict['train'] and epochs > len(history.history['acc']):
                 bad_early_stop = True
                 print("EarlyStopping by val_acc without acc, continue...")
                 continue

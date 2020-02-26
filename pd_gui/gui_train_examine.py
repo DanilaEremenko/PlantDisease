@@ -1,6 +1,8 @@
+import json
+
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
-from pd_gui.components.gui_layouts import MyGridLayout
+from pd_gui.components.gui_layouts import MyGridWidget
 
 from .gui_window_interface import WindowInterface
 from pd_gui.components.gui_labels import ImageTextLabel
@@ -24,6 +26,9 @@ class WindowMultipleExamples(WindowInterface):
     def __init__(self, model, x_data, y_data, classes):
         super(WindowMultipleExamples, self).__init__()
 
+        config_dict = self.load_dict_from_json_with_keys(key_list=['qt_label_size'])
+        self.label_size = config_dict['qt_label_size']
+
         self.model = model
         self.x_data = x_data
         self.y_data = y_data
@@ -31,8 +36,8 @@ class WindowMultipleExamples(WindowInterface):
 
         self._define_max_key_len()
 
-        self.main_layout = MyGridLayout(hbox_control=self.hbox_control)
-        self.setLayout(self.main_layout)
+        self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
+        self.setCentralWidget(self.main_layout)
         self.update_main_layout()
         self.show()
 
@@ -71,7 +76,8 @@ class WindowMultipleExamples(WindowInterface):
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text='%s %.2f' % (answer['key'], answer['value'])
+                    text='%s %.2f' % (answer['key'], answer['value']),
+                    label_size=self.label_size
                 )
             )
         rect_len = int(np.sqrt(len(self.x_data)))

@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from PIL import Image
-from pd_lib import img_proc as img_pr
+from pd_lib import img_proc as img_pr, ui_cmd
 from pd_geo import exif_parser as ep
 import json
 
@@ -9,25 +9,30 @@ import json
 ################################################################################
 # --------------------------------- for predict on image -----------------------
 ################################################################################
-def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=255, path_out_dir=None):
+def get_x_from_croped_img(path_img_in, window_shape, img_thumb=None, step=1.0, color=255, path_out_dir=None,
+                          verbose=False):
     if path_out_dir != None and not os.path.isdir(path_out_dir):
         raise Exception("No such directory %s" % path_out_dir)
 
     full_img = Image.open(path_img_in)
-    full_img.thumbnail(img_shape)
+    if img_thumb is not None:
+        full_img.thumbnail(img_thumb)
+
     img_exif = ep.get_exif_data(full_img)
 
     draw_image = full_img
 
     p1_x, p1_y, p2_x, p2_y = 0, 0, window_shape[0], window_shape[1]
     i = 0
-    x_data = np.empty(0, dtype='uint8')
-    x_coord = np.empty(0, dtype='uint8')
+    ex_num = int(full_img.size[0] / window_shape[0]) * int(full_img.size[1] / window_shape[1])
+    x_data = np.empty([ex_num, *window_shape[0:-1], 3], dtype='uint8')
+    x_coord = []
     longitudes = []  # TODO add caluclating
     latitudes = []  # TODO add caluclating
-
     while p2_y <= full_img.size[1]:
         while p2_x <= full_img.size[0]:
+            if verbose:
+                ui_cmd.printProgressBar(current=i, total=ex_num)
             if path_out_dir != None:
                 img_pr.crop_multiply_data(img=full_img,
                                           name="%d" % i,
@@ -35,9 +40,7 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
                                           path_out_dir=path_out_dir
                                           )
 
-            curr_x = np.asarray(full_img.crop((p1_x, p1_y, p2_x, p2_y)))
-            x_data = np.append(x_data, curr_x)
-            x_coord = np.append(x_coord, (p1_x, p1_y, p2_x, p2_y))
+            x_data[i] = np.asarray(full_img.crop((p1_x, p1_y, p2_x, p2_y)))
 
             draw_image = img_pr.draw_rect_on_image(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
 
@@ -48,9 +51,6 @@ def get_x_from_croped_img(path_img_in, img_shape, window_shape, step=1.0, color=
         p2_x = window_shape[0]
         p1_y += int(window_shape[1] * step)
         p2_y += int(window_shape[1] * step)
-
-    x_data.shape = (i, window_shape[0], window_shape[1], window_shape[2])
-    x_coord.shape = (i, 4)
     return {"x_data": x_data, "x_coord": x_coord, "longitudes": longitudes, "latitudes": latitudes}, \
            full_img, draw_image
 
@@ -79,14 +79,14 @@ def get_data_from_json_list(json_list, ex_shape):
     return classes, x_train, y_train
 
 
-def json_train_create(path, cropped_data, y_data, img_shape, classes):
-    if cropped_data["x_data"].shape[0] != y_data.shape[0]:
+def json_train_create(path, x_data_full, y_data, img_shape, classes):
+    if x_data_full["x_data"].shape[0] != y_data.shape[0]:
         raise Exception("bad shape")
     with open(path, "w") as fp:
         json.dump(
             {"classes": classes, "img_shape": img_shape,
-             "x_data": cropped_data["x_data"].tolist(), "y_data": y_data.tolist(),
-             "longitudes": cropped_data["longitudes"], "latitudes": cropped_data["latitudes"]}, fp)
+             "x_data": x_data_full["x_data"].tolist(), "y_data": y_data.tolist(),
+             "longitudes": x_data_full["longitudes"], "latitudes": x_data_full["latitudes"]}, fp)
         fp.close()
 
     pass
@@ -106,7 +106,7 @@ def json_train_load(path):
 def multiple_class_examples(x_train, y_train, class_for_multiple,
                             use_noise=False, intensity_noise_list=(50,), use_deform=False, k_deform_list=(0.5,),
                             max_class_num=None):
-    original_len = len(y_train)
+    x_original_shape = x_train.shape
 
     class_for_multiple_examples = np.empty(0, dtype='uint8')
     class_for_mult_num = 0
@@ -156,8 +156,8 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
     for i in range(new_examples_num):
         y_train = np.append(y_train, class_for_multiple)
 
-    x_train.shape = (original_len + new_examples_num, 32, 32, 3)
-    y_train.shape = (original_len + new_examples_num, len(class_for_multiple))
+    x_train.shape = (x_original_shape[0] + new_examples_num, *x_original_shape[1:])
+    y_train.shape = (x_original_shape[0] + new_examples_num, len(class_for_multiple))
 
     return x_train, y_train
 

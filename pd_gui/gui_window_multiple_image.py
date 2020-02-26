@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
-from pd_gui.components.gui_layouts import MyGridLayout
+from pd_gui.components.gui_layouts import MyGridWidget
 
 import pd_lib.data_maker as dmk
 from .gui_window_interface import WindowInterface
@@ -26,7 +26,12 @@ class WindowMultipleExamples(WindowInterface):
     def _init_data_from_json(self, json_for_multiple):
         with open(json_for_multiple) as train_json_fp:
             train_json = dict(json.load(train_json_fp))
-            self.classes = train_json['classes']
+
+            self.classes = {}
+            for class_name in train_json['classes'].keys():
+                for sub_class_name in train_json['classes'][class_name]:
+                    self.classes[sub_class_name] = train_json['classes'][class_name][sub_class_name]
+
             self.x_data = np.array(train_json["x_data"], dtype='uint8')
             self.y_data = np.array(train_json["y_data"])
             self.longitudes, self.latitudes = train_json["longitudes"], train_json["latitudes"]
@@ -46,14 +51,17 @@ class WindowMultipleExamples(WindowInterface):
     def __init__(self):
         super(WindowMultipleExamples, self).__init__()
 
-        json_for_multiple = self.choose_json()
+        with open(self.choose_json(content_title='config data')) as config_fp:
+            self.label_size = json.load(config_fp)['qt_label_size']
+
+        json_for_multiple = self.choose_json(content_title='train_data')
         self.json_name = os.path.splitext(json_for_multiple)[0]
 
         self._init_data_from_json(json_for_multiple)
         self._define_max_class()
 
-        self.main_layout = MyGridLayout(hbox_control=self.hbox_control)
-        self.setLayout(self.main_layout)
+        self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
+        self.setCentralWidget(self.main_layout)
 
         self.update_main_layout()
         self.show()
@@ -80,7 +88,8 @@ class WindowMultipleExamples(WindowInterface):
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text=add_spaces(get_key_by_value(value=y), new_size=self.max_key_len)
+                    text=add_spaces(get_key_by_value(value=y), new_size=self.max_key_len),
+                    label_size=self.label_size
                 )
             )
         rect_len = int(np.sqrt(len(self.x_data)))
@@ -97,7 +106,7 @@ class WindowMultipleExamples(WindowInterface):
         print("Save to %s" % out_json_path)
         dmk.json_train_create(
             path=out_json_path,
-            cropped_data={"x_data": self.x_data, "longitudes": self.longitudes, "latitudes": self.latitudes},
+            x_data_full={"x_data": self.x_data, "longitudes": self.longitudes, "latitudes": self.latitudes},
             y_data=self.y_data,
             img_shape=None,
             classes=self.classes
@@ -106,19 +115,23 @@ class WindowMultipleExamples(WindowInterface):
         self.quit_default()
 
     def multiple_pressed(self):
-        print("---------------------------------")
         for key, value in self.classes.items():
             if self.classes[key]['num'] < self.max_class['num']:
+                old_class_size = len(self.x_data)
                 self.x_data, self.y_data = dmk.multiple_class_examples(x_train=self.x_data, y_train=self.y_data,
                                                                        class_for_multiple=self.classes[key]['value'],
                                                                        use_noise=False,
                                                                        intensity_noise_list=intensity_noise_list,
                                                                        use_deform=True, k_deform_list=k_deform_list,
                                                                        max_class_num=self.max_class['num'])
+
+                new_ex_num = len(self.x_data) - old_class_size
+                print('%s : generated %d new examples' % (key, new_ex_num))
                 self.classes[key]['num'] = 0
                 for y in self.y_data:
                     if ((y.__eq__(self.classes[key]['value'])).all()):
                         self.classes[key]['num'] += 1
 
             else:
-                print("%s class  = %s (max_class_num = %d)" % (key, self.classes[key]['num'], self.max_class['num']))
+                print('%s : generated %d new examples (class_size == max_size)' % (key, 0))
+        print("---------------------------------")

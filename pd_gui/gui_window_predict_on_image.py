@@ -3,7 +3,7 @@ import os
 
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
-from pd_gui.components.gui_layouts import MyGridLayout
+from pd_gui.components.gui_layouts import MyGridWidget
 
 from pd_lib.addition import get_full_model
 from pd_lib import data_maker as dmk
@@ -25,15 +25,19 @@ class WindowPredictOnImage(WindowInterface):
 
     def _parse_image(self):
         self.picture_path = self.choose_picture()
-        x_cropped, full_img, draw_img = dmk.get_x_from_croped_img(path_img_in=self.picture_path,
-                                                                  img_shape=(1024, 1024),
-                                                                  window_shape=(32, 32, 3))
+        x_cropped, full_img, draw_img = dmk.get_x_from_croped_img(
+            path_img_in=self.picture_path,
+            window_shape=(32, 32, 3),
+            img_thumb=self.img_thumb
+
+        )
         self.x_data = x_cropped['x_data']
 
     def _init_classes(self):
-        with open(os.path.abspath('config.json')) as config_fp:
+        with open(os.path.abspath('config_gui.json')) as config_fp:
             config_dict = json.load(config_fp)
             self.classes = config_dict['classes']
+            self.img_thumb = config_dict['img_thumb']
 
     def _define_max_key_len(self):
         self.max_key_len = 0
@@ -44,14 +48,17 @@ class WindowPredictOnImage(WindowInterface):
     def __init__(self):
         super(WindowPredictOnImage, self).__init__()
 
-        self.choose_NN()
-        self._parse_image()
+        config_dict = self.load_dict_from_json_with_keys(key_list=['qt_label_size'])
+        self.label_size = config_dict['qt_label_size']
 
+        self.choose_NN()
         self._init_classes()
         self._define_max_key_len()
 
-        self.main_layout = MyGridLayout(hbox_control=self.hbox_control)
-        self.setLayout(self.main_layout)
+        self._parse_image()
+
+        self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
+        self.setCentralWidget(self.main_layout)
         self.update_main_layout()
         self.show()
 
@@ -90,7 +97,8 @@ class WindowPredictOnImage(WindowInterface):
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text='%s %.2f' % (answer['key'], answer['value'])
+                    text='%s %.2f' % (answer['key'], answer['value']),
+                    label_size=self.label_size
                 )
             )
         rect_len = int(np.sqrt(len(self.x_data)))
