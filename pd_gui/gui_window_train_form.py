@@ -143,11 +143,7 @@ class WindowClassificationPicture(WindowInterface):
                 ex_num += 1
 
         x_data_full['x_data'].shape = (ex_num, *self.window_shape)
-
-        class_num = 0
-        for class_name in self.classes.keys():
-            class_num += len(self.classes[class_name])
-        y_data.shape = (len(x_data_full['x_data']), class_num)
+        y_data.shape = (len(x_data_full['x_data']), 1)
 
         dmk.json_train_create(
             path="%s.json" % self.img_name,
