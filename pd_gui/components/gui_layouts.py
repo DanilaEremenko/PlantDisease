@@ -33,8 +33,10 @@ class MyGridWidget(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
-        self.max_width = 1280
-        self.max_height = 860
+        from screeninfo import get_monitors
+        m = get_monitors()[0]
+        self.max_width = m.width
+        self.max_height = m.height - 100
 
     def clear(self):
         for hbox in self.hbox_image_list:
