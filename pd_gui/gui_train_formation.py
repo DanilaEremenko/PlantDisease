@@ -111,8 +111,8 @@ class WindowClassificationPicture(WindowInterface):
             label.updateImage(label_size=list(map(lambda x: x * self.zoom, self.default_label_size)))
 
         self.main_layout.update_grid(
-            windows_width=self.frameGeometry().width(),
-            window_height=self.frameGeometry().height(),
+            windows_width=self.main_layout.max_width,
+            window_height=self.main_layout.max_height,
             x_len=int(self.full_img.size[0] / self.x_data_full["x_data"].shape[1]),
             y_len=int(self.full_img.size[1] / self.x_data_full["x_data"].shape[2]),
             label_list=self.label_list
