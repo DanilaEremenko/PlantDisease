@@ -98,8 +98,8 @@ class WindowMultipleExamples(WindowInterface):
             )
         rect_len = int(np.sqrt(len(self.x_data)))
         self.main_layout.update_grid(
-            windows_width=self.frameGeometry().width(),
-            window_height=self.frameGeometry().height(),
+            windows_width=self.main_layout.max_width,
+            window_height=self.main_layout.max_height,
             x_len=rect_len,
             y_len=rect_len,
             label_list=label_list
