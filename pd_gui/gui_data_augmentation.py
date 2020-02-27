@@ -67,8 +67,8 @@ class WindowMultipleExamples(WindowInterface):
         self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
         self.setCentralWidget(self.main_layout)
 
+        self.showFullScreen()
         self.update_main_layout()
-        self.show()
 
     def clear(self):
         self.main_layout.clear()
