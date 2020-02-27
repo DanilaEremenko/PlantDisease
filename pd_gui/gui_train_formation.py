@@ -27,7 +27,6 @@ class WindowClassificationPicture(WindowInterface):
         self.zoom = self.zoom_list[0]
 
         self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
-        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
 
     def _init_main_menu(self):
@@ -61,8 +60,7 @@ class WindowClassificationPicture(WindowInterface):
                 window_shape=self.window_shape,
                 step=1.0,
                 color=255,
-                verbose=True,
-                img_thumb=self.img_thumb
+                verbose=True
             )
         print("ok")
 
@@ -100,8 +98,8 @@ class WindowClassificationPicture(WindowInterface):
         self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
         self.setCentralWidget(self.main_layout)
 
+        self.showFullScreen()
         self.update_main_layout()
-        self.show()
 
     def clear(self):
         self.main_layout.clear()
