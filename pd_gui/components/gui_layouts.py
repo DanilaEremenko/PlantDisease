@@ -34,7 +34,7 @@ class MyGridWidget(QWidget):
         self.layout.setSpacing(0)
 
         self.max_width = 1280
-        self.max_height = 960
+        self.max_height = 860
 
     def clear(self):
         for hbox in self.hbox_image_list:
