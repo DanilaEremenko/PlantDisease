@@ -4,9 +4,9 @@ PyQt GUI for main_create_json_from_image.py
 
 import json
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QAction
-
+from PyQt5.QtGui import QCursor
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_labels import MergedTrainExLabel
 from pd_gui.components.gui_layouts import MyGridWidget
@@ -25,7 +25,7 @@ class WindowClassificationPicture(WindowInterface):
 
         self.zoom_list = [0.25, 0.5, 0.75, 1]
         self.zoom = self.zoom_list[0]
-
+        self.zoom_no = 0
         self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
 
@@ -41,6 +41,27 @@ class WindowClassificationPicture(WindowInterface):
 
         for zoom in self.zoom_list:
             add_zoom_to_menu(zoom)
+
+            # TODO от сих
+    #   mouse wheel event scroll
+    def wheelEvent(self,event):
+        # calculate coor
+        cursor_x=QtGui.QCursor.pos().x()
+        cursor_y=QtGui.QCursor.pos().y()
+        screen = QtGui.QGuiApplication.primaryScreen()
+        screenGeometry = screen.geometry()
+        screen_height = screenGeometry.height()
+        screen_width = screenGeometry.width()
+        pos_x=screen_width-cursor_x
+        pos_y=screen_height-cursor_y
+        if event.angleDelta().y() > 0:
+            if self.zoom_no< len(self.zoom_list)-1:self.zoom_no += 1
+        else:
+            if self.zoom_no>0:self.zoom_no -= 1
+        self.change_zoom(self.zoom_list[self.zoom_no])
+
+
+    # TODO до сих
 
     def change_zoom(self, new_zoom):
         self.zoom = new_zoom
