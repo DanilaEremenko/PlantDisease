@@ -1,9 +1,9 @@
 """
 Custom PyQt5 GUI slider
 """
-
+from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QSlider
+from PyQt5.QtWidgets import QSlider, QScrollArea, QApplication
 import numpy as np
 
 
@@ -34,3 +34,13 @@ class ImgSizeSlider(QSlider):
                 self.setValue(self.val_list[i + 1])
                 # print("Slider Value = %d" % self.value())
                 return
+
+
+class MyScrollArea(QScrollArea):
+    def __init__(self):
+        super().__init__()
+
+    def wheelEvent(self, a0: QtGui.QWheelEvent):
+        modifiers = QApplication.keyboardModifiers()
+        if modifiers != QtCore.Qt.ControlModifier:
+            super().wheelEvent(a0)

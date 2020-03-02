@@ -2,8 +2,10 @@
 Custom PyQt5.QWidget for cropped image visualizing and processing
 """
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QScrollArea, QGroupBox, QWidget
+from PyQt5 import QtCore, QtGui
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QGroupBox, QWidget, QLabel
+
+from pd_gui.components.gui_slider import MyScrollArea
 
 
 class MyGridWidget(QWidget):
@@ -20,8 +22,13 @@ class MyGridWidget(QWidget):
         self.label_layout.setSpacing(0)
         self.label_layout.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
 
+        from screeninfo import get_monitors
+        m = get_monitors()[0]
+        self.max_width = m.width
+        self.max_height = m.height - 100
+
         self.groubBox = QGroupBox()
-        self.scroll_area = QScrollArea()
+        self.scroll_area = MyScrollArea()
         self.groubBox.setLayout(self.label_layout)
         self.scroll_area.setWidget(self.groubBox)
         self.layout.addWidget(self.scroll_area)
@@ -33,10 +40,20 @@ class MyGridWidget(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
-        from screeninfo import get_monitors
-        m = get_monitors()[0]
-        self.max_width = m.width
-        self.max_height = m.height - 100
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFixedWidth(self.max_width)
+        self.scroll_area.setFixedHeight(self.max_height)
+
+    def addLoadignLabel(self):
+        self.loading_label = QLabel()
+        self.loading_label.setText("Loading...")
+        self.loading_label.setFont(QtGui.QFont("Times", 20, QtGui.QFont.Bold))
+        self.loading_label.resize(self.max_width, self.max_height)
+
+        self.label_layout.addWidget(self.loading_label)
+
+    def removeLoadingLabel(self):
+        self.label_layout.removeWidget(self.loading_label)
 
     def clear(self):
         for hbox in self.hbox_image_list:
@@ -78,4 +95,3 @@ class MyGridWidget(QWidget):
 
     def quit_pressed(self):
         QtCore.QCoreApplication.instance().quit()
-        pass

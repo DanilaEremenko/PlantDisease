@@ -4,9 +4,8 @@ PyQt GUI for main_create_json_from_image.py
 
 import json
 
-from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtWidgets import QAction
-from PyQt5.QtGui import QCursor
+from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtWidgets import QAction, QApplication
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_labels import MergedTrainExLabel
 from pd_gui.components.gui_layouts import MyGridWidget
@@ -27,6 +26,7 @@ class WindowClassificationPicture(WindowInterface):
         self.zoom = self.zoom_list[0]
         self.zoom_no = 0
         self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
+        self.hbox_control.addWidget(ControlButton("Choose image", self.choose_and_render_image))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
 
     def _init_main_menu(self):
@@ -42,26 +42,24 @@ class WindowClassificationPicture(WindowInterface):
         for zoom in self.zoom_list:
             add_zoom_to_menu(zoom)
 
-            # TODO от сих
     #   mouse wheel event scroll
-    def wheelEvent(self,event):
-        # calculate coor
-        cursor_x=QtGui.QCursor.pos().x()
-        cursor_y=QtGui.QCursor.pos().y()
-        screen = QtGui.QGuiApplication.primaryScreen()
-        screenGeometry = screen.geometry()
-        screen_height = screenGeometry.height()
-        screen_width = screenGeometry.width()
-        pos_x=screen_width-cursor_x
-        pos_y=screen_height-cursor_y
-        if event.angleDelta().y() > 0:
-            if self.zoom_no< len(self.zoom_list)-1:self.zoom_no += 1
-        else:
-            if self.zoom_no>0:self.zoom_no -= 1
-        self.change_zoom(self.zoom_list[self.zoom_no])
-
-
-    # TODO до сих
+    def wheelEvent(self, event):
+        modifiers = QApplication.keyboardModifiers()
+        if modifiers == QtCore.Qt.ControlModifier:
+            # calculate coor
+            cursor_x = QtGui.QCursor.pos().x()
+            cursor_y = QtGui.QCursor.pos().y()
+            screen = QtGui.QGuiApplication.primaryScreen()
+            screenGeometry = screen.geometry()
+            screen_height = screenGeometry.height()
+            screen_width = screenGeometry.width()
+            pos_x = screen_width - cursor_x
+            pos_y = screen_height - cursor_y
+            if event.angleDelta().y() > 0:
+                if self.zoom_no < len(self.zoom_list) - 1: self.zoom_no += 1
+            else:
+                if self.zoom_no > 0: self.zoom_no -= 1
+            self.change_zoom(self.zoom_list[self.zoom_no])
 
     def change_zoom(self, new_zoom):
         self.zoom = new_zoom
@@ -112,15 +110,28 @@ class WindowClassificationPicture(WindowInterface):
         self.img_thumb = config_dict['img_thumb']
 
         self._init_hbox_control()
-        self._init_images()
         self._init_main_menu()
-        self._init_label_list()
 
         self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
         self.setCentralWidget(self.main_layout)
-
         self.showFullScreen()
-        self.update_main_layout()
+
+    def choose_and_render_image(self):
+        self.clear()
+
+        self.img_path = self.choose_picture()
+
+        if self.img_path != '':
+            self.img_name = os.path.splitext(self.img_path)[0]
+
+            self.main_layout.addLoadignLabel()
+
+            self._init_images()
+            self._init_label_list()
+
+            self.main_layout.removeLoadingLabel()
+
+            self.update_main_layout()
 
     def clear(self):
         self.main_layout.clear()
@@ -179,4 +190,4 @@ class WindowClassificationPicture(WindowInterface):
 
         print("OKAY")
 
-        self.quit_default()
+        self.choose_and_render_image()
