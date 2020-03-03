@@ -42,27 +42,27 @@ class WindowClassificationPicture(WindowInterface):
         for zoom in self.zoom_list:
             add_zoom_to_menu(zoom)
 
+    # ------------------------ MOUSE DRAGGING PART -------------------------------------
     def mousePressEvent(self, event):
-        self.first_x = event.x()
-        self.first_y = event.y()
+        # TODO to fix
+        self.first_x = max(0, min(self.main_layout.max_width, event.x() + self.last_x))
+        self.first_y = max(0, min(self.main_layout.max_height, event.y() + self.last_y))
         print("press offset ", self.first_x, self.first_y)
 
     def mouseMoveEvent(self, event):
         self.v_bar = self.main_layout.scroll_area.verticalScrollBar()
         self.h_bar = self.main_layout.scroll_area.horizontalScrollBar()
-        rect = self.main_layout.label_layout.geometry()
-        if self.main_layout.width() < rect.width():
+        rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+        if self.main_layout.width() < rect[0]:
             x = self.first_x - event.x()
             y = self.first_y - event.y()
-            print("current offset ", x, y)
+            self.last_x = x
+            self.last_y = y
+            print("\n\nDRAG OFFSET:", x, y)
             self.main_layout.set_offset(x, y)
 
-    def mouseReleaseEvent(self, event):
-        print("reliesed ", event.x(), event.y())
-        self.end_x = event.x()
-        self.end_y = event.y()
-
-    #   mouse wheel event scroll
+    # ------------------------ WHEEL PART -------------------------------------
+    #   mouse wheel event scrollо
     def wheelEvent(self, event):
         modifiers = QApplication.keyboardModifiers()
         if modifiers == QtCore.Qt.ControlModifier:
@@ -70,8 +70,8 @@ class WindowClassificationPicture(WindowInterface):
                 if self.zoom_no < len(self.zoom_list) - 1: self.zoom_no += 1
             else:
                 if self.zoom_no > 0: self.zoom_no -= 1
-            # self.move_by_cursor()
             self.change_zoom(self.zoom_list[self.zoom_no])
+            self.move_by_cursor()
 
     def move_by_cursor(self):
         cursor_x = QtGui.QCursor.pos().x()
@@ -80,22 +80,30 @@ class WindowClassificationPicture(WindowInterface):
         window_width = self.main_layout.width()
         window_height = self.main_layout.height()
 
-        rect = self.main_layout.label_layout.geometry()
-        real_image_width = rect.width()
-        real_image_height = rect.height()
+        rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+        real_image_width = int(rect[0])
+        real_image_height = int(rect[1])
         print("x coor ", cursor_x, window_width, real_image_width)
         if (real_image_width < window_width | real_image_height < window_height):
             print("nothing to move")
         else:
-            koef_x = (100 * cursor_x) / real_image_width
-            koef_y = (100 * cursor_y) / real_image_height
+            koef_x = (cursor_x) / real_image_width
+            koef_y = (cursor_y) / real_image_height
 
             offset_x = (real_image_width - window_width) * koef_x
             offset_y = (real_image_height - window_height) * koef_y
 
-            self.main_layout.offset_x = int(offset_x / 100)
-            self.main_layout.offset_y = int(offset_y / 100)
+            x = int(offset_x * 4)
+            y = int(offset_y * 2)
 
+            print("\n\nZOOM OFFSET:", x, y)
+            self.main_layout.set_offset(x, y)
+
+            # TODO can be great bone
+            # self.last_x = x
+            # self.last_y = y
+
+    # ------------------------ ZOOM PART -------------------------------------
     def change_zoom(self, new_zoom):
         self.zoom = new_zoom
         print('new zoom = %d' % self.zoom)
@@ -152,6 +160,12 @@ class WindowClassificationPicture(WindowInterface):
         self.setCentralWidget(self.main_layout)
         self.showFullScreen()
 
+        self.choose_and_render_image()
+
+        # for offset calculation
+        self.last_x = 0
+        self.last_y = 0
+
     def choose_and_render_image(self):
         self.clear()
 
@@ -159,13 +173,8 @@ class WindowClassificationPicture(WindowInterface):
 
         if self.img_path != '':
             self.img_name = os.path.splitext(self.img_path)[0]
-            self.main_layout.addLoadignLabel()
-
             self._init_images()
             self._init_label_list()
-
-            self.main_layout.removeLoadingLabel()
-
             self.update_main_layout()
 
     def clear(self):
