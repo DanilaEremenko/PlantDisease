@@ -45,8 +45,11 @@ class WindowClassificationPicture(WindowInterface):
     # ------------------------ MOUSE DRAGGING PART -------------------------------------
     def mousePressEvent(self, event):
         # TODO to fix
-        self.first_x = max(0, min(self.main_layout.max_width, event.x() + self.last_x))
-        self.first_y = max(0, min(self.main_layout.max_height, event.y() + self.last_y))
+        rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+        self.first_x = max(0, min(int(rect[0]), event.x() + self.last_x))
+        self.first_y = max(0, min(int(rect[1]), event.y() + self.last_y))
+        print("event ", event.x(), event.y())
+        print("last ", self.last_x, self.last_y)
         print("press offset ", self.first_x, self.first_y)
 
     def mouseMoveEvent(self, event):
