@@ -45,8 +45,6 @@ class MyGridWidget(QWidget):
         self.scroll_area.setFixedWidth(self.max_width)
         self.scroll_area.setFixedHeight(self.max_height)
 
-
-
     def addLoadignLabel(self):
         self.loading_label = QLabel()
         self.loading_label.setText("Loading...")
@@ -58,10 +56,9 @@ class MyGridWidget(QWidget):
     def removeLoadingLabel(self):
         self.label_layout.removeWidget(self.loading_label)
 
-    def set_offset(self,x,y):
+    def set_offset(self, x, y):
         self.scroll_area.verticalScrollBar().setValue(y)
         self.scroll_area.horizontalScrollBar().setValue(x)
-
 
     def clear(self):
         for hbox in self.hbox_image_list:

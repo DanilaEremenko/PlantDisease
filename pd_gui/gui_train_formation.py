@@ -42,20 +42,20 @@ class WindowClassificationPicture(WindowInterface):
         for zoom in self.zoom_list:
             add_zoom_to_menu(zoom)
 
-    def mousePressEvent(self,event):
-        self.first_x=event.x()
-        self.first_y=event.y()
-        print("press offset ", self.first_x,self.first_y)
+    def mousePressEvent(self, event):
+        self.first_x = event.x()
+        self.first_y = event.y()
+        print("press offset ", self.first_x, self.first_y)
 
-    def mouseMoveEvent(self,event):
+    def mouseMoveEvent(self, event):
         self.v_bar = self.main_layout.scroll_area.verticalScrollBar()
         self.h_bar = self.main_layout.scroll_area.horizontalScrollBar()
         rect = self.main_layout.label_layout.geometry()
         if self.main_layout.width() < rect.width():
-            x=self.first_x-event.x()
-            y=self.first_y-event.y()
-            print("current offset ",x,y)
-            self.main_layout.set_offset(x,y)
+            x = self.first_x - event.x()
+            y = self.first_y - event.y()
+            print("current offset ", x, y)
+            self.main_layout.set_offset(x, y)
 
     def mouseReleaseEvent(self, event):
         print("reliesed ", event.x(), event.y())
@@ -73,7 +73,6 @@ class WindowClassificationPicture(WindowInterface):
             # self.move_by_cursor()
             self.change_zoom(self.zoom_list[self.zoom_no])
 
-
     def move_by_cursor(self):
         cursor_x = QtGui.QCursor.pos().x()
         cursor_y = QtGui.QCursor.pos().y()
@@ -84,8 +83,8 @@ class WindowClassificationPicture(WindowInterface):
         rect = self.main_layout.label_layout.geometry()
         real_image_width = rect.width()
         real_image_height = rect.height()
-        print("x coor ",cursor_x, window_width,real_image_width)
-        if ( real_image_width < window_width | real_image_height < window_height):
+        print("x coor ", cursor_x, window_width, real_image_width)
+        if (real_image_width < window_width | real_image_height < window_height):
             print("nothing to move")
         else:
             koef_x = (100 * cursor_x) / real_image_width
@@ -94,9 +93,8 @@ class WindowClassificationPicture(WindowInterface):
             offset_x = (real_image_width - window_width) * koef_x
             offset_y = (real_image_height - window_height) * koef_y
 
-            self.main_layout.offset_x=int (offset_x/100)
-            self.main_layout.offset_y=int (offset_y/100)
-
+            self.main_layout.offset_x = int(offset_x / 100)
+            self.main_layout.offset_y = int(offset_y / 100)
 
     def change_zoom(self, new_zoom):
         self.zoom = new_zoom
@@ -154,7 +152,6 @@ class WindowClassificationPicture(WindowInterface):
         self.setCentralWidget(self.main_layout)
         self.showFullScreen()
 
-
     def choose_and_render_image(self):
         self.clear()
 
@@ -163,7 +160,6 @@ class WindowClassificationPicture(WindowInterface):
         if self.img_path != '':
             self.img_name = os.path.splitext(self.img_path)[0]
             self.main_layout.addLoadignLabel()
-
 
             self._init_images()
             self._init_label_list()
