@@ -42,24 +42,61 @@ class WindowClassificationPicture(WindowInterface):
         for zoom in self.zoom_list:
             add_zoom_to_menu(zoom)
 
+    def mousePressEvent(self,event):
+        self.first_x=event.x()
+        self.first_y=event.y()
+        print("press offset ", self.first_x,self.first_y)
+
+    def mouseMoveEvent(self,event):
+        self.v_bar = self.main_layout.scroll_area.verticalScrollBar()
+        self.h_bar = self.main_layout.scroll_area.horizontalScrollBar()
+        rect = self.main_layout.label_layout.geometry()
+        if self.main_layout.width() < rect.width():
+            x=self.first_x-event.x()
+            y=self.first_y-event.y()
+            print("current offset ",x,y)
+            self.main_layout.set_offset(x,y)
+
+    def mouseReleaseEvent(self, event):
+        print("reliesed ", event.x(), event.y())
+        self.end_x = event.x()
+        self.end_y = event.y()
+
     #   mouse wheel event scroll
     def wheelEvent(self, event):
         modifiers = QApplication.keyboardModifiers()
         if modifiers == QtCore.Qt.ControlModifier:
-            # calculate coor
-            cursor_x = QtGui.QCursor.pos().x()
-            cursor_y = QtGui.QCursor.pos().y()
-            screen = QtGui.QGuiApplication.primaryScreen()
-            screenGeometry = screen.geometry()
-            screen_height = screenGeometry.height()
-            screen_width = screenGeometry.width()
-            pos_x = screen_width - cursor_x
-            pos_y = screen_height - cursor_y
             if event.angleDelta().y() > 0:
                 if self.zoom_no < len(self.zoom_list) - 1: self.zoom_no += 1
             else:
                 if self.zoom_no > 0: self.zoom_no -= 1
+            # self.move_by_cursor()
             self.change_zoom(self.zoom_list[self.zoom_no])
+
+
+    def move_by_cursor(self):
+        cursor_x = QtGui.QCursor.pos().x()
+        cursor_y = QtGui.QCursor.pos().y()
+
+        window_width = self.main_layout.width()
+        window_height = self.main_layout.height()
+
+        rect = self.main_layout.label_layout.geometry()
+        real_image_width = rect.width()
+        real_image_height = rect.height()
+        print("x coor ",cursor_x, window_width,real_image_width)
+        if ( real_image_width < window_width | real_image_height < window_height):
+            print("nothing to move")
+        else:
+            koef_x = (100 * cursor_x) / real_image_width
+            koef_y = (100 * cursor_y) / real_image_height
+
+            offset_x = (real_image_width - window_width) * koef_x
+            offset_y = (real_image_height - window_height) * koef_y
+
+            self.main_layout.offset_x=int (offset_x/100)
+            self.main_layout.offset_y=int (offset_y/100)
+
 
     def change_zoom(self, new_zoom):
         self.zoom = new_zoom
@@ -68,9 +105,9 @@ class WindowClassificationPicture(WindowInterface):
 
     def _init_images(self):
         self.pre_rendered_img_dict = {}
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
         print("rendering image...")
-
         (self.x_data_full,
          self.full_img,
          self.draw_image) = \
@@ -81,6 +118,7 @@ class WindowClassificationPicture(WindowInterface):
                 color=255,
                 verbose=True
             )
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         print("ok")
 
     def _init_label_list(self):
@@ -101,8 +139,8 @@ class WindowClassificationPicture(WindowInterface):
         with open(self.choose_json(content_title='config data')) as config_fp:
             config_dict = json.load(config_fp)
 
-        self.img_path = self.choose_picture()
-        self.img_name = os.path.splitext(self.img_path)[0]
+        # self.img_path = self.choose_picture()
+        # self.img_name = os.path.splitext(self.img_path)[0]
 
         self.window_shape = config_dict['window_shape']
         self.classes = config_dict['classes']
@@ -116,6 +154,7 @@ class WindowClassificationPicture(WindowInterface):
         self.setCentralWidget(self.main_layout)
         self.showFullScreen()
 
+
     def choose_and_render_image(self):
         self.clear()
 
@@ -123,8 +162,8 @@ class WindowClassificationPicture(WindowInterface):
 
         if self.img_path != '':
             self.img_name = os.path.splitext(self.img_path)[0]
-
             self.main_layout.addLoadignLabel()
+
 
             self._init_images()
             self._init_label_list()
