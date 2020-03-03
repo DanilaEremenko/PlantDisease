@@ -36,25 +36,12 @@ class MyGridWidget(QWidget):
 
         self.hbox_control = hbox_control
         self.layout.addLayout(self.hbox_control)
-        self.offset_x = 0
-        self.offset_y = 0
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFixedWidth(self.max_width)
         self.scroll_area.setFixedHeight(self.max_height)
-
-    def addLoadignLabel(self):
-        self.loading_label = QLabel()
-        self.loading_label.setText("Loading...")
-        self.loading_label.setFont(QtGui.QFont("Times", 20, QtGui.QFont.Bold))
-        self.loading_label.resize(self.max_width, self.max_height)
-
-        self.label_layout.addWidget(self.loading_label)
-
-    def removeLoadingLabel(self):
-        self.label_layout.removeWidget(self.loading_label)
 
     def set_offset(self, x, y):
         self.scroll_area.verticalScrollBar().setValue(y)
