@@ -2,8 +2,6 @@
 PyQt GUI for main_create_json_from_image.py
 """
 
-import json
-
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QAction, QApplication
 from pd_gui.components.gui_buttons import ControlButton
@@ -117,9 +115,7 @@ class WindowClassificationPicture(WindowInterface):
         QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
         print("rendering image...")
-        (self.x_data_full,
-         self.full_img,
-         self.draw_image) = \
+        self.x_data_full, self.full_img = \
             dmk.get_x_from_croped_img(
                 path_img_in=self.img_path,
                 window_shape=self.window_shape,
@@ -232,8 +228,6 @@ class WindowClassificationPicture(WindowInterface):
             img_shape=self.full_img.size,
             classes=self.classes
         )
-
-        self.draw_image.save("%s_net.JPG" % self.img_name)
 
         print("OKAY")
 
