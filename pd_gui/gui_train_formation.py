@@ -94,15 +94,15 @@ class WindowClassificationPicture(WindowInterface):
             offset_x = (real_image_width - window_width) * koef_x
             offset_y = (real_image_height - window_height) * koef_y
 
+            # TODO famous math constant 4 and 2
             x = int(offset_x * 4)
             y = int(offset_y * 2)
 
             print("\n\nZOOM OFFSET:", x, y)
             self.main_layout.set_offset(x, y)
 
-            # TODO can be great bone
-            # self.last_x = x
-            # self.last_y = y
+            self.last_x = x
+            self.last_y = y
 
     # ------------------------ ZOOM PART -------------------------------------
     def change_zoom(self, new_zoom):
