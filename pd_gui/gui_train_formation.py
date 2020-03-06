@@ -47,36 +47,39 @@ class WindowClassificationPicture(WindowInterface):
     # ------------------------ MOUSE DRAGGING PART -------------------------------------
     def mousePressEvent(self, event):
         # TODO to fix
-        rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
-        self.first_x = max(0, min(int(rect[0]), event.x() + self.last_x))
-        self.first_y = max(0, min(int(rect[1]), event.y() + self.last_y))
-        print("event ", event.x(), event.y())
-        print("last ", self.last_x, self.last_y)
-        print("press offset ", self.first_x, self.first_y)
+        if hasattr(self, 'img_name'):
+            rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+            self.first_x = max(0, min(int(rect[0]), event.x() + self.last_x))
+            self.first_y = max(0, min(int(rect[1]), event.y() + self.last_y))
+            print("event ", event.x(), event.y())
+            print("last ", self.last_x, self.last_y)
+            print("press offset ", self.first_x, self.first_y)
 
     def mouseMoveEvent(self, event):
-        self.v_bar = self.main_layout.scroll_area.verticalScrollBar()
-        self.h_bar = self.main_layout.scroll_area.horizontalScrollBar()
-        rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
-        if self.main_layout.width() < rect[0]:
-            x = self.first_x - event.x()
-            y = self.first_y - event.y()
-            self.last_x = x
-            self.last_y = y
-            print("\n\nDRAG OFFSET:", x, y)
-            self.main_layout.set_offset(x, y)
+        if hasattr(self, 'img_name'):
+            self.v_bar = self.main_layout.scroll_area.verticalScrollBar()
+            self.h_bar = self.main_layout.scroll_area.horizontalScrollBar()
+            rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+            if self.main_layout.width() < rect[0]:
+                x = self.first_x - event.x()
+                y = self.first_y - event.y()
+                self.last_x = x
+                self.last_y = y
+                print("\n\nDRAG OFFSET:", x, y)
+                self.main_layout.set_offset(x, y)
 
     # ------------------------ WHEEL PART -------------------------------------
     #   mouse wheel event scrollо
     def wheelEvent(self, event):
-        modifiers = QApplication.keyboardModifiers()
-        if modifiers == QtCore.Qt.ControlModifier:
-            if event.angleDelta().y() > 0:
-                if self.zoom_no < len(self.zoom_list) - 1: self.zoom_no += 1
-            else:
-                if self.zoom_no > 0: self.zoom_no -= 1
-            self.change_zoom(self.zoom_list[self.zoom_no])
-            self.move_by_cursor()
+        if hasattr(self,'img_name'):
+            modifiers = QApplication.keyboardModifiers()
+            if modifiers == QtCore.Qt.ControlModifier:
+                if event.angleDelta().y() > 0:
+                    if self.zoom_no < len(self.zoom_list) - 1: self.zoom_no += 1
+                else:
+                    if self.zoom_no > 0: self.zoom_no -= 1
+                self.change_zoom(self.zoom_list[self.zoom_no])
+                self.move_by_cursor()
 
     def move_by_cursor(self):
         cursor_x = QtGui.QCursor.pos().x()
@@ -171,15 +174,13 @@ class WindowClassificationPicture(WindowInterface):
         self.last_y = 0
 
     def choose_and_render_image(self):
-        self.clear()
-        self.img_path = ''
-        while self.img_path == '':
-            self.img_path = self.choose_picture()
-
-        self.img_name = os.path.splitext(self.img_path)[0]
-        self._init_images()
-        self._init_label_list()
-        self.update_main_layout()
+        self.img_path = self.choose_picture()
+        if self.img_path != '':
+            self.clear()
+            self.img_name = os.path.splitext(self.img_path)[0]
+            self._init_images()
+            self._init_label_list()
+            self.update_main_layout()
 
     def clear(self):
         self.main_layout.clear()
