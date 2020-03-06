@@ -24,39 +24,31 @@ def get_x_from_croped_img(path_img_in, window_shape, img_thumb=None, step=1.0, c
 
     img_exif = ep.get_exif_data(full_img)
 
-    draw_image = full_img
+    x_len = int(full_img.size[0] / window_shape[0])
+    y_len = int(full_img.size[1] / window_shape[1])
+    ex_num = x_len * y_len
 
-    p1_x, p1_y, p2_x, p2_y = 0, 0, window_shape[0], window_shape[1]
-    i = 0
-    ex_num = int(full_img.size[0] / window_shape[0]) * int(full_img.size[1] / window_shape[1])
     x_data = np.empty([ex_num, *window_shape[0:-1], 3], dtype='uint8')
     x_coord = []
     longitudes = []  # TODO add caluclating
     latitudes = []  # TODO add caluclating
-    while p2_y <= full_img.size[1]:
-        while p2_x <= full_img.size[0]:
-            if verbose:
-                ui_cmd.printProgressBar(current=i, total=ex_num)
-            if path_out_dir != None:
-                img_pr.crop_multiply_data(img=full_img,
-                                          name="%d" % i,
-                                          crop_area=(p1_x, p1_y, p2_x, p2_y),
-                                          path_out_dir=path_out_dir
-                                          )
+    for i in range(ex_num):
+        p1_x, p1_y = i % x_len * window_shape[0], int(i / x_len) * window_shape[1]
+        p2_x, p2_y = p1_x + window_shape[0], p1_y + window_shape[1]
 
-            x_data[i] = np.asarray(full_img.crop((p1_x, p1_y, p2_x, p2_y)))
+        if verbose:
+            ui_cmd.printProgressBar(current=i, total=ex_num)
+        if path_out_dir != None:
+            img_pr.crop_multiply_data(img=full_img,
+                                      name="%d" % i,
+                                      crop_area=(p1_x, p1_y, p2_x, p2_y),
+                                      path_out_dir=path_out_dir
+                                      )
 
-            draw_image = img_pr.draw_rect_on_image(draw_image, (p1_x, p1_y, p2_x, p2_y), color=color)
+        x_data[i] = np.asarray(full_img.crop((p1_x, p1_y, p2_x, p2_y)))
 
-            p1_x += int(window_shape[0] * step)
-            p2_x += int(window_shape[0] * step)
-            i += 1
-        p1_x = 0
-        p2_x = window_shape[0]
-        p1_y += int(window_shape[1] * step)
-        p2_y += int(window_shape[1] * step)
     return {"x_data": x_data, "x_coord": x_coord, "longitudes": longitudes, "latitudes": latitudes}, \
-           full_img, draw_image
+           full_img
 
 
 def get_data_from_json_list(json_list, ex_shape):

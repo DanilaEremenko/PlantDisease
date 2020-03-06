@@ -2,11 +2,8 @@
 PyQt GUI for main_create_json_from_image.py
 """
 
-import json
-
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QAction
-
+from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtWidgets import QAction, QApplication
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_labels import MergedTrainExLabel
 from pd_gui.components.gui_layouts import MyGridWidget
@@ -25,9 +22,14 @@ class WindowClassificationPicture(WindowInterface):
 
         self.zoom_list = [0.25, 0.5, 0.75, 1]
         self.zoom = self.zoom_list[0]
+        self.zoom_no = 0
 
-        self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
-        self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
+        self.hbox_control.addWidget(
+            ControlButton("Okay", self.okay_pressed, styleSheet='background-color: #0cdb3c'))
+        self.hbox_control.addWidget(
+            ControlButton("Choose image", self.choose_and_render_image, styleSheet='background-color: #ffbe25'))
+        self.hbox_control.addWidget(
+            ControlButton("Quit", self.quit_default, styleSheet='background-color: #e84a1a'))
 
     def _init_main_menu(self):
 
@@ -42,6 +44,75 @@ class WindowClassificationPicture(WindowInterface):
         for zoom in self.zoom_list:
             add_zoom_to_menu(zoom)
 
+    # ------------------------ MOUSE DRAGGING PART -------------------------------------
+    def mousePressEvent(self, event):
+        # TODO to fix
+        if hasattr(self, 'img_name'):
+            rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+            self.first_x = max(0, min(int(rect[0]), event.x() + self.last_x))
+            self.first_y = max(0, min(int(rect[1]), event.y() + self.last_y))
+            print("event ", event.x(), event.y())
+            print("last ", self.last_x, self.last_y)
+            print("press offset ", self.first_x, self.first_y)
+
+    def mouseMoveEvent(self, event):
+        if hasattr(self, 'img_name'):
+            self.v_bar = self.main_layout.scroll_area.verticalScrollBar()
+            self.h_bar = self.main_layout.scroll_area.horizontalScrollBar()
+            rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+            if self.main_layout.width() < rect[0]:
+                x = self.first_x - event.x()
+                y = self.first_y - event.y()
+                self.last_x = x
+                self.last_y = y
+                print("\n\nDRAG OFFSET:", x, y)
+                self.main_layout.set_offset(x, y)
+
+    # ------------------------ WHEEL PART -------------------------------------
+    #   mouse wheel event scrollо
+    def wheelEvent(self, event):
+        if hasattr(self,'img_name'):
+            modifiers = QApplication.keyboardModifiers()
+            if modifiers == QtCore.Qt.ControlModifier:
+                if event.angleDelta().y() > 0:
+                    if self.zoom_no < len(self.zoom_list) - 1: self.zoom_no += 1
+                else:
+                    if self.zoom_no > 0: self.zoom_no -= 1
+                self.change_zoom(self.zoom_list[self.zoom_no])
+                self.move_by_cursor()
+
+    def move_by_cursor(self):
+        cursor_x = QtGui.QCursor.pos().x()
+        cursor_y = QtGui.QCursor.pos().y()
+
+        window_width = self.main_layout.width()
+        window_height = self.main_layout.height()
+
+        rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+        real_image_width = int(rect[0])
+        real_image_height = int(rect[1])
+        print("x coor ", cursor_x, window_width, real_image_width)
+        if (real_image_width < window_width | real_image_height < window_height):
+            print("nothing to move")
+        else:
+            koef_x = (cursor_x) / real_image_width
+            koef_y = (cursor_y) / real_image_height
+
+            offset_x = (real_image_width - window_width) * koef_x
+            offset_y = (real_image_height - window_height) * koef_y
+
+            # TODO famous math constant 4 and 2
+            x = int(offset_x * 4)
+            y = int(offset_y * 2)
+
+            print("\n\nZOOM OFFSET:", x, y)
+            self.main_layout.set_offset(x, y)
+
+            # TODO maybe someday zoom will work
+            # self.last_x = x
+            # self.last_y = y
+
+    # ------------------------ ZOOM PART -------------------------------------
     def change_zoom(self, new_zoom):
         self.zoom = new_zoom
         print('new zoom = %d' % self.zoom)
@@ -49,12 +120,10 @@ class WindowClassificationPicture(WindowInterface):
 
     def _init_images(self):
         self.pre_rendered_img_dict = {}
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
         print("rendering image...")
-
-        (self.x_data_full,
-         self.full_img,
-         self.draw_image) = \
+        self.x_data_full, self.full_img = \
             dmk.get_x_from_croped_img(
                 path_img_in=self.img_path,
                 window_shape=self.window_shape,
@@ -62,6 +131,7 @@ class WindowClassificationPicture(WindowInterface):
                 color=255,
                 verbose=True
             )
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         print("ok")
 
     def _init_label_list(self):
@@ -82,8 +152,8 @@ class WindowClassificationPicture(WindowInterface):
         with open(self.choose_json(content_title='config data')) as config_fp:
             config_dict = json.load(config_fp)
 
-        self.img_path = self.choose_picture()
-        self.img_name = os.path.splitext(self.img_path)[0]
+        # self.img_path = self.choose_picture()
+        # self.img_name = os.path.splitext(self.img_path)[0]
 
         self.window_shape = config_dict['window_shape']
         self.classes = config_dict['classes']
@@ -91,15 +161,26 @@ class WindowClassificationPicture(WindowInterface):
         self.img_thumb = config_dict['img_thumb']
 
         self._init_hbox_control()
-        self._init_images()
         self._init_main_menu()
-        self._init_label_list()
 
         self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
         self.setCentralWidget(self.main_layout)
-
         self.showFullScreen()
-        self.update_main_layout()
+
+        self.choose_and_render_image()
+
+        # for offset calculation
+        self.last_x = 0
+        self.last_y = 0
+
+    def choose_and_render_image(self):
+        self.img_path = self.choose_picture()
+        if self.img_path != '':
+            self.clear()
+            self.img_name = os.path.splitext(self.img_path)[0]
+            self._init_images()
+            self._init_label_list()
+            self.update_main_layout()
 
     def clear(self):
         self.main_layout.clear()
@@ -154,8 +235,6 @@ class WindowClassificationPicture(WindowInterface):
             classes=self.classes
         )
 
-        self.draw_image.save("%s_net.JPG" % self.img_name)
-
         print("OKAY")
 
-        self.quit_default()
+        self.choose_and_render_image()
