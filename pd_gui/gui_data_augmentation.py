@@ -14,9 +14,6 @@ import json
 import os
 import numpy as np
 
-intensity_noise_list = (50, 150)
-k_deform_list = (0.09, 0.10, 0.11, 0.12, 0.13, 0.14)
-
 
 class WindowMultipleExamples(WindowInterface):
     def _init_hbox_control(self):
@@ -55,8 +52,19 @@ class WindowMultipleExamples(WindowInterface):
     def __init__(self):
         super(WindowMultipleExamples, self).__init__()
 
-        with open(self.choose_json(content_title='config data')) as config_fp:
-            self.label_size = json.load(config_fp)['qt_label_size']
+        with open(self.choose_json(content_title='config gui data')) as gui_config_fp:
+            self.label_size = json.load(gui_config_fp)['qt_label_size']
+
+        with open(self.choose_json(content_title='config augmentation data')) as aug_config_fp:
+            alghs_dict = json.load(aug_config_fp)['algorithms']
+            self.arg_dict = {
+                'use_noise': alghs_dict['noise']['use'],
+                'intensity_noise_list': alghs_dict['noise']['val_list'],
+                'use_deform': alghs_dict['deform']['use'],
+                'k_deform_list': alghs_dict['deform']['val_list'],
+                'use_blur': alghs_dict['blur']['use'],
+                'rad_list': alghs_dict['blur']['val_list']
+            }
 
         json_for_multiple = self.choose_json(content_title='train_data')
         self.json_name = os.path.splitext(json_for_multiple)[0]
@@ -124,9 +132,7 @@ class WindowMultipleExamples(WindowInterface):
                 old_class_size = len(self.x_data)
                 self.x_data, self.y_data = dmk.multiple_class_examples(x_train=self.x_data, y_train=self.y_data,
                                                                        class_for_multiple=self.classes[key]['value'],
-                                                                       use_noise=False,
-                                                                       intensity_noise_list=intensity_noise_list,
-                                                                       use_deform=True, k_deform_list=k_deform_list,
+                                                                       **self.arg_dict,
                                                                        max_class_num=self.max_class['num'])
 
                 new_ex_num = len(self.x_data) - old_class_size
