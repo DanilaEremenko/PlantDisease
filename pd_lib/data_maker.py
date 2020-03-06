@@ -100,7 +100,9 @@ def json_train_load(path):
 # --------------------------------- multiple class -----------------------------
 ################################################################################
 def multiple_class_examples(x_train, y_train, class_for_multiple,
-                            use_noise=False, intensity_noise_list=(50,), use_deform=False, k_deform_list=(0.5,),
+                            use_noise=False, intensity_noise_list=(50,),
+                            use_deform=False, k_deform_list=(0.5,),
+                            use_blur=False, rad_list=(0.5),
                             max_class_num=None):
     x_original_shape = x_train.shape
 
@@ -120,28 +122,40 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
     x_new_examples = np.empty(0, dtype='uint8')
 
     stop_augment = False
-    # --------------- make noised examples ----------------------------------
+    algh_dict = {}
+    # define alghoritms
     if use_noise:
-        for intensity in intensity_noise_list:
-            if stop_augment:
-                break
-            for multiple_ex in class_for_multiple_examples:
-                if new_examples_num < max_new_examples_num:
-                    x_new_examples = \
-                        np.append(x_new_examples, img_pr.noise_arr(arr=multiple_ex.flatten(), intensity=intensity))
-                    new_examples_num += 1
-                else:
-                    stop_augment = True
-                    break
-    # --------------- make deformed examples ----------------------------------
+        algh_dict['noised'] = {
+            'func': img_pr.noise_arr,
+            'args': {},
+            'loop_list': intensity_noise_list,
+            'loop_arg': 'intensity'
+        }
     if use_deform:
-        for k in k_deform_list:
+        algh_dict['deformed'] = {
+            'func': img_pr.deform_arr,
+            'args': {'n': 0, 'm': x_train.shape[1]},
+            'loop_list': k_deform_list,
+            'loop_arg': 'k'
+        }
+    if use_blur:
+        algh_dict['blured'] = {
+            'func': img_pr.blur_img,
+            'args': {},
+            'loop_list': rad_list,
+            'loop_arg': 'radius'
+        }
+    # --------------- make noised examples ----------------------------------
+    for alg_name, algh in algh_dict.items():
+        print('generating via %s' % alg_name)
+        for loop_var in algh['loop_list']:
             if stop_augment:
                 break
             for multiple_ex in class_for_multiple_examples:
                 if new_examples_num < max_new_examples_num:
                     x_new_examples = \
-                        np.append(x_new_examples, img_pr.deform_arr(arr=multiple_ex, k=k, n=0, m=x_train.shape[1]))
+                        np.append(x_new_examples,
+                                  algh['func'](**{'arr': multiple_ex, algh['loop_arg']: loop_var}, **algh['args']))
                     new_examples_num += 1
                 else:
                     stop_augment = True

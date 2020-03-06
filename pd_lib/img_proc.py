@@ -6,7 +6,7 @@ from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from PIL import Image
+from PIL import Image, ImageFilter
 
 
 #############################################################################
@@ -46,10 +46,18 @@ def noise_img_from_arr(img, intensity):
 
 
 def noise_arr(arr, intensity):
-    res_arr = arr.copy()
+    res_arr = arr.copy().flatten()
     for i in range(0, res_arr.size):
         res_arr[i] = (res_arr[i] + np.random.randint(0, intensity)) % 255
     return res_arr
+
+
+#############################################################################
+# --------------------------- blur image -----------------------------------
+#############################################################################
+def blur_img(arr, radius):
+    img = Image.fromarray(arr)
+    return np.asarray(img.filter(ImageFilter.GaussianBlur(radius=radius)))
 
 
 #############################################################################
