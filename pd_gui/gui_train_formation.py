@@ -105,8 +105,9 @@ class WindowClassificationPicture(WindowInterface):
             print("\n\nZOOM OFFSET:", x, y)
             self.main_layout.set_offset(x, y)
 
-            self.last_x = x
-            self.last_y = y
+            # TODO maybe someday zoom will work
+            # self.last_x = x
+            # self.last_y = y
 
     # ------------------------ ZOOM PART -------------------------------------
     def change_zoom(self, new_zoom):
