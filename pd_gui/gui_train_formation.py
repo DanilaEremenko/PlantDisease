@@ -172,14 +172,14 @@ class WindowClassificationPicture(WindowInterface):
 
     def choose_and_render_image(self):
         self.clear()
+        self.img_path = ''
+        while self.img_path == '':
+            self.img_path = self.choose_picture()
 
-        self.img_path = self.choose_picture()
-
-        if self.img_path != '':
-            self.img_name = os.path.splitext(self.img_path)[0]
-            self._init_images()
-            self._init_label_list()
-            self.update_main_layout()
+        self.img_name = os.path.splitext(self.img_path)[0]
+        self._init_images()
+        self._init_label_list()
+        self.update_main_layout()
 
     def clear(self):
         self.main_layout.clear()
