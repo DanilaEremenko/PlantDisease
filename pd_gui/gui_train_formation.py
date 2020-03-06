@@ -23,9 +23,13 @@ class WindowClassificationPicture(WindowInterface):
         self.zoom_list = [0.25, 0.5, 0.75, 1]
         self.zoom = self.zoom_list[0]
         self.zoom_no = 0
-        self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
-        self.hbox_control.addWidget(ControlButton("Choose image", self.choose_and_render_image))
-        self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
+
+        self.hbox_control.addWidget(
+            ControlButton("Okay", self.okay_pressed, styleSheet='background-color: #0cdb3c'))
+        self.hbox_control.addWidget(
+            ControlButton("Choose image", self.choose_and_render_image, styleSheet='background-color: #ffbe25'))
+        self.hbox_control.addWidget(
+            ControlButton("Quit", self.quit_default, styleSheet='background-color: #e84a1a'))
 
     def _init_main_menu(self):
 
