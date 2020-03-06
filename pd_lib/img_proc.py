@@ -1,7 +1,7 @@
 """
 Contains functions for image processing
 """
-
+import cv2
 from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
 import numpy as np
@@ -58,6 +58,21 @@ def noise_arr(arr, intensity):
 def blur_img(arr, radius):
     img = Image.fromarray(arr)
     return np.asarray(img.filter(ImageFilter.GaussianBlur(radius=radius)))
+
+
+#############################################################################
+# --------------------------- warp image ------------------------------------
+#############################################################################
+def affine_warp(arr):
+    y, x = arr.shape[0:2]
+    step = int(x / 100)
+
+    pts1 = np.float32([[0 + step, 1], [x, 1], [1, y]])
+    pts2 = np.float32([[0, 2 + step], [x - step, 2], [2, y - step]])
+
+    M = cv2.getAffineTransform(pts1, pts2)
+
+    return cv2.warpAffine(arr, M, (x, y))
 
 
 #############################################################################
