@@ -52,10 +52,14 @@ class WindowMultipleExamples(WindowInterface):
     def __init__(self):
         super(WindowMultipleExamples, self).__init__()
 
-        with open(self.choose_json(content_title='config gui data')) as gui_config_fp:
+        # TODO maybe will be restored someday
+        # with open(self.choose_json(content_title='config gui data')) as gui_config_fp:
+        with open('config_gui_diseases.json') as gui_config_fp:
             self.label_size = json.load(gui_config_fp)['qt_label_size']
 
-        with open(self.choose_json(content_title='config augmentation data')) as aug_config_fp:
+        # TODO maybe will be restored someday
+        # with open(self.choose_json(content_title='config augmentation data')) as aug_config_fp:
+        with open('config_augmentation.json') as aug_config_fp:
             alghs_dict = json.load(aug_config_fp)['algorithms']
             self.arg_dict = {
 
