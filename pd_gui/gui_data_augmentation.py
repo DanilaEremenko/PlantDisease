@@ -58,12 +58,18 @@ class WindowMultipleExamples(WindowInterface):
         with open(self.choose_json(content_title='config augmentation data')) as aug_config_fp:
             alghs_dict = json.load(aug_config_fp)['algorithms']
             self.arg_dict = {
+
                 'use_noise': alghs_dict['noise']['use'],
                 'intensity_noise_list': alghs_dict['noise']['val_list'],
+
                 'use_deform': alghs_dict['deform']['use'],
                 'k_deform_list': alghs_dict['deform']['val_list'],
+
                 'use_blur': alghs_dict['blur']['use'],
-                'rad_list': alghs_dict['blur']['val_list']
+                'rad_list': alghs_dict['blur']['val_list'],
+
+                'use_affine': alghs_dict['affine']['use'],
+                'affine_list': alghs_dict['affine']['val_list']
             }
 
         json_for_multiple = self.choose_json(content_title='train_data')

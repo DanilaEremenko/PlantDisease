@@ -103,6 +103,7 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
                             use_noise=False, intensity_noise_list=(50,),
                             use_deform=False, k_deform_list=(0.5,),
                             use_blur=False, rad_list=(0.5),
+                            use_affine=False, affine_list=(0.5,),
                             max_class_num=None):
     x_original_shape = x_train.shape
 
@@ -144,6 +145,13 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
             'args': {},
             'loop_list': rad_list,
             'loop_arg': 'radius'
+        }
+    if use_affine:
+        algh_dict['affine'] = {
+            'func': img_pr.affine_warp,
+            'args': {},
+            'loop_list': affine_list,
+            'loop_arg': 'k'
         }
     # --------------- make noised examples ----------------------------------
     for alg_name, algh in algh_dict.items():

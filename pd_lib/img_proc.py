@@ -63,12 +63,18 @@ def blur_img(arr, radius):
 #############################################################################
 # --------------------------- warp image ------------------------------------
 #############################################################################
-def affine_warp(arr):
+def affine_warp(arr, k):
     y, x = arr.shape[0:2]
-    step = int(x / 100)
+    step = max(1, int(x * k / 100))
 
-    pts1 = np.float32([[0 + step, 1], [x, 1], [1, y]])
-    pts2 = np.float32([[0, 2 + step], [x - step, 2], [2, y - step]])
+    pts1 = np.float32([[step, step], [x, step], [step, y]])
+    pts2 = np.float32(
+        [
+            [0.5 * step, 1.5 * step],
+            [x - 0.5 * step, 0.5 * step],
+            [1.5 * step, y - 0.5 * step]
+        ]
+    )
 
     M = cv2.getAffineTransform(pts1, pts2)
 
