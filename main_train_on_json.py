@@ -161,7 +161,6 @@ def main():
     #####################################################################
     # ----------------------- set data params ---------------------------
     #####################################################################
-    ex_shape = (32, 32, 3)
     if len(sys.argv) < 2:
         raise Exception('Path to config_train should be passed')
     with open(sys.argv[1]) as config_fp:
@@ -180,10 +179,10 @@ def main():
     eval = {}
 
     train['classes'], train["x"], train["y"] = \
-        dmk.get_data_from_json_list(json_list, ex_shape)
+        dmk.get_data_from_json_list(json_list)
 
     eval['classes'], eval["x"], eval["y"] = \
-        dmk.get_data_from_json_list(eval_list, ex_shape)
+        dmk.get_data_from_json_list(eval_list)
 
     eval['x'] = np.array(eval['x'], dtype='uint8')
 
@@ -208,11 +207,11 @@ def main():
         )
         new_model_type = 'NN'
     elif config_dict['model']['new']['type'] == 'vgg16':
-        model = get_VGG16(ex_shape, len(train['classes'].keys()))
+        model = get_VGG16(train['x'].shape[1:], len(train['classes'].keys()))
         print("new VGG16 model created\n")
         new_model_type = 'VGG16'
     else:
-        model = get_CNN(ex_shape, len(train['classes'].keys()))
+        model = get_CNN(train['x'].shape[1:], len(train['classes'].keys()))
         print("new CNN model created\n")
         new_model_type = 'CNN'
 

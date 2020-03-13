@@ -51,13 +51,16 @@ def get_x_from_croped_img(path_img_in, window_shape, img_thumb=None, step=1.0, c
            full_img
 
 
-def get_data_from_json_list(json_list, ex_shape):
+def get_data_from_json_list(json_list):
     test_num = 0
     x_train = np.empty(0, dtype='uint8')
     y_train = np.empty(0, dtype='uint8')
     classes = None
+    ex_shape = None
     for train_json in json_list:
         cur_classes, img_shape, curr_x_train, curr_y_train = json_train_load(train_json)
+        if ex_shape == None:
+            ex_shape = curr_x_train.shape[1:]
         if classes is None:
             classes = cur_classes
         else:
