@@ -69,8 +69,22 @@ def get_data_from_json_list(json_list, ex_shape):
         x_train = np.append(x_train, curr_x_train)
         y_train = np.append(y_train, curr_y_train)
         test_num += curr_y_train.shape[0]
-    x_train.shape = (test_num, ex_shape[0], ex_shape[1], ex_shape[2])
-    y_train.shape = (test_num, len(classes))
+    new_classes = {}
+    for key in classes.keys():
+        if classes[key]['num'] != 0:
+            new_classes[key] = classes[key]
+    classes = new_classes
+
+    if len(classes.keys()) < 2:
+        raise Exception('Illegal number of classes < 2')
+
+    x_train.shape = (test_num, *ex_shape)
+    y_values = set(y_train)
+    map_dict = dict(zip(y_values, list(range(len(y_values)))))
+    y_train = list(map(lambda x: map_dict[x], y_train))
+    y_train = get_pos_from_num(arr=y_train, class_num=len(classes.keys()))
+    for key in classes.keys():
+        classes[key]['value'] = get_pos_from_num([map_dict[classes[key]['value'][0]]], class_num=len(classes.keys()))
 
     return classes, x_train, y_train
 
@@ -181,7 +195,7 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
 
 
 def get_pos_from_num(arr, class_num):
-    new_arr = np.zeros((arr.size, class_num))
+    new_arr = np.zeros((len(arr), class_num))
 
     curr_new_i = 0
     for num in arr:
