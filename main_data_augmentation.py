@@ -10,7 +10,7 @@ from pd_gui.gui_data_augmentation import WindowMultipleExamples
 def main():
     app = QtWidgets.QApplication(sys.argv)
 
-    window_class_pctr = WindowMultipleExamples()
+    window_class_pctr = WindowMultipleExamples(sys.argv)
 
     sys.exit(app.exec_())
 

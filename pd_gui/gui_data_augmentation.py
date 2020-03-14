@@ -24,20 +24,6 @@ class WindowMultipleExamples(WindowInterface):
         self.hbox_control.addWidget(ControlButton("Multiple", self.multiple_pressed))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
 
-    def _init_data_from_json(self, json_for_multiple):
-        with open(json_for_multiple) as train_json_fp:
-            train_json = dict(json.load(train_json_fp))
-
-            self.classes = {}
-            for class_name in train_json['classes'].keys():
-                for sub_class_name in train_json['classes'][class_name]:
-                    self.classes[sub_class_name] = train_json['classes'][class_name][sub_class_name]
-
-            self.x_data = np.array(train_json["x_data"], dtype='uint8')
-            self.y_data = np.array(train_json["y_data"])
-            self.longitudes, self.latitudes = train_json["longitudes"], train_json["latitudes"]
-            self.img_shape = train_json["img_shape"]
-
     def _define_max_class(self):
         self.max_class = {'name': None, 'num': 0, 'value': None}
         self.max_key_len = 0
@@ -49,7 +35,7 @@ class WindowMultipleExamples(WindowInterface):
             if len(key) > self.max_key_len:
                 self.max_key_len = len(key)
 
-    def __init__(self):
+    def __init__(self, argv):
         super(WindowMultipleExamples, self).__init__()
 
         # TODO maybe will be restored someday
@@ -60,7 +46,8 @@ class WindowMultipleExamples(WindowInterface):
         # TODO maybe will be restored someday
         # with open(self.choose_json(content_title='config augmentation data')) as aug_config_fp:
         with open('config_augmentation.json') as aug_config_fp:
-            alghs_dict = json.load(aug_config_fp)['algorithms']
+            aug_config_dict = json.load(aug_config_fp)
+            alghs_dict = aug_config_dict['algorithms']
             self.arg_dict = {
 
                 'use_noise': alghs_dict['noise']['use'],
@@ -75,11 +62,17 @@ class WindowMultipleExamples(WindowInterface):
                 'use_affine': alghs_dict['affine']['use'],
                 'affine_list': alghs_dict['affine']['val_list']
             }
+            self.min_examples = aug_config_dict['min_examples']
 
-        json_for_multiple = self.choose_json(content_title='train_data')
-        self.json_name = os.path.splitext(json_for_multiple)[0]
+        if len(argv) == 1:
+            json_list = [self.choose_json(content_title='train_data')]
+        else:
+            json_list = argv[1:]
 
-        self._init_data_from_json(json_for_multiple)
+        self.json_name = os.path.splitext(json_list[0])[0]
+
+        self.classes, self.x_data, self.y_data = dmk.get_data_from_json_list(json_list)
+
         self._define_max_class()
 
         self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
@@ -126,9 +119,13 @@ class WindowMultipleExamples(WindowInterface):
     def okay_pressed(self):
         out_json_path = "%s_multiple.json" % self.json_name
         print("Save to %s" % out_json_path)
+
+        for key in self.classes.keys():
+            self.classes[key]['value'] = list(*self.classes[key]['value'])
+
         dmk.json_train_create(
             path=out_json_path,
-            x_data_full={"x_data": self.x_data, "longitudes": self.longitudes, "latitudes": self.latitudes},
+            x_data_full={"x_data": self.x_data, "longitudes": None, "latitudes": None},
             y_data=self.y_data,
             img_shape=None,
             classes=self.classes
@@ -138,12 +135,19 @@ class WindowMultipleExamples(WindowInterface):
 
     def multiple_pressed(self):
         for key, value in self.classes.items():
-            if self.classes[key]['num'] < self.max_class['num']:
+            if self.classes[key]['num'] < self.max_class['num'] or self.classes[key]['num'] < self.min_examples:
+                if self.classes[key]['num'] < self.max_class['num']:
+                    print('generating under max_class')
+                    max_class_num = self.max_class['num']
+                else:
+                    print('generating under min_examples')
+                    max_class_num = self.min_examples
+
                 old_class_size = len(self.x_data)
                 self.x_data, self.y_data = dmk.multiple_class_examples(x_train=self.x_data, y_train=self.y_data,
                                                                        class_for_multiple=self.classes[key]['value'],
                                                                        **self.arg_dict,
-                                                                       max_class_num=self.max_class['num'])
+                                                                       max_class_num=max_class_num)
 
                 new_ex_num = len(self.x_data) - old_class_size
                 print('%s : generated %d new examples' % (key, new_ex_num))

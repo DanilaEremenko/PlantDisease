@@ -39,5 +39,6 @@
       ],
       "use": false
     }
-  }
+  },
+  "min_examples": 40
 }

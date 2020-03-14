@@ -58,7 +58,17 @@ def get_data_from_json_list(json_list):
     classes = None
     ex_shape = None
     for train_json in json_list:
-        cur_classes, img_shape, curr_x_train, curr_y_train = json_train_load(train_json)
+        with open(train_json) as json_fp:
+            train_json = json.load(json_fp)
+            curr_x_train = np.array(train_json["x_data"], dtype='uint8')
+            curr_y_train = np.array(train_json["y_data"])
+            cur_classes = {}
+
+        # remove nesting
+        for class_name in train_json['classes'].keys():
+            for sub_class_name in train_json['classes'][class_name]:
+                cur_classes[sub_class_name] = train_json['classes'][class_name][sub_class_name]
+
         if ex_shape == None:
             ex_shape = curr_x_train.shape[1:]
         if classes is None:
@@ -97,9 +107,12 @@ def json_train_create(path, x_data_full, y_data, img_shape, classes):
         raise Exception("bad shape")
     with open(path, "w") as fp:
         json.dump(
-            {"classes": classes, "img_shape": img_shape,
-             "x_data": x_data_full["x_data"].tolist(), "y_data": y_data.tolist(),
-             "longitudes": x_data_full["longitudes"], "latitudes": x_data_full["latitudes"]}, fp)
+            {
+                "classes": classes, "img_shape": img_shape,
+                "x_data": x_data_full["x_data"].tolist(), "y_data": y_data.tolist(),
+                "longitudes": x_data_full["longitudes"], "latitudes": x_data_full["latitudes"]
+            },
+            fp)
         fp.close()
 
     pass
@@ -192,7 +205,7 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
         y_train = np.append(y_train, class_for_multiple)
 
     x_train.shape = (x_original_shape[0] + new_examples_num, *x_original_shape[1:])
-    y_train.shape = (x_original_shape[0] + new_examples_num, len(class_for_multiple))
+    y_train.shape = (x_original_shape[0] + new_examples_num, class_for_multiple.size)
 
     return x_train, y_train
 
