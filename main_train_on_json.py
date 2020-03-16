@@ -110,32 +110,6 @@ def get_train_and_test(x_data, y_data, classes, validation_split):
            (x_test, y_test, test_clasess)
 
 
-def predict_and_draw_on_data(model, x, y):
-    i = 0
-    res = {'x_draw': x.copy(), 'class_1_ans': 0, 'class_2_ans': 0, 'right_ans': 0}
-
-    for y, mod_ans in zip(y, model.predict(x)):
-        if y.__eq__([1, 0]).all():
-            draw_rect_on_array(img_arr=res['x_draw'][i], points=(1, 1, 31, 31), color=255)
-        if mod_ans[0] > mod_ans[1]:
-            draw_rect_on_array(img_arr=res['x_draw'][i], points=(10, 10, 20, 20), color=255)
-            res['class_2_ans'] += 1
-            if y.__eq__([1, 0]).all():
-                res['right_ans'] += 1
-
-        elif mod_ans[1] > mod_ans[0]:
-            draw_rect_on_array(img_arr=res['x_draw'][i], points=(10, 10, 20, 20), color=0)
-            res['class_1_ans'] += 1
-            if y.__eq__([0, 1]).all():
-                res['right_ans'] += 1
-        else:
-            print("Too rare case")
-
-        i += 1
-
-    return res
-
-
 def show_predict_on_window(model, x_data, y_data, classes):
     # TODO works incorrect
     from pd_gui.gui_train_examine import WindowShowPredictions

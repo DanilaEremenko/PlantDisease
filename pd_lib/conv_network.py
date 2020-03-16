@@ -28,7 +28,8 @@ def get_CNN(input_shape, output_shape):
     model.add(Conv2D(input_shape[0], kernel_size=3, activation='relu'))
 
     # selection layer
-    model.add(MaxPooling2D(data_format="channels_first", pool_size=(2, 2)))
+    model.add(MaxPooling2D(data_format="channels_first",
+                           pool_size=list(map(lambda z: max(2, int(z / 16)), input_shape[0:2]))))
 
     # regularization
     model.add(Dropout(0.25))
@@ -40,7 +41,8 @@ def get_CNN(input_shape, output_shape):
     model.add(Conv2D(input_shape[0] * 2, kernel_size=3, activation='relu'))
 
     # selection layer
-    model.add(MaxPooling2D(data_format="channels_first", pool_size=(2, 2)))
+    model.add(MaxPooling2D(data_format="channels_first",
+                           pool_size=list(map(lambda z: max(2, int(z / 32)), input_shape[0:2]))))
 
     # regularization
     model.add(Dropout(0.25))
@@ -48,7 +50,7 @@ def get_CNN(input_shape, output_shape):
     # 2D -> 1D
     model.add(Flatten())
 
-    model.add(Dense(int(input_shape[0] * input_shape[1] / 2), activation='relu'))
+    model.add(Dense(int(512), activation='relu'))
 
     model.add(Dropout(0.5))
 
