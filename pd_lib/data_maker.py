@@ -5,6 +5,8 @@ Contains functions for train data formation and processing
 import numpy as np
 import os
 from PIL import Image
+from sklearn.utils import class_weight
+
 from pd_lib import img_proc as img_pr, ui_cmd
 from pd_geo import exif_parser as ep
 import json
@@ -91,13 +93,18 @@ def get_data_from_json_list(json_list):
     if len(classes.keys()) < 2:
         raise Exception('Illegal number of classes < 2')
 
+    class_weights = class_weight.compute_class_weight(class_weight='balanced',
+                                                      classes=np.unique(y_train),
+                                                      y=y_train)
+
     x_train.shape = (test_num, *ex_shape)
     y_values = set(y_train)
     map_dict = dict(zip(y_values, list(range(len(y_values)))))
     y_train = list(map(lambda x: map_dict[x], y_train))
     y_train = get_pos_from_num(arr=y_train, class_num=len(classes.keys()))
-    for key in classes.keys():
+    for i, key in enumerate(classes.keys()):
         classes[key]['value'] = get_pos_from_num([map_dict[classes[key]['value'][0]]], class_num=len(classes.keys()))
+        classes[key]['weight'] = [map_dict[list(y_values)[i]], class_weights[i]]
 
     return classes, x_train, y_train
 

@@ -7,7 +7,6 @@ import json
 
 from pd_lib.conv_network import get_CNN, get_VGG16
 from pd_lib.keras_addition_ import save_model_to_json, get_full_model
-from pd_lib.img_proc import get_full_rect_image_from_pieces, draw_rect_on_array
 from pd_lib.ui_cmd import get_input_int, get_stdin_answer
 
 import pd_lib.data_maker as dmk
@@ -140,10 +139,6 @@ def main():
     with open(sys.argv[1]) as config_fp:
         config_dict = json.load(config_fp)
 
-    json_list = config_dict['data']['train_list']
-    eval_list = config_dict['data']['eval_list']
-    # model, json_list, evaluate_list, new_model_type = parse_args_for_train()
-
     #####################################################################
     # ----------------------- data initializing --------------------------
     #####################################################################
@@ -152,11 +147,11 @@ def main():
     test = {}
     eval = {}
 
-    train['classes'], train["x"], train["y"] = \
-        dmk.get_data_from_json_list(json_list)
+    train['classes'], img_shape, train['x'], train['y'] = \
+        dmk.json_train_load(config_dict['data']['train_json'])
 
-    eval['classes'], eval["x"], eval["y"] = \
-        dmk.get_data_from_json_list(eval_list)
+    eval['classes'], img_shape, eval['x'], eval['y'] = \
+        dmk.json_train_load(config_dict['data']['eval_json'])
 
     eval['x'] = np.array(eval['x'], dtype='uint8')
 
@@ -165,10 +160,15 @@ def main():
                                                                  y_data=train["y"],
                                                                  classes=train['classes'],
                                                                  validation_split=validation_split)
+    class_weights = {}
+    for class_info in train['classes'].values():
+        class_weights[class_info['weight'][0]] = class_info['weight'][1]
 
-    print("train = %s" % str(train['classes']))
-    print("test  = %s" % str(test['classes']))
-    print("eval  = %s" % str(eval['classes']))
+    print("train['classes']  = %s" % str(train['classes']))
+    print("test ['classes']  = %s" % str(test['classes']))
+    print("eval ['classes']  = %s" % str(eval['classes']))
+
+    print('class_weights = %s' % class_weights)
 
     #####################################################################
     # ----------------------- model initializing ------------------------
@@ -271,17 +271,18 @@ def main():
         if not bad_early_stop:
             epochs = get_input_int("How many epochs?", 0, 100)
 
+        history = model.fit_generator(
+            generator=train_generator,
+            steps_per_epoch=train['x'].shape[0] / train['batch_size'],
+            validation_steps=test['batch_size'],
+            validation_data=validation_generator,
+            epochs=epochs,
+            shuffle=True,
+            verbose=verbose,
+            callbacks=callbacks,
+            class_weight=class_weights
+        )
         if epochs != 0:
-            history = model.fit_generator(
-                generator=train_generator,
-                steps_per_epoch=train['x'].shape[0] / train['batch_size'],
-                validation_steps=test['batch_size'],
-                validation_data=validation_generator,
-                epochs=epochs,
-                shuffle=True,
-                verbose=verbose,
-                callbacks=callbacks
-            )
 
             full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
             full_history['loss'] = np.append(full_history['loss'], history.history['loss'])

@@ -1,12 +1,7 @@
 {
   "data": {
-    "train_list": [
-      "Datasets/Potato/plan_train/DJI_0246_multiple.json",
-      "Datasets/Potato/plan_train/DJI_0247_multiple.json"
-    ],
-    "eval_list": [
-      "Datasets/Potato/plan_train/DJI_0247_multiple.json"
-    ]
+    "train_json": "Datasets/Potato/plan_train/DJI_0001_multiple.json",
+    "eval_json": "Datasets/Potato/plan_train/DJI_0001_multiple.json"
   },
   "fit": {
     "baseline": {
@@ -18,7 +13,7 @@
   "model": {
     "create_new": true,
     "new": {
-      "type": "CNN"
+      "type": "cnn"
     },
     "exist": {
       "weights": "models/model_ground_50.h5",

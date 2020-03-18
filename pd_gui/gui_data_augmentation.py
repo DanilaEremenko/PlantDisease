@@ -63,6 +63,7 @@ class WindowMultipleExamples(WindowInterface):
                 'affine_list': alghs_dict['affine']['val_list']
             }
             self.min_examples = aug_config_dict['min_examples']
+            self.balance_classes = aug_config_dict['balance_classes']
 
         if len(argv) == 1:
             json_list = [self.choose_json(content_title='train_data')]
@@ -117,6 +118,7 @@ class WindowMultipleExamples(WindowInterface):
         )
 
     def okay_pressed(self):
+        print('classes = %s' % str(self.classes))
         out_json_path = "%s_multiple.json" % self.json_name
         print("Save to %s" % out_json_path)
 
@@ -136,7 +138,7 @@ class WindowMultipleExamples(WindowInterface):
     def multiple_pressed(self):
         for key, value in self.classes.items():
             if self.classes[key]['num'] < self.max_class['num'] or self.classes[key]['num'] < self.min_examples:
-                if self.classes[key]['num'] < self.max_class['num']:
+                if self.classes[key]['num'] < self.max_class['num'] & self.balance_classes:
                     print('generating under max_class')
                     max_class_num = self.max_class['num']
                 else:

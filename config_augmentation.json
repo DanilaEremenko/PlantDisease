@@ -40,5 +40,6 @@
       "use": false
     }
   },
+  "balance_classes": false,
   "min_examples": 40
 }
