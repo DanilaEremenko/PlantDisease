@@ -27,6 +27,7 @@ class WindowMultipleExamples(WindowInterface):
     def _define_max_class(self):
         self.max_class = {'name': None, 'num': 0, 'value': None}
         self.max_key_len = 0
+        self.max_aug_for_classes = {}
         for key, value in self.classes.items():
             if self.classes[key]['num'] > self.max_class['num']:
                 self.max_class['name'] = key
@@ -34,6 +35,9 @@ class WindowMultipleExamples(WindowInterface):
                 self.max_class['value'] = self.classes[key]['value']
             if len(key) > self.max_key_len:
                 self.max_key_len = len(key)
+
+            self.max_aug_for_classes[key] = self.classes[key]['num'] \
+                                            + int(self.classes[key]['num'] * self.max_aug_part)
 
     def __init__(self, argv):
         super(WindowMultipleExamples, self).__init__()
@@ -62,8 +66,7 @@ class WindowMultipleExamples(WindowInterface):
                 'use_affine': alghs_dict['affine']['use'],
                 'affine_list': alghs_dict['affine']['val_list']
             }
-            self.min_examples = aug_config_dict['min_examples']
-            self.balance_classes = aug_config_dict['balance_classes']
+            self.max_aug_part = aug_config_dict['max_aug_part']
 
         if len(argv) == 1:
             json_list = [self.choose_json(content_title='train_data')]
@@ -81,6 +84,12 @@ class WindowMultipleExamples(WindowInterface):
 
         self.showFullScreen()
         self.update_main_layout()
+
+        print("---------------------------------")
+        print('classes      = %s' % str(self.classes))
+        print('max_classes  = %s' % str(self.max_aug_for_classes))
+        print('ex_num = %d' % sum(map(lambda x: x['num'], self.classes.values())))
+        print("---------------------------------")
 
     def clear(self):
         self.main_layout.clear()
@@ -118,7 +127,6 @@ class WindowMultipleExamples(WindowInterface):
         )
 
     def okay_pressed(self):
-        print('classes = %s' % str(self.classes))
         out_json_path = "%s_multiple.json" % self.json_name
         print("Save to %s" % out_json_path)
 
@@ -137,14 +145,10 @@ class WindowMultipleExamples(WindowInterface):
 
     def multiple_pressed(self):
         for key, value in self.classes.items():
-            if self.classes[key]['num'] < self.max_class['num'] or self.classes[key]['num'] < self.min_examples:
-                if self.classes[key]['num'] < self.max_class['num'] & self.balance_classes:
-                    print('generating under max_class')
-                    max_class_num = self.max_class['num']
-                else:
-                    print('generating under min_examples')
-                    max_class_num = self.min_examples
 
+            if self.classes[key]['num'] < self.max_aug_for_classes[key]:
+
+                max_class_num = self.max_aug_for_classes[key]
                 old_class_size = len(self.x_data)
                 self.x_data, self.y_data = dmk.multiple_class_examples(x_train=self.x_data, y_train=self.y_data,
                                                                        class_for_multiple=self.classes[key]['value'],
@@ -160,4 +164,7 @@ class WindowMultipleExamples(WindowInterface):
 
             else:
                 print('%s : generated %d new examples (class_size == max_size)' % (key, 0))
+        print("---------------------------------")
+        print('classes = %s' % str(self.classes))
+        print('ex_num = %d' % sum(map(lambda x: x['num'], self.classes.values())))
         print("---------------------------------")

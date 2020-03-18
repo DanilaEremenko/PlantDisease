@@ -40,6 +40,5 @@
       "use": false
     }
   },
-  "balance_classes": false,
-  "min_examples": 40
+  "max_aug_part": 0.4
 }
