@@ -53,7 +53,7 @@ def get_x_from_croped_img(path_img_in, window_shape, img_thumb=None, step=1.0, c
            full_img
 
 
-def get_data_from_json_list(json_list):
+def get_data_from_json_list(json_list, remove_classes=None):
     test_num = 0
     x_train = np.empty(0, dtype='uint8')
     y_train = np.empty(0, dtype='uint8')
@@ -69,8 +69,31 @@ def get_data_from_json_list(json_list):
         # remove nesting
         for class_name in train_json['classes'].keys():
             for sub_class_name in train_json['classes'][class_name]:
-                cur_classes[sub_class_name] = train_json['classes'][class_name][sub_class_name]
+                if remove_classes is not None \
+                        and sub_class_name in remove_classes \
+                        and train_json['classes'][class_name][sub_class_name]['num'] != 0:
 
+                    remove_value = train_json['classes'][class_name][sub_class_name]['value'][0]
+                    remove_indexes = []
+                    for i, y in enumerate(curr_y_train):
+                        if y[0] == remove_value:
+                            remove_indexes.append(i)
+
+                    new_curr_x_train = np.empty(0)
+                    for i, x in enumerate(curr_x_train):
+                        if i not in remove_indexes:
+                            new_curr_x_train = np.append(new_curr_x_train, curr_x_train[i])
+
+                    curr_x_train = np.array(new_curr_x_train, dtype='uint8').reshape(
+                        (curr_x_train.shape[0] - len(remove_indexes), *curr_x_train.shape[1:]))
+                    curr_y_train = np.delete(curr_y_train, remove_indexes)
+
+                    train_json['classes'][class_name][sub_class_name]['num'] = 0
+
+                    print("'%s' examples removed" % sub_class_name)
+
+                cur_classes[sub_class_name] = train_json['classes'][class_name][sub_class_name]
+        # join with other data
         if ex_shape == None:
             ex_shape = curr_x_train.shape[1:]
         if classes is None:

@@ -39,8 +39,9 @@ class WindowMultipleExamples(WindowInterface):
             self.max_aug_for_classes[key] = self.classes[key]['num'] \
                                             + int(self.classes[key]['num'] * self.max_aug_part)
 
-    def __init__(self, argv):
+    def __init__(self, json_list):
         super(WindowMultipleExamples, self).__init__()
+        self.postfix = 'joined'
 
         # TODO maybe will be restored someday
         # with open(self.choose_json(content_title='config gui data')) as gui_config_fp:
@@ -68,14 +69,23 @@ class WindowMultipleExamples(WindowInterface):
             }
             self.max_aug_part = aug_config_dict['max_aug_part']
 
-        if len(argv) == 1:
+        if json_list == None:
             json_list = [self.choose_json(content_title='train_data')]
-        else:
-            json_list = argv[1:]
-
         self.json_name = os.path.splitext(json_list[0])[0]
 
-        self.classes, self.x_data, self.y_data = dmk.get_data_from_json_list(json_list)
+        if len(json_list) == 1 and self.json_name[-6:] == self.postfix:
+            print('Parsing preprocessed json')
+            self.classes, img_shape, self.x_data, self.y_data = \
+                dmk.json_train_load(json_list[0])
+            self.x_data = np.array(self.x_data, dtype='uint8')
+            self.y_data = np.array(self.y_data, dtype='uint8')
+        else:
+            print('Parsing json list')
+            self.classes, self.x_data, self.y_data = dmk.get_data_from_json_list(
+                json_list=json_list,
+                remove_classes=None,
+                # remove_classes=['фитофтороз']
+            )
 
         self._define_max_class()
 
@@ -127,7 +137,7 @@ class WindowMultipleExamples(WindowInterface):
         )
 
     def okay_pressed(self):
-        out_json_path = "%s_multiple.json" % self.json_name
+        out_json_path = "%s_%s.json" % (self.json_name, self.postfix)
         print("Save to %s" % out_json_path)
 
         for key in self.classes.keys():

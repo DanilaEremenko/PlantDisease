@@ -93,7 +93,7 @@ def get_train_and_test(x_data, y_data, classes, validation_split):
 
     for i, (x, y) in enumerate(zip(x_data, y_data)):
         for key in classes.keys():
-            if (y == classes[key]['value']).all() and test_clasess[key]['num'] < test_size / len(classes.keys()):
+            if (y == classes[key]['value']).all() and test_i < test_size:
                 x_test[test_i] = x
                 y_test[test_i] = y
                 test_i += 1
