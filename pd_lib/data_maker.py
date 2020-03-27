@@ -153,7 +153,7 @@ def json_train_load(path):
         data_dict = json.load(fp)
         fp.close()
         return data_dict["classes"], data_dict["img_shape"], \
-               np.array(data_dict["x_data"]), np.array(data_dict["y_data"])
+               np.array(data_dict["x_data"], dtype='uint8'), np.array(data_dict["y_data"], dtype='uint8')
 
 
 ################################################################################

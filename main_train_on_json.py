@@ -234,6 +234,7 @@ def main():
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
+        vertical_flip=True,
     ) \
         .flow(
         x=train['x'],
@@ -244,6 +245,7 @@ def main():
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
+        vertical_flip=True
     ) \
         .flow(
         x=test['x'],
