@@ -200,9 +200,9 @@ def main():
     verbose = True
     history_show = True
 
-    train['batch_size'] = max(1, int(train["y"].shape[0] * 0.010))
-    test['batch_size'] = max(1, int(test["y"].shape[0] * 0.010))
-    eval['batch_size'] = max(1, int(eval["y"].shape[0] * 0.010))
+    train['batch_size'] = max(8, int(train["y"].shape[0] * 0.010))
+    test['batch_size'] = max(4, int(test["y"].shape[0] * 0.010))
+    eval['batch_size'] = max(4, int(eval["y"].shape[0] * 0.010))
     full_history = {"acc": np.empty(0), "loss": np.empty(0)}
 
     print("train.batch_size = %d\ntest.batch_size = %d\neval.batch_size = %d\n" %
@@ -276,7 +276,7 @@ def main():
         history = model.fit_generator(
             generator=train_generator,
             steps_per_epoch=train['x'].shape[0] / train['batch_size'],
-            validation_steps=test['batch_size'],
+            validation_steps=train['x'].shape[0] / train['batch_size'],
             validation_data=validation_generator,
             epochs=epochs,
             shuffle=True,
