@@ -4,6 +4,7 @@ Contains functions that return different CNN models
 
 from __future__ import print_function
 
+from keras.applications import InceptionResNetV2
 from keras.models import Sequential
 from keras.layers import Dense, Flatten
 from keras.layers import Dropout
@@ -62,10 +63,21 @@ def get_CNN(input_shape, output_shape):
 def get_VGG16(input_shape, output_shape):
     model = Sequential()
 
-    model.add(VGG16(include_top=False, input_shape=input_shape))
+    model.add(VGG16(include_top=False, weights='imagenet', input_shape=input_shape))
 
     model.add(Flatten())
-    model.add(Dense(output_shape))
+    model.add(Dense(output_shape, activation='softmax'))
+
+    return model
+
+
+def get_InceptionResNetV2(input_shape, output_shape):
+    model = Sequential()
+
+    model.add(InceptionResNetV2(include_top=False, weights='imagenet', input_shape=input_shape))
+
+    model.add(Flatten())
+    model.add(Dense(output_shape, activation='softmax'))
 
     return model
 
