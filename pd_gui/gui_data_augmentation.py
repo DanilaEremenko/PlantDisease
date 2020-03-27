@@ -39,6 +39,40 @@ class WindowMultipleExamples(WindowInterface):
             self.max_aug_for_classes[key] = self.classes[key]['num'] \
                                             + int(self.classes[key]['num'] * self.max_aug_part)
 
+    def show_histogram(self, labels, values, title='Diseases distribution'):
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        x = np.arange(len(labels))  # the label locations
+        width = 0.35  # the width of the bars
+
+        fig, ax = plt.subplots()
+        rects1 = ax.bar(x - width / 2, values, width, label='Examples num')
+
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel('Num')
+        ax.set_title(title)
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels)
+        ax.legend()
+
+        def autolabel(rects):
+            """Attach a text label above each bar in *rects*, displaying its height."""
+            for rect in rects:
+                height = rect.get_height()
+                ax.annotate('{}'.format(height),
+                            xy=(rect.get_x() + rect.get_width() / 2, height),
+                            xytext=(0, 3),  # 3 points vertical offset
+                            textcoords="offset points",
+                            ha='center', va='bottom')
+
+        autolabel(rects1)
+
+        fig.tight_layout()
+
+        plt.xticks(rotation=45)
+        plt.show()
+
     def __init__(self, json_list):
         super(WindowMultipleExamples, self).__init__()
         self.postfix = 'joined'
@@ -100,6 +134,11 @@ class WindowMultipleExamples(WindowInterface):
         print('max_classes  = %s' % str(self.max_aug_for_classes))
         print('ex_num = %d' % sum(map(lambda x: x['num'], self.classes.values())))
         print("---------------------------------")
+
+        self.show_histogram(
+            labels=list(self.classes.keys()),
+            values=list(map(lambda val: val['num'], self.classes.values()))
+        )
 
     def clear(self):
         self.main_layout.clear()
@@ -178,3 +217,9 @@ class WindowMultipleExamples(WindowInterface):
         print('classes = %s' % str(self.classes))
         print('ex_num = %d' % sum(map(lambda x: x['num'], self.classes.values())))
         print("---------------------------------")
+
+        self.show_histogram(
+            labels=list(self.classes.keys()),
+            values=list(map(lambda val: val['num'], self.classes.values())),
+            title='Diseases distribution after augmentation'
+        )
