@@ -148,10 +148,10 @@ def main():
     eval = {}
 
     train['classes'], img_shape, train['x'], train['y'] = \
-        dmk.json_train_load(config_dict['data']['train_json'])
+        dmk.json_big_load(config_dict['data']['train_json'])
 
     eval['classes'], img_shape, eval['x'], eval['y'] = \
-        dmk.json_train_load(config_dict['data']['eval_json'])
+        dmk.json_big_load(config_dict['data']['eval_json'])
 
     eval['x'] = np.array(eval['x'], dtype='uint8')
 
