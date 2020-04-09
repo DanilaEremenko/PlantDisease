@@ -1,7 +1,7 @@
 """
 Contains functions for train data formation and processing
 """
-
+import h5py
 import numpy as np
 import os
 from PIL import Image
@@ -87,6 +87,7 @@ def get_data_from_json_list(json_list, remove_classes=None):
                     curr_x_train = np.array(new_curr_x_train, dtype='uint8').reshape(
                         (curr_x_train.shape[0] - len(remove_indexes), *curr_x_train.shape[1:]))
                     curr_y_train = np.delete(curr_y_train, remove_indexes)
+                    curr_y_train.shape = (curr_y_train.shape[0], 1)
 
                     train_json['classes'][class_name][sub_class_name]['num'] = 0
 
@@ -132,6 +133,9 @@ def get_data_from_json_list(json_list, remove_classes=None):
     return classes, x_train, y_train
 
 
+###############################################################
+# ---------------- store x & y arrays in h5 files -------------
+###############################################################
 def json_train_create(path, x_data_full, y_data, img_shape, classes):
     if x_data_full["x_data"].shape[0] != y_data.shape[0]:
         raise Exception("bad shape")
@@ -145,8 +149,6 @@ def json_train_create(path, x_data_full, y_data, img_shape, classes):
             fp)
         fp.close()
 
-    pass
-
 
 def json_train_load(path):
     with open(path, "r") as fp:
@@ -154,6 +156,35 @@ def json_train_load(path):
         fp.close()
         return data_dict["classes"], data_dict["img_shape"], \
                np.array(data_dict["x_data"], dtype='uint8'), np.array(data_dict["y_data"], dtype='uint8')
+
+
+###############################################################
+# ---------------- store x & y arrays in h5 files -------------
+###############################################################
+def json_big_create(json_path, h5_path, x_data, y_data, img_shape, longitudes, latitudes, classes):
+    h5f = h5py.File(h5_path, "w")
+    h5f.create_dataset(name='x_data', data=x_data)
+    h5f.create_dataset(name='y_data', data=y_data)
+    h5f.close()
+    with open(json_path, "w") as fp:
+        json.dump(
+            {
+                "classes": classes, "img_shape": img_shape,
+                "h5d_path": h5_path,
+                "longitudes": longitudes, "latitudes": latitudes
+            },
+            fp)
+        fp.close()
+
+
+def json_big_load(json_path):
+    with open(json_path, "r") as json_fp:
+        config_dict = json.load(json_fp)
+    h5f = h5py.File(config_dict["h5d_path"], 'r')
+    x_data = np.array(h5f.get('x_data'))
+    y_data = np.array(h5f.get('y_data'))
+    h5f.close()
+    return config_dict['classes'], config_dict['img_shape'], x_data, y_data
 
 
 ################################################################################
