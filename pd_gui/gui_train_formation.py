@@ -1,6 +1,7 @@
 """
 PyQt GUI for main_create_json_from_image.py
 """
+import json
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QAction, QApplication
@@ -71,7 +72,7 @@ class WindowClassificationPicture(WindowInterface):
     # ------------------------ WHEEL PART -------------------------------------
     #   mouse wheel event scrollо
     def wheelEvent(self, event):
-        if hasattr(self,'img_name'):
+        if hasattr(self, 'img_name'):
             modifiers = QApplication.keyboardModifiers()
             if modifiers == QtCore.Qt.ControlModifier:
                 if event.angleDelta().y() > 0:
@@ -119,6 +120,25 @@ class WindowClassificationPicture(WindowInterface):
         self.update_main_layout()
 
     def _init_images(self):
+        def get_marked_indexes():
+            marked_indexes = []
+            pref_path = self.img_path.split('.')[0].split('/')[-1]
+            if pref_path in list(map(lambda repeat_file: repeat_file.split('.')[0], self.already_marked_list)):
+                with open("%s/%s.json" % (self.already_marked_dir, pref_path))as repeat_fp:
+                    x_repeated = np.array(json.load(repeat_fp)['x_data'], dtype='uint8')
+                    mae_threshold = 1.2  # experimental
+                    for i, x in enumerate(self.x_data_full['x_data']):
+                        for rep_i, rep_x in enumerate(x_repeated):
+                            mae = abs((x - rep_x).astype('int8')).mean()
+                            if mae < mae_threshold:
+                                print('%d->%d:mae = %.3f' % (rep_i, i, mae))
+                                marked_indexes.append(i)
+                                break
+
+                    if len(marked_indexes) != len(x_repeated):
+                        raise Exception('bad threshold')
+            return marked_indexes
+
         self.pre_rendered_img_dict = {}
         QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
@@ -131,21 +151,32 @@ class WindowClassificationPicture(WindowInterface):
                 color=255,
                 verbose=True
             )
+        print("ok")
+
+        self.marked_indexes = get_marked_indexes()
         QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         print("ok")
 
     def _init_label_list(self):
         self.label_list = []
-        for x in self.x_data_full['x_data']:
+        for i, x in enumerate(self.x_data_full['x_data']):
+            if i in self.marked_indexes:
+                img_data = x * 10
+            else:
+                img_data = x
+
             self.label_list.append(
                 MergedTrainExLabel(
-                    x_data=x,
+                    x_data=img_data,
                     classes=self.classes,
                     label_size=self.default_label_size
                 )
             )
 
     def __init__(self):
+        self.already_marked_dir = 'Datasets/Potato/agro'
+        self.already_marked_list = os.listdir(self.already_marked_dir)
+
         super(WindowClassificationPicture, self).__init__()
         self.setWindowTitle("Plant Disease Recognizer")
 
