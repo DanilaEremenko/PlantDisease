@@ -117,9 +117,13 @@ class WindowMultipleExamples(WindowInterface):
             print('Parsing json list')
             self.classes, self.x_data, self.y_data = dmk.get_data_from_json_list(
                 json_list=json_list,
-                remove_classes=None,
-                # remove_classes=['фитофтороз']
+                # remove_classes=None,
+                # TODO some dev stuff
+                remove_classes=['альтернариоз', 'прочие инфекции', 'морщинистая мозаика', 'полосатая мозаика']
             )
+        # TODO some dev stuff
+        self.classes['здоровые кусты'] = self.classes['марь белая']
+        del self.classes['марь белая']
 
         self._define_max_class()
 
@@ -182,10 +186,13 @@ class WindowMultipleExamples(WindowInterface):
         for key in self.classes.keys():
             self.classes[key]['value'] = list(*self.classes[key]['value'])
 
-        dmk.json_train_create(
-            path=out_json_path,
-            x_data_full={"x_data": self.x_data, "longitudes": None, "latitudes": None},
+        dmk.json_big_create(
+            json_path=out_json_path,
+            h5_path="%s_%s.hd5f" % (self.json_name, self.postfix),
+            x_data=self.x_data,
             y_data=self.y_data,
+            longitudes=None,
+            latitudes=None,
             img_shape=None,
             classes=self.classes
         )
