@@ -122,8 +122,12 @@ class WindowMultipleExamples(WindowInterface):
                 remove_classes=['альтернариоз', 'прочие инфекции', 'морщинистая мозаика', 'полосатая мозаика']
             )
         # TODO some dev stuff
-        self.classes['здоровые кусты'] = self.classes['марь белая']
+        self.classes['здоровый куст'] = self.classes['марь белая']
         del self.classes['марь белая']
+        self.classes['мозаика'] = self.classes['прочие мозаики']
+        del self.classes['прочие мозаики']
+        self.classes['сорняк'] = self.classes['прочие сорняки']
+        del self.classes['прочие сорняки']
 
         self._define_max_class()
 

@@ -180,8 +180,56 @@ class WindowClassificationPicture(WindowInterface):
         super(WindowClassificationPicture, self).__init__()
         self.setWindowTitle("Plant Disease Recognizer")
 
-        with open(self.choose_json(content_title='config data')) as config_fp:
-            config_dict = json.load(config_fp)
+        # TODO some dev stuff
+        # with open(self.choose_json(content_title='config data')) as config_fp:
+        #     config_dict = json.load(config_fp)
+        config_dict = {
+
+            "classes": {
+                "Грибные инфекции": {
+                    "фитофтороз": {"value": [0]},
+                    "альтернариоз": {"value": [1]},
+                    "прочие инфекции": {"value": [2]}
+                },
+                "Бактериальные": {
+                    "кольцевая гниль": {"value": [3]},
+                    "бурый слизистый бактериоз": {"value": [4]},
+                    "прочие гнили": {"value": [5]}
+                },
+                "Вирусы": {
+                    "полосатая мозаика": {"value": [6]},
+                    "обыкновенная мозаика": {"value": [7]},
+                    "морщинистая мозаика": {"value": [8]},
+                    "прочие мозаики": {"value": [9]}
+                },
+                "Неопределенные болезни": {
+                    "неопределенная болезнь": {"value": [10]}
+                },
+                "Вредители": {
+                    "нематоды": {"value": [11]},
+                    "колорадские жуки": {"value": [12]},
+                    "проволочники": {"value": [13]},
+                    "прочие вредители": {"value": [14]}
+                },
+                "Сорняки": {
+                    "марь белая": {"value": [15]},
+                    "подмаренник цепкий": {"value": [16]},
+                    "щирица": {"value": [17]},
+                    "пастушья сумка": {"value": [18]},
+                    "сурепка дикая": {"value": [19]},
+                    "куриное просо": {"value": [20]},
+                    "овсюг": {"value": [21]},
+                    "пырей ползучий": {"value": [22]},
+                    "вьюнок": {"value": [23]},
+                    "бодяк": {"value": [24]},
+                    "осот": {"value": [25]},
+                    "прочие сорняки": {"value": [26]}
+                }
+            },
+            "window_shape": [256, 256, 3],
+            "qt_label_size": [256, 256],
+            "img_thumb": [8192, 8192]
+        }
 
         # self.img_path = self.choose_picture()
         # self.img_name = os.path.splitext(self.img_path)[0]
