@@ -5,7 +5,7 @@ Script for train new or early saved NN models via UI CMD
 import argparse
 import json
 
-from pd_lib.conv_network import get_CNN, get_VGG16
+from pd_lib.conv_network import get_model_by_name
 from pd_lib.keras_addition_ import save_model_to_json, get_full_model
 from pd_lib.ui_cmd import get_input_int, get_stdin_answer
 
@@ -68,7 +68,7 @@ def unison_shuffled_copies(a, b):
     return a[p], b[p]
 
 
-def get_train_and_test(x_data, y_data, classes, validation_split):
+def get_splited_subs(x_data, y_data, classes, validation_split):
     test_size = int(len(x_data) * validation_split)
     while test_size % len(classes.keys()) != 0:
         test_size += 1
@@ -87,13 +87,19 @@ def get_train_and_test(x_data, y_data, classes, validation_split):
 
         test_clasess[key] = classes[key].copy()
         test_clasess[key]['num'] = 0
+        test_clasess[key]['max_num'] = int(classes[key]['num'] * validation_split)
+
+    while sum(list(map(lambda x: x['max_num'], test_clasess.values()))) < test_size:
+        test_clasess[list(test_clasess.keys())[0]]['max_num'] += 1
 
     test_i = 0
     train_i = 0
 
     for i, (x, y) in enumerate(zip(x_data, y_data)):
         for key in classes.keys():
-            if (y == classes[key]['value']).all() and test_i < test_size:
+            if (y == classes[key]['value']).all() \
+                    and test_clasess[key]['num'] < test_clasess[key]['max_num'] \
+                    and test_i < test_size:
                 x_test[test_i] = x
                 y_test[test_i] = y
                 test_i += 1
@@ -126,11 +132,36 @@ def show_predict_on_window(model, x_data, y_data, classes):
     print("GUI EXITED WITH CODE = %d" % app.exec_())
 
 
+def get_sub_arrays(x, y, classes, size=500):
+    if x.shape[0] > size:
+        (x1, y1, classes_1), (x2, y2, classes_2) = get_splited_subs(x, y, classes, validation_split=0.5)
+        sub_1 = get_sub_arrays(x1, y1, classes_1)
+        sub_2 = get_sub_arrays(x2, y2, classes_2)
+
+        if isinstance(sub_1['x'], list):
+            return {
+                'x': [*sub_1['x'], *sub_2['x']],
+                'y': [*sub_1['y'], *sub_2['y']],
+                'classes': [*sub_1['classes'], *sub_2['classes']]
+            }
+
+        elif isinstance(sub_1['x'], np.ndarray):
+            return {
+                'x': [sub_1['x'], sub_2['x']],
+                'y': [sub_1['y'], sub_2['y']],
+                'classes': [classes_1, classes_2]
+            }
+
+        else:
+            raise Exception("Whaaa")
+
+    return {'x': x, 'y': y, 'classes': classes}
+
+
 ################################################################################
 # --------------------------------- MAIN ---------------------------------------
 ################################################################################
 def main():
-    MAX_DRAW_IMG_SIZE = 1600
     #####################################################################
     # ----------------------- set data params ---------------------------
     #####################################################################
@@ -156,10 +187,16 @@ def main():
     eval['x'] = np.array(eval['x'], dtype='uint8')
 
     (train["x"], train["y"], train['classes']), \
-    (test["x"], test["y"], test['classes']) = get_train_and_test(x_data=train["x"],
-                                                                 y_data=train["y"],
-                                                                 classes=train['classes'],
-                                                                 validation_split=validation_split)
+    (test["x"], test["y"], test['classes']) = get_splited_subs(x_data=train["x"],
+                                                               y_data=train["y"],
+                                                               classes=train['classes'],
+                                                               validation_split=validation_split)
+
+    #########################################################
+    # ----------- divide to sub arrays to avoid sigkill -----
+    #########################################################
+    # train_splited = get_sub_arrays(**train)
+    #########################################################
     class_weights = {}
     for class_info in train['classes'].values():
         class_weights[class_info['weight'][0]] = class_info['weight'][1]
@@ -179,15 +216,15 @@ def main():
             h5_path=config_dict['model']['exist']['weights'],
             verbose=True
         )
-        new_model_type = 'NN'
-    elif config_dict['model']['new']['type'] == 'vgg16':
-        model = get_VGG16(train['x'].shape[1:], len(train['classes'].keys()))
-        print("new VGG16 model created\n")
-        new_model_type = 'VGG16'
+        model_name = 'NN'
     else:
-        model = get_CNN(train['x'].shape[1:], len(train['classes'].keys()))
-        print("new CNN model created\n")
-        new_model_type = 'CNN'
+        model, model_name = get_model_by_name(
+            name=config_dict['model']['new']['type'],
+            input_shape=train['x'].shape[1:],
+            output_shape=len(train['classes'].keys())
+        )
+
+    print("new %s model created\n" % model_name)
 
     plot_model(model, show_shapes=True, to_file='model.png')
 
@@ -330,8 +367,8 @@ def main():
                 classes=eval['classes']
             )
         if get_stdin_answer(text='Save model?'):
-            save_model_to_json(model, "models/model_ground_%s_%d.json" % (new_model_type, epochs_sum))
-            model.save_weights('models/model_ground_%s_%d.h5' % (new_model_type, epochs_sum))
+            save_model_to_json(model, "models/model_ground_%s_%d.json" % (model_name, epochs_sum))
+            model.save_weights('models/model_ground_%s_%d.h5' % (model_name, epochs_sum))
 
         continue_train = get_stdin_answer(text="Continue?")
 
