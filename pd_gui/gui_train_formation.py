@@ -145,10 +145,9 @@ class WindowClassificationPicture(WindowInterface):
         print("rendering image...")
         self.x_data_full, self.full_img = \
             dmk.get_x_from_croped_img(
-                path_img_in=self.img_path,
+                path_to_img=self.img_path,
                 window_shape=self.window_shape,
                 step=1.0,
-                color=255,
                 verbose=True
             )
         print("ok")

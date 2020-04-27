@@ -1,5 +1,5 @@
 """
-PyQt GUI for visualizing predictions of NN in main_train_on_json.py
+PyQt GUI for visualizing predictions of NN in main_train_CNN.py
 """
 
 from PyQt5 import QtWidgets
@@ -25,23 +25,23 @@ class WindowShowPredictions(WindowInterface):
             if len(key) > self.max_key_len:
                 self.max_key_len = len(key)
 
-    def __init__(self, model, x_data, y_data, classes):
+    def __init__(self, x_data, y_data, y_predicted, classes):
         super(WindowShowPredictions, self).__init__()
 
         config_dict = self.load_dict_from_json_with_keys(key_list=['qt_label_size'])
         self.label_size = config_dict['qt_label_size']
 
-        self.model = model
         self.x_data = x_data
         self.y_data = y_data
+        self.y_predicted = y_predicted
         self.classes = classes
 
         self._define_max_key_len()
 
         self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
         self.setCentralWidget(self.main_layout)
+        self.showFullScreen()
         self.update_main_layout()
-        self.show()
 
     def clear(self):
         self.main_layout.clear()
@@ -71,7 +71,7 @@ class WindowShowPredictions(WindowInterface):
             return word
 
         label_list = []
-        for x, y, y_answer in zip(self.x_data, self.y_data, self.model.predict(self.x_data)):
+        for x, y, y_answer in zip(self.x_data, self.y_data, self.y_predicted):
             answer = get_key_by_answer(pos_code=y_answer)
             answer['key'] = add_spaces(answer['key'], new_size=self.max_key_len)
 

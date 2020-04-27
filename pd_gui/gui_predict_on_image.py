@@ -30,7 +30,7 @@ class WindowPredictOnImage(WindowInterface):
     def _parse_image(self):
         self.picture_path = self.choose_picture()
         x_cropped, full_img = dmk.get_x_from_croped_img(
-            path_img_in=self.picture_path,
+            path_to_img=self.picture_path,
             window_shape=(32, 32, 3),
             img_thumb=self.img_thumb
 

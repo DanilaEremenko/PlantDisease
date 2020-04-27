@@ -1,7 +1,6 @@
 """
 Contains functions for image processing
 """
-import cv2
 from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +12,7 @@ from PIL import Image, ImageFilter
 # --------------------------- deform image ----------------------------------
 #############################################################################
 def get_img_edges(img, thr_1=60, thr_2=120):
+    import cv2
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # edges = cv2.Canny(gray, 20, 30)
     edges_high_thresh = cv2.Canny(gray, thr_1, thr_2)
@@ -28,7 +28,7 @@ def deform_image(img, k, n, m):
 
 def deform_arr(arr, k, n, m):
     """
-    :param arr: img as array
+    :param arr: image as array
     :param k: intensity
     :param n: from pixel
     :param m: to pixel

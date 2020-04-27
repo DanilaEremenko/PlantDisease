@@ -15,12 +15,11 @@ import json
 ################################################################################
 # --------------------------------- for predict on image -----------------------
 ################################################################################
-def get_x_from_croped_img(path_img_in, window_shape, img_thumb=None, step=1.0, color=255, path_out_dir=None,
-                          verbose=False):
+def get_x_from_croped_img(path_to_img, window_shape, img_thumb=None, step=1.0, path_out_dir=None, verbose=False):
     if path_out_dir != None and not os.path.isdir(path_out_dir):
         raise Exception("No such directory %s" % path_out_dir)
 
-    full_img = Image.open(path_img_in)
+    full_img = Image.open(path_to_img)
     if img_thumb is not None:
         full_img.thumbnail(img_thumb)
 
@@ -35,8 +34,8 @@ def get_x_from_croped_img(path_img_in, window_shape, img_thumb=None, step=1.0, c
     longitudes = []  # TODO add caluclating
     latitudes = []  # TODO add caluclating
     for i in range(ex_num):
-        p1_x, p1_y = i % x_len * window_shape[0], int(i / x_len) * window_shape[1]
-        p2_x, p2_y = p1_x + window_shape[0], p1_y + window_shape[1]
+        p1_x, p1_y = i % x_len * int(window_shape[0] * step), int(i / x_len) * window_shape[1]
+        p2_x, p2_y = p1_x + int(window_shape[0] * step), p1_y + window_shape[1]
 
         if verbose:
             ui_cmd.printProgressBar(current=i, total=ex_num)
@@ -284,3 +283,10 @@ def get_pos_from_num(arr, class_num):
         new_arr[curr_new_i][i] = 1
         curr_new_i += 1
     return new_arr
+
+
+def get_num_from_pos(arr):
+    for i, n in enumerate(arr):
+        if n == 1:
+            return i
+    raise Exception("%s is not a pos code" % str(arr))

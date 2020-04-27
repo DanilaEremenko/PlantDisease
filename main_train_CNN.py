@@ -2,7 +2,6 @@
 Script for train new or early saved NN models via UI CMD
 """
 
-import argparse
 import json
 
 from pd_lib.conv_network import get_model_by_name
@@ -23,6 +22,7 @@ import sys
 
 def parse_args_for_train():
     # -------------------- initialize arguments ----------------------------------
+    import argparse
     parser = argparse.ArgumentParser(description="Some description")
 
     parser.add_argument("-j", "--json_list", type=str, action="append",
@@ -115,17 +115,17 @@ def get_splited_subs(x_data, y_data, classes, validation_split):
            (x_test, y_test, test_clasess)
 
 
-def show_predict_on_window(model, x_data, y_data, classes):
+def show_predict_on_window(x_data, y_data, y_predicted, classes):
     # TODO works incorrect
-    from pd_gui.gui_train_examine import WindowShowPredictions
+    from pd_gui.gui_fitting_cnn import WindowShowPredictions
     from PyQt5 import QtWidgets
 
     app = QtWidgets.QApplication(sys.argv)
 
     window_class_pctr = WindowShowPredictions(
-        model=model,
         x_data=x_data,
         y_data=y_data,
+        y_predicted=y_predicted,
         classes=classes
     )
 
@@ -158,6 +158,41 @@ def get_sub_arrays(x, y, classes, size=500):
     return {'x': x, 'y': y, 'classes': classes}
 
 
+def get_flow_dict(flow_dir, json_path=None, data_dict=None):
+    if json_path is not None:
+        classes, img_shape, x_samples, y_samples = \
+            dmk.json_big_load(json_path=json_path)
+    elif data_dict is not None:
+        classes = data_dict['classes']
+        x_samples = data_dict['x']
+        y_samples = data_dict['y']
+    else:
+        raise Exception('Data was not passed')
+
+    from PIL import Image
+    import os
+    for key in classes.keys():
+        classes[key]['value_num'] = dmk.get_num_from_pos(classes[key]['value'])
+        cur_flow_dir = "%s/%d_%s" % (flow_dir, classes[key]['value_num'] + 1, key)
+        if not os.path.isdir(cur_flow_dir):
+            os.mkdir(cur_flow_dir)
+            classes[key]['saved_num'] = 0
+        else:
+            print("%s already exist, exiting..." % cur_flow_dir)
+            return {'classes': classes, 'flow_dir': flow_dir}
+
+    for x, y in zip(x_samples, y_samples):
+        for key in classes.keys():
+            if (classes[key]['value'] == y).all():
+                cur_flow_dir = "%s/%d_%s" % (flow_dir, classes[key]['value_num'] + 1, key)
+                file_path = "%s/%d.JPG" % (cur_flow_dir, classes[key]['saved_num'] + 1)
+                Image.fromarray(x).save(file_path)
+                print("%s saved" % file_path)
+                classes[key]['saved_num'] += 1
+
+    return {'classes': classes, 'flow_dir': flow_dir}
+
+
 ################################################################################
 # --------------------------------- MAIN ---------------------------------------
 ################################################################################
@@ -173,25 +208,30 @@ def main():
     #####################################################################
     # ----------------------- data initializing --------------------------
     #####################################################################
-    validation_split = 0.1
+    validation_split = 0.2
+    # --------------------- train & test ---------------------------
     train = {}
     test = {}
-    eval = {}
 
     train['classes'], img_shape, train['x'], train['y'] = \
         dmk.json_big_load(config_dict['data']['train_json'])
-
-    eval['classes'], img_shape, eval['x'], eval['y'] = \
-        dmk.json_big_load(config_dict['data']['eval_json'])
-
-    eval['x'] = np.array(eval['x'], dtype='uint8')
-
-    (train["x"], train["y"], train['classes']), \
-    (test["x"], test["y"], test['classes']) = get_splited_subs(x_data=train["x"],
-                                                               y_data=train["y"],
+    (train['x'], train['y'], train['classes']), \
+    (test['x'], test['y'], test['classes']) = get_splited_subs(x_data=train['x'],
+                                                               y_data=train['y'],
                                                                classes=train['classes'],
                                                                validation_split=validation_split)
 
+    data_shape = train['x'].shape[1:]
+
+    train = get_flow_dict(data_dict=train, flow_dir='Datasets/final_dataset/flow_dir/train')
+    test = get_flow_dict(data_dict=test, flow_dir='Datasets/final_dataset/flow_dir/val')
+    eval = test.copy()
+    # --------------------- eval ---------------------------
+    # TODO add eval
+    # eval['classes'], img_shape, eval['x'], eval['y'] = \
+    #     dmk.json_big_load(config_dict['data']['eval_json'])
+    #
+    # eval = get_flow_dict(data_dict=test, flow_dir='Datasets/final_dataset/flow_dir/test')
     #########################################################
     # ----------- divide to sub arrays to avoid sigkill -----
     #########################################################
@@ -208,6 +248,16 @@ def main():
     print('class_weights = %s' % class_weights)
 
     #####################################################################
+    # ----------------------- segmentator initializing ------------------
+    #####################################################################
+    if config_dict['segmentator']['use']:
+        print("Segmentator: %s choosed" % config_dict['segmentator']['name'])
+        from pd_main_part.segmentators import UnetSegmentator
+        segmentator = UnetSegmentator(**config_dict['segmentator']['args'])
+    else:
+        print("Segmentator: isn't used")
+
+    #####################################################################
     # ----------------------- model initializing ------------------------
     #####################################################################
     if not config_dict['model']['create_new']:
@@ -220,13 +270,13 @@ def main():
     else:
         model, model_name = get_model_by_name(
             name=config_dict['model']['new']['type'],
-            input_shape=train['x'].shape[1:],
+            input_shape=data_shape,
             output_shape=len(train['classes'].keys())
         )
 
     print("new %s model created\n" % model_name)
 
-    plot_model(model, show_shapes=True, to_file='model.png')
+    # plot_model(model, show_shapes=True, to_file='model.png')
 
     #####################################################################
     # ----------------------- set train params --------------------------
@@ -237,9 +287,9 @@ def main():
     verbose = True
     history_show = True
 
-    train['batch_size'] = max(8, int(train["y"].shape[0] * 0.010))
-    test['batch_size'] = max(4, int(test["y"].shape[0] * 0.010))
-    eval['batch_size'] = max(4, int(eval["y"].shape[0] * 0.010))
+    train['batch_size'] = 4
+    test['batch_size'] = 4
+    eval['batch_size'] = 16
     full_history = {"acc": np.empty(0), "loss": np.empty(0)}
 
     print("train.batch_size = %d\ntest.batch_size = %d\neval.batch_size = %d\n" %
@@ -265,40 +315,64 @@ def main():
     model.compile(loss='categorical_crossentropy', optimizer=Adam(lr), metrics=['accuracy'])
 
     #####################################################################
+    # ----------------------- load arrays into memory -------------------
+    #####################################################################
+    # import os
+    #
+    # if not os.path.isfile('train_x.npy'):
+    #     np.save('train_x', train['x'])
+    # train['x'] = np.memmap('train_x.npy', shape=train['x'].shape, offset=128)
+    #
+    # if not os.path.isfile('test_x.npy'):
+    #     np.save('test_x', test['x'])
+    # test['x'] = np.memmap('test_x.npy', shape=test['x'].shape, offset=128)
+    #
+    # if not os.path.isfile('eval_x.npy'):
+    #     np.save('eval_x', eval['x'])
+    # eval['x'] = np.memmap('eval_x.npy', shape=eval['x'].shape, offset=128)
+
+    #####################################################################
     # ----------------------- creating train datagen --------------------
     #####################################################################
     train_generator = ImageDataGenerator(
-        shear_range=0.2,
-        zoom_range=0.2,
-        horizontal_flip=True,
-        vertical_flip=True,
-    ) \
-        .flow(
-        x=train['x'],
-        y=train['y'],
-        batch_size=train['batch_size']
-    )
-    validation_generator = ImageDataGenerator(
-        shear_range=0.2,
-        zoom_range=0.2,
+        shear_range=0.1,
+        zoom_range=0.1,
         horizontal_flip=True,
         vertical_flip=True
     ) \
-        .flow(
-        x=test['x'],
-        y=test['y'],
-        batch_size=test['batch_size']
+        .flow_from_directory(
+        directory=train['flow_dir'],
+        target_size=(256, 256),
+        color_mode='rgb',
+        batch_size=train['batch_size']
+
     )
 
-    evaluate_generator = ImageDataGenerator(
-        shear_range=0.2,
-        zoom_range=0.2,
+    validation_generator = ImageDataGenerator(
+        shear_range=0.1,
+        zoom_range=0.1,
         horizontal_flip=True,
+        vertical_flip=True,
     ) \
-        .flow(
-        x=eval['x'],
-        y=eval['y'],
+        .flow_from_directory(
+        directory=test['flow_dir'],
+        target_size=(256, 256),
+        color_mode='rgb',
+        batch_size=test['batch_size']
+
+    )
+    evaluate_generator = ImageDataGenerator(
+        shear_range=0.1,
+        zoom_range=0.1,
+        horizontal_flip=True,
+        vertical_flip=True,
+    ) \
+        .flow_from_directory(
+        directory=test['flow_dir'],
+        target_size=(256, 256),
+        color_mode='rgb',
         batch_size=eval['batch_size']
+
     )
     #####################################################################
     # ----------------------- train_model -------------------------------
@@ -310,18 +384,19 @@ def main():
         if not bad_early_stop:
             epochs = get_input_int("How many epochs?", 0, 100)
 
-        history = model.fit_generator(
-            generator=train_generator,
-            steps_per_epoch=train['x'].shape[0] / train['batch_size'],
-            validation_steps=train['x'].shape[0] / train['batch_size'],
-            validation_data=validation_generator,
-            epochs=epochs,
-            shuffle=True,
-            verbose=verbose,
-            callbacks=callbacks,
-            class_weight=class_weights
-        )
         if epochs != 0:
+
+            history = model.fit_generator(
+                generator=train_generator,
+                steps_per_epoch=train['batch_size'],
+                validation_data=validation_generator,
+                validation_steps=test['batch_size'],
+                epochs=epochs,
+                shuffle=True,
+                verbose=verbose,
+                callbacks=callbacks,
+                class_weight=class_weights
+            )
 
             full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
             full_history['loss'] = np.append(full_history['loss'], history.history['loss'])
@@ -360,10 +435,11 @@ def main():
         # ----------------------- CMD UI ------------------------------------
         #####################################################################
         if get_stdin_answer("Show image of prediction?"):
+            x, y = train_generator.next()
             show_predict_on_window(
-                model=model,
-                x_data=eval['x'],
-                y_data=eval['y'],
+                x_data=np.array(x, 'uint8'),
+                y_data=y,
+                y_predicted=model.predict(x),
                 classes=eval['classes']
             )
         if get_stdin_answer(text='Save model?'):
