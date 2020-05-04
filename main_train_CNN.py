@@ -208,35 +208,53 @@ def main():
     #####################################################################
     # ----------------------- data initializing --------------------------
     #####################################################################
-    validation_split = 0.2
-    # --------------------- train & test ---------------------------
+    validation_split = 0.3
+    evaluate_split = 0.3
+
     train = {}
     test = {}
+    eval = {}
 
-    train['classes'], img_shape, train['x'], train['y'] = \
-        dmk.json_big_load(config_dict['data']['train_json'])
-    (train['x'], train['y'], train['classes']), \
-    (test['x'], test['y'], test['classes']) = get_splited_subs(x_data=train['x'],
-                                                               y_data=train['y'],
-                                                               classes=train['classes'],
-                                                               validation_split=validation_split)
+    #####################################################################
+    # ----------------------- segmentator check -------------------------
+    #####################################################################
+    if config_dict['segmentator']['use']:
+        print("Segmentator: %s choosed" % config_dict['segmentator']['name'])
+        from pd_main_part.segmentators import UnetSegmentator
+        segmentator = UnetSegmentator(**config_dict['segmentator']['args'])
+    else:
+        print("Segmentator: isn't used")
 
-    data_shape = train['x'].shape[1:]
+    # ------------------------------- splitting --------------------------------------------------
+    # train['classes'], img_shape, train['x'], train['y'] = \
+    #     dmk.json_big_load(config_dict['data_json'])
+    #
+    # (train['x'], train['y'], train['classes']), \
+    # (test['x'], test['y'], test['classes']) = get_splited_subs(x_data=train['x'],
+    #                                                            y_data=train['y'],
+    #                                                            classes=train['classes'],
+    #                                                            validation_split=validation_split)
+    # (test['x'], test['y'], test['classes']), \
+    # (eval['x'], eval['y'], eval['classes']) = get_splited_subs(x_data=test['x'],
+    #                                                            y_data=test['y'],
+    #                                                            classes=test['classes'],
+    #                                                            validation_split=evaluate_split)
+    #
+    # data_shape = train['x'].shape[1:]
 
+    with open(config_dict['data']['train_json']) as train_json_fp:
+        train = json.load(train_json_fp)
+        test = train.copy()
+        eval = train.copy()
+
+    data_shape = (256, 256, 3)
+
+    # ------------------------------- saving to dir ----------------------------------------------
     train = get_flow_dict(data_dict=train, flow_dir='Datasets/final_dataset/flow_dir/train')
     test = get_flow_dict(data_dict=test, flow_dir='Datasets/final_dataset/flow_dir/val')
-    eval = test.copy()
-    # --------------------- eval ---------------------------
-    # TODO add eval
-    # eval['classes'], img_shape, eval['x'], eval['y'] = \
-    #     dmk.json_big_load(config_dict['data']['eval_json'])
-    #
-    # eval = get_flow_dict(data_dict=test, flow_dir='Datasets/final_dataset/flow_dir/test')
-    #########################################################
-    # ----------- divide to sub arrays to avoid sigkill -----
-    #########################################################
-    # train_splited = get_sub_arrays(**train)
-    #########################################################
+    eval = get_flow_dict(data_dict=eval, flow_dir='Datasets/final_dataset/flow_dir/eval')
+
+    # ------------------------------- weights setting --------------------------------------------
     class_weights = {}
     for class_info in train['classes'].values():
         class_weights[class_info['weight'][0]] = class_info['weight'][1]
@@ -246,16 +264,6 @@ def main():
     print("eval ['classes']  = %s" % str(eval['classes']))
 
     print('class_weights = %s' % class_weights)
-
-    #####################################################################
-    # ----------------------- segmentator initializing ------------------
-    #####################################################################
-    if config_dict['segmentator']['use']:
-        print("Segmentator: %s choosed" % config_dict['segmentator']['name'])
-        from pd_main_part.segmentators import UnetSegmentator
-        segmentator = UnetSegmentator(**config_dict['segmentator']['args'])
-    else:
-        print("Segmentator: isn't used")
 
     #####################################################################
     # ----------------------- model initializing ------------------------
@@ -273,8 +281,7 @@ def main():
             input_shape=data_shape,
             output_shape=len(train['classes'].keys())
         )
-
-    print("new %s model created\n" % model_name)
+        print("new %s model created\n" % model_name)
 
     # plot_model(model, show_shapes=True, to_file='model.png')
 
@@ -287,10 +294,10 @@ def main():
     verbose = True
     history_show = True
 
-    train['batch_size'] = 4
-    test['batch_size'] = 4
-    eval['batch_size'] = 16
-    full_history = {"acc": np.empty(0), "loss": np.empty(0)}
+    train['batch_size'] = 16
+    test['batch_size'] = 8
+    eval['batch_size'] = 8
+    full_history = {"val_loss": np.empty(0), "val_accuracy": np.empty(0), "loss": np.empty(0), "accuracy": np.empty(0)}
 
     print("train.batch_size = %d\ntest.batch_size = %d\neval.batch_size = %d\n" %
           (train['batch_size'], test['batch_size'], eval['batch_size']))
@@ -301,15 +308,15 @@ def main():
     baseline_dict = config_dict['fit']['baseline']
     print('BASELINES:%s' % str(baseline_dict))
     callbacks = [
-        ModelCheckpoint("model_ground.h5",
-                        monitor='val_acc',
+        ModelCheckpoint("models/MobileNetV2_96_93/model_MobileNetV2_best.h5",
+                        monitor='val_accuracy',
                         verbose=True,
                         save_best_only=True),
-        EarlyStopping(monitor='val_acc',
-                      patience=0,
-                      baseline=baseline_dict['test'],
-                      verbose=True,
-                      ),
+        # EarlyStopping(monitor='val_accuracy',
+        #               patience=0,
+        #               baseline=baseline_dict['test'],
+        #               verbose=True,
+        #               ),
     ]
 
     model.compile(loss='categorical_crossentropy', optimizer=Adam(lr), metrics=['accuracy'])
@@ -368,7 +375,7 @@ def main():
         vertical_flip=True,
     ) \
         .flow_from_directory(
-        directory=test['flow_dir'],
+        directory=eval['flow_dir'],
         target_size=(256, 256),
         color_mode='rgb',
         batch_size=eval['batch_size']
@@ -388,9 +395,9 @@ def main():
 
             history = model.fit_generator(
                 generator=train_generator,
-                steps_per_epoch=train['batch_size'],
+                steps_per_epoch=int(1506 / train['batch_size']),
                 validation_data=validation_generator,
-                validation_steps=test['batch_size'],
+                validation_steps=int(452 / test['batch_size']),
                 epochs=epochs,
                 shuffle=True,
                 verbose=verbose,
@@ -398,36 +405,33 @@ def main():
                 class_weight=class_weights
             )
 
-            full_history['acc'] = np.append(full_history['acc'], history.history['acc'])
+            full_history['val_loss'] = np.append(full_history['val_loss'], history.history['val_loss'])
+            full_history['val_accuracy'] = np.append(full_history['val_accuracy'], history.history['val_accuracy'])
             full_history['loss'] = np.append(full_history['loss'], history.history['loss'])
-            epochs_sum = len(full_history['acc'])
+            full_history['accuracy'] = np.append(full_history['accuracy'], history.history['accuracy'])
+            epochs_sum = len(full_history['accuracy'])
 
             #####################################################################
             # ----------------------- evaluate model ----------------------------
             #####################################################################
-            eval['loss'], eval['acc'] = model.evaluate_generator(
+            eval['loss'], eval['accuracy'] = model.evaluate_generator(
                 generator=evaluate_generator,
-                steps=train['x'].shape[0] / eval['batch_size']
+                steps=int(196 / eval['batch_size'])
             )
 
-            print("\nacc        %.2f%%\n" % (history.history['acc'][-1] * 100), end='')
-            print("val_acc      %.2f%%\n" % (history.history['val_acc'][-1] * 100), end='')
-            print("eval_acc     %.2f%%\n" % (eval['acc'] * 100))
+            print("\nacc        %.2f%%\n" % (history.history['accuracy'][-1] * 100), end='')
+            print("val_acc      %.2f%%\n" % (history.history['val_accuracy'][-1] * 100), end='')
+            print("eval_acc     %.2f%%\n" % (eval['accuracy'] * 100))
 
-            if history.history['acc'][-1] < baseline_dict['train'] and epochs > len(history.history['acc']):
+            if history.history['accuracy'][-1] < baseline_dict['train'] and epochs > len(history.history['accuracy']):
                 bad_early_stop = True
                 print("EarlyStopping by val_acc without acc, continue...")
                 continue
             bad_early_stop = False
 
-            epochs = len(history.history['acc'])
+            epochs = len(history.history['accuracy'])
 
-            gr.plot_history_separate_from_dict(history_dict=full_history,
-                                               save_path_acc=None,
-                                               save_path_loss=None,
-                                               show=history_show,
-                                               save=False
-                                               )
+            # gr.plot_train_test_from_history(history_dict=history.history, show=True)
 
         print("epochs: %d - %d" % (epochs_sum - epochs, epochs_sum))
 
@@ -443,8 +447,14 @@ def main():
                 classes=eval['classes']
             )
         if get_stdin_answer(text='Save model?'):
-            save_model_to_json(model, "models/model_ground_%s_%d.json" % (model_name, epochs_sum))
-            model.save_weights('models/model_ground_%s_%d.h5' % (model_name, epochs_sum))
+            save_model_to_json(model, "models/model_%s_%d.json" % (model_name, epochs_sum))
+            model.save_weights('models/model_%s_%d.h5' % (model_name, epochs_sum))
+            with open('models/model_%s_%d_history.json' % (model_name, epochs_sum), "w") as fp:
+                json.dump(
+                    obj=dict(zip(('val_loss', 'val_accuracy', 'loss', 'accuracy'),
+                                 list(map(lambda x: x.tolist(), full_history.values())))),
+                    fp=fp
+                )
 
         continue_train = get_stdin_answer(text="Continue?")
 
