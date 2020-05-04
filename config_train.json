@@ -1,23 +1,23 @@
 {
   "data": {
-    "train_json": "Datasets/Potato/plan_train/DJI_0001_multiple.json",
-    "eval_json": "Datasets/Potato/plan_train/DJI_0001_multiple.json"
+    "train_json": "Datasets/final_dataset/DJI_0001_health_joined.json"
   },
   "fit": {
     "baseline": {
       "train": 0.90,
       "test": 0.95,
-      "eval": 0.85
+      "eval": 0.95
     }
   },
   "model": {
-    "create_new": true,
+    "create_new": false,
     "new": {
-      "type": "cnn"
+      "type": "DenseNet121"
     },
     "exist": {
-      "weights": "models/model_ground_50.h5",
-      "structure": "models/model_ground_50.json"
+      "weights": "models/DenseNet_98_96_98/model_DenseNet121_50.h5",
+      "structure": "models/DenseNet_98_96_98/model_DenseNet121_50.json",
+      "history": "models/DenseNet_98_96_98/model_DenseNet121_50_history.json"
     }
   }
 }

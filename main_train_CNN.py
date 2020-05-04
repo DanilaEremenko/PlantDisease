@@ -218,12 +218,12 @@ def main():
     #####################################################################
     # ----------------------- segmentator check -------------------------
     #####################################################################
-    if config_dict['segmentator']['use']:
-        print("Segmentator: %s choosed" % config_dict['segmentator']['name'])
-        from pd_main_part.segmentators import UnetSegmentator
-        segmentator = UnetSegmentator(**config_dict['segmentator']['args'])
-    else:
-        print("Segmentator: isn't used")
+    # if config_dict['segmentator']['use']:
+    #     print("Segmentator: %s choosed" % config_dict['segmentator']['name'])
+    #     from pd_main_part.segmentators import UnetSegmentator
+    #     segmentator = UnetSegmentator(**config_dict['segmentator']['args'])
+    # else:
+    #     print("Segmentator: isn't used")
 
     # ------------------------------- splitting --------------------------------------------------
     # train['classes'], img_shape, train['x'], train['y'] = \
@@ -250,9 +250,12 @@ def main():
     data_shape = (256, 256, 3)
 
     # ------------------------------- saving to dir ----------------------------------------------
-    train = get_flow_dict(data_dict=train, flow_dir='Datasets/final_dataset/flow_dir/train')
-    test = get_flow_dict(data_dict=test, flow_dir='Datasets/final_dataset/flow_dir/val')
-    eval = get_flow_dict(data_dict=eval, flow_dir='Datasets/final_dataset/flow_dir/eval')
+    # train = get_flow_dict(data_dict=train, flow_dir='Datasets/final_dataset/flow_dir/train')
+    # test = get_flow_dict(data_dict=test, flow_dir='Datasets/final_dataset/flow_dir/val')
+    # eval = get_flow_dict(data_dict=eval, flow_dir='Datasets/final_dataset/flow_dir/eval')
+    train['flow_dir'] = 'Datasets/final_dataset/flow_dir/train'
+    test['flow_dir'] = 'Datasets/final_dataset/flow_dir/val'
+    eval['flow_dir'] = 'Datasets/final_dataset/flow_dir/eval'
 
     # ------------------------------- weights setting --------------------------------------------
     class_weights = {}
@@ -297,7 +300,20 @@ def main():
     train['batch_size'] = 16
     test['batch_size'] = 8
     eval['batch_size'] = 8
-    full_history = {"val_loss": np.empty(0), "val_accuracy": np.empty(0), "loss": np.empty(0), "accuracy": np.empty(0)}
+
+    #####################################################################
+    # ------------------ full history create/load -----------------------
+    #####################################################################
+    if not config_dict['model']['create_new'] and config_dict['model']['exist']['history']:
+        with open(config_dict['model']['exist']['history']) as history_fp:
+            full_history = json.load(history_fp)
+        for key in full_history.keys():
+            full_history[key] = np.array(full_history[key])
+        print('history loaded from file')
+    else:
+        full_history = {"val_loss": np.empty(0), "val_accuracy": np.empty(0), "loss": np.empty(0),
+                        "accuracy": np.empty(0)}
+        print('new history initialized')
 
     print("train.batch_size = %d\ntest.batch_size = %d\neval.batch_size = %d\n" %
           (train['batch_size'], test['batch_size'], eval['batch_size']))
@@ -308,7 +324,7 @@ def main():
     baseline_dict = config_dict['fit']['baseline']
     print('BASELINES:%s' % str(baseline_dict))
     callbacks = [
-        ModelCheckpoint("models/MobileNetV2_96_93/model_MobileNetV2_best.h5",
+        ModelCheckpoint("models/model_%s_best.h5" % model_name,
                         monitor='val_accuracy',
                         verbose=True,
                         save_best_only=True),
@@ -414,14 +430,8 @@ def main():
             #####################################################################
             # ----------------------- evaluate model ----------------------------
             #####################################################################
-            eval['loss'], eval['accuracy'] = model.evaluate_generator(
-                generator=evaluate_generator,
-                steps=int(196 / eval['batch_size'])
-            )
-
             print("\nacc        %.2f%%\n" % (history.history['accuracy'][-1] * 100), end='')
             print("val_acc      %.2f%%\n" % (history.history['val_accuracy'][-1] * 100), end='')
-            print("eval_acc     %.2f%%\n" % (eval['accuracy'] * 100))
 
             if history.history['accuracy'][-1] < baseline_dict['train'] and epochs > len(history.history['accuracy']):
                 bad_early_stop = True
@@ -432,6 +442,11 @@ def main():
             epochs = len(history.history['accuracy'])
 
             # gr.plot_train_test_from_history(history_dict=history.history, show=True)
+        eval['loss'], eval['accuracy'] = model.evaluate_generator(
+            generator=evaluate_generator,
+            steps=int(196 / eval['batch_size'])
+        )
+        print("eval_acc     %.2f%%\n" % (eval['accuracy'] * 100))
 
         print("epochs: %d - %d" % (epochs_sum - epochs, epochs_sum))
 
@@ -439,7 +454,7 @@ def main():
         # ----------------------- CMD UI ------------------------------------
         #####################################################################
         if get_stdin_answer("Show image of prediction?"):
-            x, y = train_generator.next()
+            x, y = evaluate_generator.next()
             show_predict_on_window(
                 x_data=np.array(x, 'uint8'),
                 y_data=y,
