@@ -1,0 +1,23 @@
+{
+  "data": {
+    "train_json": "Datasets/final_dataset/DJI_0001_joined_1540.json"
+  },
+  "fit": {
+    "baseline": {
+      "train": 0.90,
+      "test": 0.95,
+      "eval": 0.95
+    }
+  },
+  "model": {
+    "create_new": false,
+    "new": {
+      "type": "DenseNet121"
+    },
+    "exist": {
+      "weights": "models/DenseNet_98_96_98/model_DenseNet121_50.h5",
+      "structure": "models/DenseNet_98_96_98/model_DenseNet121_50.json",
+      "history": "models/DenseNet_98_96_98/model_DenseNet121_50_history.json"
+    }
+  }
+}

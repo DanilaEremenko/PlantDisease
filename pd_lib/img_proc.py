@@ -1,12 +1,22 @@
 """
 Contains functions for image processing
 """
-
 from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from PIL import Image
+from PIL import Image, ImageFilter
+
+
+#############################################################################
+# --------------------------- deform image ----------------------------------
+#############################################################################
+def get_img_edges(img, thr_1=60, thr_2=120):
+    import cv2
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # edges = cv2.Canny(gray, 20, 30)
+    edges_high_thresh = cv2.Canny(gray, thr_1, thr_2)
+    return edges_high_thresh
 
 
 #############################################################################
@@ -18,7 +28,7 @@ def deform_image(img, k, n, m):
 
 def deform_arr(arr, k, n, m):
     """
-    :param arr: img as array
+    :param arr: image as array
     :param k: intensity
     :param n: from pixel
     :param m: to pixel
@@ -46,10 +56,39 @@ def noise_img_from_arr(img, intensity):
 
 
 def noise_arr(arr, intensity):
-    res_arr = arr.copy()
+    res_arr = arr.copy().flatten()
     for i in range(0, res_arr.size):
         res_arr[i] = (res_arr[i] + np.random.randint(0, intensity)) % 255
     return res_arr
+
+
+#############################################################################
+# --------------------------- blur image -----------------------------------
+#############################################################################
+def blur_img(arr, radius):
+    img = Image.fromarray(arr)
+    return np.asarray(img.filter(ImageFilter.GaussianBlur(radius=radius)))
+
+
+#############################################################################
+# --------------------------- warp image ------------------------------------
+#############################################################################
+def affine_warp(arr, k):
+    y, x = arr.shape[0:2]
+    step = max(1, int(x * k / 100))
+
+    pts1 = np.float32([[step, step], [x, step], [step, y]])
+    pts2 = np.float32(
+        [
+            [0.5 * step, 1.5 * step],
+            [x - 0.5 * step, 0.5 * step],
+            [1.5 * step, y - 0.5 * step]
+        ]
+    )
+
+    M = cv2.getAffineTransform(pts1, pts2)
+
+    return cv2.warpAffine(arr, M, (x, y))
 
 
 #############################################################################
@@ -71,7 +110,7 @@ def crop_multiply_data(img, name, crop_area, path_out_dir):
 
 
 #############################################################################
-# --------------------------- 'decropping' ----------------------------------
+# --------------------------- merging ---------------------------------------
 #############################################################################
 def get_full_repaired_image_from_pieces(x_data, img_shape):
     x_len = int(img_shape[0] / x_data.shape[1])

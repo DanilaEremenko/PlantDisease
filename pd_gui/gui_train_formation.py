@@ -1,7 +1,6 @@
 """
 PyQt GUI for main_create_json_from_image.py
 """
-
 import json
 
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -25,9 +24,13 @@ class WindowClassificationPicture(WindowInterface):
         self.zoom_list = [0.25, 0.5, 0.75, 1]
         self.zoom = self.zoom_list[0]
         self.zoom_no = 0
-        self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
-        self.hbox_control.addWidget(ControlButton("Choose image", self.choose_and_render_image))
-        self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
+
+        self.hbox_control.addWidget(
+            ControlButton("Okay", self.okay_pressed, styleSheet='background-color: #0cdb3c'))
+        self.hbox_control.addWidget(
+            ControlButton("Choose image", self.choose_and_render_image, styleSheet='background-color: #ffbe25'))
+        self.hbox_control.addWidget(
+            ControlButton("Quit", self.quit_default, styleSheet='background-color: #e84a1a'))
 
     def _init_main_menu(self):
 
@@ -42,67 +45,193 @@ class WindowClassificationPicture(WindowInterface):
         for zoom in self.zoom_list:
             add_zoom_to_menu(zoom)
 
-    #   mouse wheel event scroll
-    def wheelEvent(self, event):
-        modifiers = QApplication.keyboardModifiers()
-        if modifiers == QtCore.Qt.ControlModifier:
-            # calculate coor
-            cursor_x = QtGui.QCursor.pos().x()
-            cursor_y = QtGui.QCursor.pos().y()
-            screen = QtGui.QGuiApplication.primaryScreen()
-            screenGeometry = screen.geometry()
-            screen_height = screenGeometry.height()
-            screen_width = screenGeometry.width()
-            pos_x = screen_width - cursor_x
-            pos_y = screen_height - cursor_y
-            if event.angleDelta().y() > 0:
-                if self.zoom_no < len(self.zoom_list) - 1: self.zoom_no += 1
-            else:
-                if self.zoom_no > 0: self.zoom_no -= 1
-            self.change_zoom(self.zoom_list[self.zoom_no])
+    # ------------------------ MOUSE DRAGGING PART -------------------------------------
+    def mousePressEvent(self, event):
+        # TODO to fix
+        if hasattr(self, 'img_name'):
+            rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+            self.first_x = max(0, min(int(rect[0]), event.x() + self.last_x))
+            self.first_y = max(0, min(int(rect[1]), event.y() + self.last_y))
+            print("event ", event.x(), event.y())
+            print("last ", self.last_x, self.last_y)
+            print("press offset ", self.first_x, self.first_y)
 
+    def mouseMoveEvent(self, event):
+        if hasattr(self, 'img_name'):
+            self.v_bar = self.main_layout.scroll_area.verticalScrollBar()
+            self.h_bar = self.main_layout.scroll_area.horizontalScrollBar()
+            rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+            if self.main_layout.width() < rect[0]:
+                x = self.first_x - event.x()
+                y = self.first_y - event.y()
+                self.last_x = x
+                self.last_y = y
+                print("\n\nDRAG OFFSET:", x, y)
+                self.main_layout.set_offset(x, y)
+
+    # ------------------------ WHEEL PART -------------------------------------
+    #   mouse wheel event scrollо
+    def wheelEvent(self, event):
+        if hasattr(self, 'img_name'):
+            modifiers = QApplication.keyboardModifiers()
+            if modifiers == QtCore.Qt.ControlModifier:
+                if event.angleDelta().y() > 0:
+                    if self.zoom_no < len(self.zoom_list) - 1: self.zoom_no += 1
+                else:
+                    if self.zoom_no > 0: self.zoom_no -= 1
+                self.change_zoom(self.zoom_list[self.zoom_no])
+                self.move_by_cursor()
+
+    def move_by_cursor(self):
+        cursor_x = QtGui.QCursor.pos().x()
+        cursor_y = QtGui.QCursor.pos().y()
+
+        window_width = self.main_layout.width()
+        window_height = self.main_layout.height()
+
+        rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
+        real_image_width = int(rect[0])
+        real_image_height = int(rect[1])
+        print("x coor ", cursor_x, window_width, real_image_width)
+        if (real_image_width < window_width | real_image_height < window_height):
+            print("nothing to move")
+        else:
+            koef_x = (cursor_x) / real_image_width
+            koef_y = (cursor_y) / real_image_height
+
+            offset_x = (real_image_width - window_width) * koef_x
+            offset_y = (real_image_height - window_height) * koef_y
+
+            # TODO famous math constant 4 and 2
+            x = int(offset_x * 4)
+            y = int(offset_y * 2)
+
+            print("\n\nZOOM OFFSET:", x, y)
+            self.main_layout.set_offset(x, y)
+
+            # TODO maybe someday zoom will work
+            # self.last_x = x
+            # self.last_y = y
+
+    # ------------------------ ZOOM PART -------------------------------------
     def change_zoom(self, new_zoom):
         self.zoom = new_zoom
         print('new zoom = %d' % self.zoom)
         self.update_main_layout()
 
     def _init_images(self):
+        def get_marked_indexes():
+            marked_indexes = []
+            pref_path = self.img_path.split('.')[0].split('/')[-1]
+            if pref_path in list(map(lambda repeat_file: repeat_file.split('.')[0], self.already_marked_list)):
+                with open("%s/%s.json" % (self.already_marked_dir, pref_path))as repeat_fp:
+                    x_repeated = np.array(json.load(repeat_fp)['x_data'], dtype='uint8')
+                    mae_threshold = 1.2  # experimental
+                    for i, x in enumerate(self.x_data_full['x_data']):
+                        for rep_i, rep_x in enumerate(x_repeated):
+                            mae = abs((x - rep_x).astype('int8')).mean()
+                            if mae < mae_threshold:
+                                print('%d->%d:mae = %.3f' % (rep_i, i, mae))
+                                marked_indexes.append(i)
+                                break
+
+                    if len(marked_indexes) != len(x_repeated):
+                        raise Exception('bad threshold')
+            return marked_indexes
+
         self.pre_rendered_img_dict = {}
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
 
         print("rendering image...")
-
-        (self.x_data_full,
-         self.full_img,
-         self.draw_image) = \
+        self.x_data_full, self.full_img = \
             dmk.get_x_from_croped_img(
-                path_img_in=self.img_path,
+                path_to_img=self.img_path,
                 window_shape=self.window_shape,
                 step=1.0,
-                color=255,
                 verbose=True
             )
         print("ok")
 
+        self.marked_indexes = get_marked_indexes()
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+        print("ok")
+
     def _init_label_list(self):
         self.label_list = []
-        for x in self.x_data_full['x_data']:
+        for i, x in enumerate(self.x_data_full['x_data']):
+            if i in self.marked_indexes:
+                img_data = x * 10
+            else:
+                img_data = x
+
             self.label_list.append(
                 MergedTrainExLabel(
-                    x_data=x,
+                    x_data=img_data,
                     classes=self.classes,
                     label_size=self.default_label_size
                 )
             )
 
     def __init__(self):
+        self.already_marked_dir = 'Datasets/Potato/agro'
+        self.already_marked_list = os.listdir(self.already_marked_dir)
+
         super(WindowClassificationPicture, self).__init__()
         self.setWindowTitle("Plant Disease Recognizer")
 
-        with open(self.choose_json(content_title='config data')) as config_fp:
-            config_dict = json.load(config_fp)
+        # TODO some dev stuff
+        # with open(self.choose_json(content_title='config data')) as config_fp:
+        #     config_dict = json.load(config_fp)
+        config_dict = {
 
-        self.img_path = self.choose_picture()
-        self.img_name = os.path.splitext(self.img_path)[0]
+            "classes": {
+                "Грибные инфекции": {
+                    "фитофтороз": {"value": [0]},
+                    "альтернариоз": {"value": [1]},
+                    "прочие инфекции": {"value": [2]}
+                },
+                "Бактериальные": {
+                    "кольцевая гниль": {"value": [3]},
+                    "бурый слизистый бактериоз": {"value": [4]},
+                    "прочие гнили": {"value": [5]}
+                },
+                "Вирусы": {
+                    "полосатая мозаика": {"value": [6]},
+                    "обыкновенная мозаика": {"value": [7]},
+                    "морщинистая мозаика": {"value": [8]},
+                    "прочие мозаики": {"value": [9]}
+                },
+                "Неопределенные болезни": {
+                    "неопределенная болезнь": {"value": [10]}
+                },
+                "Вредители": {
+                    "нематоды": {"value": [11]},
+                    "колорадские жуки": {"value": [12]},
+                    "проволочники": {"value": [13]},
+                    "прочие вредители": {"value": [14]}
+                },
+                "Сорняки": {
+                    "марь белая": {"value": [15]},
+                    "подмаренник цепкий": {"value": [16]},
+                    "щирица": {"value": [17]},
+                    "пастушья сумка": {"value": [18]},
+                    "сурепка дикая": {"value": [19]},
+                    "куриное просо": {"value": [20]},
+                    "овсюг": {"value": [21]},
+                    "пырей ползучий": {"value": [22]},
+                    "вьюнок": {"value": [23]},
+                    "бодяк": {"value": [24]},
+                    "осот": {"value": [25]},
+                    "прочие сорняки": {"value": [26]}
+                }
+            },
+            "window_shape": [256, 256, 3],
+            "qt_label_size": [256, 256],
+            "img_thumb": [8192, 8192]
+        }
+
+        # self.img_path = self.choose_picture()
+        # self.img_name = os.path.splitext(self.img_path)[0]
 
         self.window_shape = config_dict['window_shape']
         self.classes = config_dict['classes']
@@ -116,21 +245,19 @@ class WindowClassificationPicture(WindowInterface):
         self.setCentralWidget(self.main_layout)
         self.showFullScreen()
 
+        self.choose_and_render_image()
+
+        # for offset calculation
+        self.last_x = 0
+        self.last_y = 0
+
     def choose_and_render_image(self):
-        self.clear()
-
         self.img_path = self.choose_picture()
-
         if self.img_path != '':
+            self.clear()
             self.img_name = os.path.splitext(self.img_path)[0]
-
-            self.main_layout.addLoadignLabel()
-
             self._init_images()
             self._init_label_list()
-
-            self.main_layout.removeLoadingLabel()
-
             self.update_main_layout()
 
     def clear(self):
@@ -185,8 +312,6 @@ class WindowClassificationPicture(WindowInterface):
             img_shape=self.full_img.size,
             classes=self.classes
         )
-
-        self.draw_image.save("%s_net.JPG" % self.img_name)
 
         print("OKAY")
 

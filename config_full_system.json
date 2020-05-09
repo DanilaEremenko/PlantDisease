@@ -1,0 +1,42 @@
+{
+  "clusterer": {
+    "name": "SlidingWindow",
+    "args": {
+      "window_shape": [256, 256, 3],
+      "step": 1.0,
+      "img_thumb": [8192,8192]
+    }
+  },
+  "segmentator": {
+    "use": false,
+    "name": "Unet",
+    "args": {
+      "json_path": "",
+      "h5_path": ""
+    }
+  },
+  "classifier": {
+    "name": "CNN",
+    "args": {
+      "json_path": "models/DenseNet_98_96_98/model_DenseNet121_50.json",
+      "h5_path": "models/DenseNet_98_96_98/model_DenseNet121_50.h5",
+      "classes": {
+        "фиотофтороз": {
+          "value": [1, 0, 0, 0]
+        },
+        "мозаика": {
+          "value": [0, 1, 0, 0]
+        },
+        "сорняк": {
+          "value": [0, 0, 1, 0]
+        },
+        "здоровый куст": {
+          "value": [0, 0, 0, 1]
+        }
+      }
+    }
+  },
+  "gui": {
+    "qt_label_size": [256, 256]
+  }
+}
