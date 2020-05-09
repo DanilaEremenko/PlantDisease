@@ -1,5 +1,5 @@
 """
-PyQt GUI for visualizing predictions of NN in main_train_CNN.py
+PyQt GUI for visualizing predictions of NN in main_fit_CNN.py
 """
 
 from PyQt5 import QtWidgets

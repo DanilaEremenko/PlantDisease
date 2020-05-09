@@ -47,7 +47,7 @@ class SimpleStatistical():
 # --------------------- test --------------------------------
 ############################################################
 def test():
-    with open('config_train.json') as config_fp:
+    with open('config_fit_CNN.json') as config_fp:
         config_dict = json.load(config_fp)
 
     classes, img_shape, x_train, y_train = \

@@ -40,5 +40,5 @@
       "use": false
     }
   },
-  "max_aug_part": 0.4
+  "max_aug_part": 1.0
 }

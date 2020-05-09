@@ -117,7 +117,7 @@ def get_splited_subs(x_data, y_data, classes, validation_split):
 
 def show_predict_on_window(x_data, y_data, y_predicted, classes):
     # TODO works incorrect
-    from pd_gui.gui_fitting_cnn import WindowShowPredictions
+    from pd_gui.gui_fit_CNN import WindowShowPredictions
     from PyQt5 import QtWidgets
 
     app = QtWidgets.QApplication(sys.argv)
@@ -299,7 +299,7 @@ def main():
 
     train['batch_size'] = 16
     test['batch_size'] = 8
-    eval['batch_size'] = 8
+    eval['batch_size'] = 16
 
     #####################################################################
     # ------------------ full history create/load -----------------------

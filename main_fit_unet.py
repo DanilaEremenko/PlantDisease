@@ -17,7 +17,7 @@ from pd_lib.ui_cmd import get_stdin_answer, get_input_int
 def show_predict_on_window(x_data, y_data, y_predicted):
     # TODO works incorrect
     from PyQt5 import QtWidgets
-    from pd_gui.gui_fitting_unet import WindowShowUnetFitting
+    from pd_gui.gui_fit_unet import WindowShowUnetFitting
 
     app = QtWidgets.QApplication(sys.argv)
 

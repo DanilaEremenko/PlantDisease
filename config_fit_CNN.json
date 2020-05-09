@@ -1,6 +1,6 @@
 {
   "data": {
-    "train_json": "Datasets/final_dataset/DJI_0001_health_joined.json"
+    "train_json": "Datasets/final_dataset/DJI_0001_joined_1540.json"
   },
   "fit": {
     "baseline": {

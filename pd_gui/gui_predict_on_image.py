@@ -1,5 +1,5 @@
 """
-PyQt GUI for main_test_on_image.py
+PyQt GUI for main_full_system_test.py
 """
 
 import json
@@ -31,17 +31,11 @@ class WindowPredictOnImage(WindowInterface):
         self.picture_path = self.choose_picture()
         x_cropped, full_img = dmk.get_x_from_croped_img(
             path_to_img=self.picture_path,
-            window_shape=(32, 32, 3),
+            window_shape=(256, 256, 3),
             img_thumb=self.img_thumb
 
         )
         self.x_data = x_cropped['x_data']
-
-    def _init_classes(self):
-        with open(os.path.abspath('config_gui.json')) as config_fp:
-            config_dict = json.load(config_fp)
-            self.classes = config_dict['classes']
-            self.img_thumb = config_dict['img_thumb']
 
     def _define_max_key_len(self):
         self.max_key_len = 0
@@ -51,20 +45,21 @@ class WindowPredictOnImage(WindowInterface):
 
     def __init__(self):
         super(WindowPredictOnImage, self).__init__()
+        with open(os.path.abspath('config_full_system.json')) as config_fp:
+            config_dict = json.load(config_fp)
+            self.classes = config_dict['classifier']['classes']
+            self.img_thumb = config_dict['gui']['img_thumb']
+            self.label_size = config_dict['gui']['qt_label_size']
+            self.model = get_full_model(**config_dict['classifier']['args'])
 
-        config_dict = self.load_dict_from_json_with_keys(key_list=['qt_label_size'])
-        self.label_size = config_dict['qt_label_size']
-
-        self.choose_NN()
-        self._init_classes()
         self._define_max_key_len()
 
         self._parse_image()
 
         self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
         self.setCentralWidget(self.main_layout)
+        self.showFullScreen()
         self.update_main_layout()
-        self.show()
 
     def clear(self):
         self.main_layout.clear()
