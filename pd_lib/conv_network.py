@@ -4,6 +4,7 @@ Contains functions that return different CNN models
 
 from __future__ import print_function
 
+from keras.applications import InceptionResNetV2, NASNetMobile, Xception, DenseNet121, MobileNetV2
 from keras.models import Sequential
 from keras.layers import Dense, Flatten
 from keras.layers import Dropout
@@ -13,6 +14,29 @@ from keras.applications.vgg16 import VGG16
 import logging
 
 logging.getLogger('tensorflow').disabled = True
+
+
+def get_model_by_name(name, input_shape, output_shape):
+    for model_name, model_constructor in zip(
+            ['DenseNet121', 'VGG16', 'MobileNetV2', 'InceptionResNetV2', 'NASNetMobile', 'Xception_98_97_98'],
+            [DenseNet121, VGG16, MobileNetV2, InceptionResNetV2, NASNetMobile, Xception]
+    ):
+        if name.lower() == model_name.lower():
+            model = get_pre_trained(model_constructor, input_shape, output_shape)
+            return model, model_name
+
+    raise Exception('Undefined pretrained model name %s' % name)
+
+
+def get_pre_trained(constructor, input_shape, output_shape):
+    model = Sequential()
+
+    model.add(constructor(include_top=False, weights='imagenet', input_shape=input_shape))
+
+    model.add(Flatten())
+    model.add(Dense(output_shape, activation='softmax'))
+
+    return model
 
 
 def get_CNN(input_shape, output_shape):
@@ -28,7 +52,8 @@ def get_CNN(input_shape, output_shape):
     model.add(Conv2D(input_shape[0], kernel_size=3, activation='relu'))
 
     # selection layer
-    model.add(MaxPooling2D(data_format="channels_first", pool_size=(2, 2)))
+    model.add(MaxPooling2D(data_format="channels_first",
+                           pool_size=list(map(lambda z: max(2, int(z / 16)), input_shape[0:2]))))
 
     # regularization
     model.add(Dropout(0.25))
@@ -40,7 +65,8 @@ def get_CNN(input_shape, output_shape):
     model.add(Conv2D(input_shape[0] * 2, kernel_size=3, activation='relu'))
 
     # selection layer
-    model.add(MaxPooling2D(data_format="channels_first", pool_size=(2, 2)))
+    model.add(MaxPooling2D(data_format="channels_first",
+                           pool_size=list(map(lambda z: max(2, int(z / 32)), input_shape[0:2]))))
 
     # regularization
     model.add(Dropout(0.25))
@@ -48,22 +74,11 @@ def get_CNN(input_shape, output_shape):
     # 2D -> 1D
     model.add(Flatten())
 
-    model.add(Dense(int(input_shape[0] * input_shape[1] / 2), activation='relu'))
+    model.add(Dense(int(512), activation='relu'))
 
     model.add(Dropout(0.5))
 
     model.add(Dense(output_shape, activation='softmax'))
-
-    return model
-
-
-def get_VGG16(input_shape, output_shape):
-    model = Sequential()
-
-    model.add(VGG16(include_top=False, input_shape=input_shape))
-
-    model.add(Flatten())
-    model.add(Dense(output_shape))
 
     return model
 

@@ -1,16 +1,19 @@
 """
-PyQt GUI for main_test_on_image.py
+PyQt GUI for main_full_system_test.py
 """
 
 import json
 import os
+import time
 
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouts import MyGridWidget
 
 from pd_lib.keras_addition_ import get_full_model
-from pd_lib import data_maker as dmk
+from pd_main_part.classifiers import get_classifier_by_name
+from pd_main_part.clusterers import get_clusterer_by_name
+from pd_main_part.segmentators import get_segmentator_by_name
 
 from .gui_window_interface import WindowInterface
 from pd_gui.components.gui_labels import ImageTextLabel
@@ -19,6 +22,34 @@ import numpy as np
 
 
 class WindowPredictOnImage(WindowInterface):
+    def __init__(self):
+        super(WindowPredictOnImage, self).__init__()
+        with open(os.path.abspath('config_full_system.json')) as config_fp:
+            self.config_dict = json.load(config_fp)
+
+            # load layers
+            self.clusterer = get_clusterer_by_name(
+                self.config_dict['clusterer']['name'],
+                self.config_dict['clusterer']['args']
+            )
+            if self.config_dict['segmentator']['use']:
+                self.segmentator = get_segmentator_by_name(
+                    self.config_dict['segmentator']['name'],
+                    self.config_dict['segmentator']['args'])
+            self.classifier = get_classifier_by_name(
+                self.config_dict['classifier']['name'],
+                self.config_dict['classifier']['args'])
+
+            self._define_max_key_len()
+            self._parse_image()
+
+            self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
+            self.setCentralWidget(self.main_layout)
+            self.showFullScreen()
+            start_time = time.time()
+            self.update_main_layout()
+            print('full_time  = %.2f' % (time.time() - start_time))
+
     def _init_hbox_control(self):
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_control.addStretch(1)
@@ -29,42 +60,14 @@ class WindowPredictOnImage(WindowInterface):
 
     def _parse_image(self):
         self.picture_path = self.choose_picture()
-        x_cropped, full_img = dmk.get_x_from_croped_img(
-            path_img_in=self.picture_path,
-            window_shape=(32, 32, 3),
-            img_thumb=self.img_thumb
-
-        )
+        x_cropped = self.clusterer.cluster(self.picture_path)
         self.x_data = x_cropped['x_data']
-
-    def _init_classes(self):
-        with open(os.path.abspath('config_gui.json')) as config_fp:
-            config_dict = json.load(config_fp)
-            self.classes = config_dict['classes']
-            self.img_thumb = config_dict['img_thumb']
 
     def _define_max_key_len(self):
         self.max_key_len = 0
-        for key, value in self.classes.items():
+        for key, value in self.classifier.classes.items():
             if len(key) > self.max_key_len:
                 self.max_key_len = len(key)
-
-    def __init__(self):
-        super(WindowPredictOnImage, self).__init__()
-
-        config_dict = self.load_dict_from_json_with_keys(key_list=['qt_label_size'])
-        self.label_size = config_dict['qt_label_size']
-
-        self.choose_NN()
-        self._init_classes()
-        self._define_max_key_len()
-
-        self._parse_image()
-
-        self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
-        self.setCentralWidget(self.main_layout)
-        self.update_main_layout()
-        self.show()
 
     def clear(self):
         self.main_layout.clear()
@@ -72,16 +75,10 @@ class WindowPredictOnImage(WindowInterface):
     def update_main_layout(self):
         self.clear()
 
-        def get_key_by_value(value):
-            for key in self.classes.keys():
-                if (self.classes[key]['value'] == value).all():
-                    return key
-            raise Exception('No value == %s' % str(value))
-
         def get_key_by_answer(pos_code):
             answer = {'mae': 9999, 'key': None, 'value': 0}
-            for key in self.classes.keys():
-                mae = np.average(abs((self.classes[key]['value'] - pos_code)))
+            for key in self.classifier.classes.keys():
+                mae = np.average(abs((self.classifier.classes[key]['value'] - pos_code)))
                 if mae < answer['mae']:
                     answer['mae'] = mae
                     answer['key'] = key
@@ -94,7 +91,7 @@ class WindowPredictOnImage(WindowInterface):
             return word
 
         label_list = []
-        for x, y_answer in zip(self.x_data, self.model.predict(self.x_data)):
+        for x, y_answer in zip(self.x_data, self.classifier.predict(self.x_data)):
             answer = get_key_by_answer(pos_code=y_answer)
             answer['key'] = add_spaces(answer['key'], new_size=self.max_key_len)
 
@@ -102,7 +99,7 @@ class WindowPredictOnImage(WindowInterface):
                 ImageTextLabel(
                     x=x,
                     text='%s %.2f' % (answer['key'], answer['value']),
-                    label_size=self.label_size
+                    label_size=self.config_dict['gui']['qt_label_size']
                 )
             )
         rect_len = int(np.sqrt(len(self.x_data)))
@@ -125,6 +122,6 @@ class WindowPredictOnImage(WindowInterface):
                                                                         "*.json *.JSON")[0])
 
         if os.path.isfile(self.weights_path) and os.path.isfile(self.structure_path):
-            self.model = get_full_model(json_path=self.structure_path, h5_path=self.weights_path)
+            self.classifier = get_full_model(json_path=self.structure_path, h5_path=self.weights_path)
         else:
             print("Files with model weights and model structure does't choosed")
