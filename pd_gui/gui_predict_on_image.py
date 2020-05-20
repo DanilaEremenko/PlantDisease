@@ -13,7 +13,7 @@ from pd_gui.components.gui_layouts import MyGridWidget
 from pd_lib.keras_addition_ import get_full_model
 from pd_main_part.classifiers import get_classifier_by_name
 from pd_main_part.clusterers import get_clusterer_by_name
-from pd_main_part.segmentators import get_segmentator_by_name
+from pd_main_part.preprocessors import get_preprocessor_by_name
 
 from .gui_window_interface import WindowInterface
 from pd_gui.components.gui_labels import ImageTextLabel
@@ -33,7 +33,7 @@ class WindowPredictOnImage(WindowInterface):
                 self.config_dict['clusterer']['args']
             )
             if self.config_dict['segmentator']['use']:
-                self.segmentator = get_segmentator_by_name(
+                self.segmentator = get_preprocessor_by_name(
                     self.config_dict['segmentator']['name'],
                     self.config_dict['segmentator']['args'])
             self.classifier = get_classifier_by_name(

@@ -7,7 +7,7 @@
       "img_thumb": [8192,8192]
     }
   },
-  "segmentator": {
+  "preprocessor": {
     "use": false,
     "name": "Unet",
     "args": {

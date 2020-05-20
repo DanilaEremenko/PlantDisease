@@ -9,15 +9,15 @@ from pd_lib.keras_addition_ import save_model_to_json, get_full_model
 from pd_lib.ui_cmd import get_input_int, get_stdin_answer
 
 import pd_lib.data_maker as dmk
-import pd_lib.gui_reporter as gr
 
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.preprocessing.image import ImageDataGenerator
-from keras.utils import plot_model
 import numpy as np
 
 import sys
+
+from pd_main_part.preprocessors import get_preprocessor_by_name
 
 
 def parse_args_for_train():
@@ -338,21 +338,14 @@ def main():
     model.compile(loss='categorical_crossentropy', optimizer=Adam(lr), metrics=['accuracy'])
 
     #####################################################################
-    # ----------------------- load arrays into memory -------------------
+    # ----------------------- preprocessor loading ----------------------
     #####################################################################
-    # import os
-    #
-    # if not os.path.isfile('train_x.npy'):
-    #     np.save('train_x', train['x'])
-    # train['x'] = np.memmap('train_x.npy', shape=train['x'].shape, offset=128)
-    #
-    # if not os.path.isfile('test_x.npy'):
-    #     np.save('test_x', test['x'])
-    # test['x'] = np.memmap('test_x.npy', shape=test['x'].shape, offset=128)
-    #
-    # if not os.path.isfile('eval_x.npy'):
-    #     np.save('eval_x', eval['x'])
-    # eval['x'] = np.memmap('eval_x.npy', shape=eval['x'].shape, offset=128)
+    if config_dict['preprocessor']['use']:
+        preprocess_function = get_preprocessor_by_name(
+            config_dict['preprocessor']['name'],
+            config_dict['preprocessor']['args']).preprocess
+    else:
+        preprocess_function = None
 
     #####################################################################
     # ----------------------- creating train datagen --------------------
@@ -361,7 +354,8 @@ def main():
         shear_range=0.1,
         zoom_range=0.1,
         horizontal_flip=True,
-        vertical_flip=True
+        vertical_flip=True,
+        preprocessing_function=preprocess_function
     ) \
         .flow_from_directory(
         directory=train['flow_dir'],
@@ -376,6 +370,7 @@ def main():
         zoom_range=0.1,
         horizontal_flip=True,
         vertical_flip=True,
+        preprocessing_function=preprocess_function
     ) \
         .flow_from_directory(
         directory=test['flow_dir'],
@@ -389,6 +384,7 @@ def main():
         zoom_range=0.1,
         horizontal_flip=True,
         vertical_flip=True,
+        preprocessing_function=preprocess_function
     ) \
         .flow_from_directory(
         directory=eval['flow_dir'],
