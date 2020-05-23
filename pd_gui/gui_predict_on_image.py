@@ -32,21 +32,22 @@ class WindowPredictOnImage(WindowInterface):
                 self.config_dict['clusterer']['name'],
                 self.config_dict['clusterer']['args']
             )
-            if self.config_dict['segmentator']['use']:
+            if self.config_dict['preprocessor']['use']:
                 self.segmentator = get_preprocessor_by_name(
-                    self.config_dict['segmentator']['name'],
-                    self.config_dict['segmentator']['args'])
+                    self.config_dict['preprocessor']['name'],
+                    self.config_dict['preprocessor']['args'])
             self.classifier = get_classifier_by_name(
                 self.config_dict['classifier']['name'],
                 self.config_dict['classifier']['args'])
+            self.bad_key = self.config_dict['classifier']['bad_key']
 
             self._define_max_key_len()
             self._parse_image()
 
             self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
             self.setCentralWidget(self.main_layout)
-            self.showFullScreen()
             start_time = time.time()
+            self.showFullScreen()
             self.update_main_layout()
             print('full_time  = %.2f' % (time.time() - start_time))
 
@@ -75,14 +76,15 @@ class WindowPredictOnImage(WindowInterface):
     def update_main_layout(self):
         self.clear()
 
-        def get_key_by_answer(pos_code):
-            answer = {'mae': 9999, 'key': None, 'value': 0}
-            for key in self.classifier.classes.keys():
-                mae = np.average(abs((self.classifier.classes[key]['value'] - pos_code)))
-                if mae < answer['mae']:
-                    answer['mae'] = mae
-                    answer['key'] = key
-                    answer['value'] = max(pos_code)
+        def get_key_by_answer(pos_code, bad_key):
+            answer = {'mae': 9999, 'key': bad_key, 'value': 0}
+            if sum(pos_code) > 0:
+                for key in self.classifier.classes.keys():
+                    mae = np.average(abs((self.classifier.classes[key]['value'] - pos_code)))
+                    if mae < answer['mae']:
+                        answer['mae'] = mae
+                        answer['key'] = key
+                        answer['value'] = max(pos_code)
             return answer
 
         def add_spaces(word, new_size):  # TODO fix gui label alignment
@@ -92,7 +94,7 @@ class WindowPredictOnImage(WindowInterface):
 
         label_list = []
         for x, y_answer in zip(self.x_data, self.classifier.predict(self.x_data)):
-            answer = get_key_by_answer(pos_code=y_answer)
+            answer = get_key_by_answer(pos_code=y_answer, bad_key=self.bad_key)
             answer['key'] = add_spaces(answer['key'], new_size=self.max_key_len)
 
             label_list.append(

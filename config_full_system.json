@@ -17,6 +17,7 @@
   },
   "classifier": {
     "name": "CNN",
+    "bad_key": "НЕ РАСТЕНИЕ",
     "args": {
       "json_path": "models/DenseNet_98_96_98/model_DenseNet121_50.json",
       "h5_path": "models/DenseNet_98_96_98/model_DenseNet121_50.h5",
@@ -33,7 +34,8 @@
         "здоровый куст": {
           "value": [0, 0, 0, 1]
         }
-      }
+      },
+      "green_threshold": 0.4
     }
   },
   "gui": {
