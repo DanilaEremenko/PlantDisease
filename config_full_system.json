@@ -8,11 +8,10 @@
     }
   },
   "preprocessor": {
-    "use": false,
-    "name": "Unet",
+    "use": true,
+    "name": "Contrast",
     "args": {
-      "json_path": "",
-      "h5_path": ""
+      "k": 1.5
     }
   },
   "classifier": {
