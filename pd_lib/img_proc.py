@@ -1,6 +1,7 @@
 """
 Contains functions for image processing
 """
+import cv2
 from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,10 +23,6 @@ def get_img_edges(img, thr_1=60, thr_2=120):
 #############################################################################
 # --------------------------- deform image ----------------------------------
 #############################################################################
-def deform_image(img, k, n, m):
-    return Image.fromarray(deform_arr(np.asarray(img), k, n, m))
-
-
 def deform_arr(arr, k, n, m):
     """
     :param arr: image as array
@@ -51,10 +48,6 @@ def deform_arr(arr, k, n, m):
 #############################################################################
 # --------------------------- noise image -----------------------------------
 #############################################################################
-def noise_img_from_arr(img, intensity):
-    return Image.fromarray(noise_arr(np.asarray(img), intensity))
-
-
 def noise_arr(arr, intensity):
     res_arr = arr.copy().flatten()
     for i in range(0, res_arr.size):
@@ -63,9 +56,19 @@ def noise_arr(arr, intensity):
 
 
 #############################################################################
+# --------------------------- filter colors ---------------------------------
+#############################################################################
+def filter_arr(arr, boundaries):
+    lower = np.array(boundaries[0], dtype="uint8")
+    upper = np.array(boundaries[1], dtype="uint8")
+    mask = cv2.inRange(arr, lower, upper)
+    return cv2.bitwise_and(arr, arr, mask=mask)
+
+
+#############################################################################
 # --------------------------- blur image -----------------------------------
 #############################################################################
-def blur_img(arr, radius):
+def blur_arr(arr, radius):
     img = Image.fromarray(arr)
     return np.asarray(img.filter(ImageFilter.GaussianBlur(radius=radius)))
 
@@ -73,7 +76,7 @@ def blur_img(arr, radius):
 #############################################################################
 # --------------------------- warp image ------------------------------------
 #############################################################################
-def affine_warp(arr, k):
+def affine_arr(arr, k):
     y, x = arr.shape[0:2]
     step = max(1, int(x * k / 100))
 
