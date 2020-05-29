@@ -3,7 +3,7 @@ import json
 import os
 
 from pd_main_part.classifiers import get_classifier_by_name
-from pd_main_part.segmentators import get_segmentator_by_name
+from pd_main_part.preprocessors import get_preprocessor_by_name
 
 
 def parse_args_for_train():
@@ -50,11 +50,11 @@ def main():
 
         x_data = np.memmap(input_file, shape=shape, offset=128)
 
-        if config_dict['segmentator']['use']:
-            segmentator = get_segmentator_by_name(
-                config_dict['segmentator']['name'],
-                config_dict['segmentator']['args'])
-            x_data = segmentator.segment(x_data)
+        if config_dict['preprocessor']['use']:
+            preprocess_function = get_preprocessor_by_name(
+                config_dict['preprocessor']['name'],
+                config_dict['preprocessor']['args']).preprocess()
+            x_data = np.array(map(lambda x: preprocess_function(x), x_data))
 
         y_data = classifier.predict(x_data)
 

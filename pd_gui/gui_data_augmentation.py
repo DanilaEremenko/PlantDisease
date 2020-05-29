@@ -107,10 +107,10 @@ class WindowMultipleExamples(WindowInterface):
             json_list = [self.choose_json(content_title='train_data')]
         self.json_name = os.path.splitext(json_list[0])[0]
 
-        if len(json_list) == 1 and self.json_name[-6:] == self.postfix:
+        if len(json_list) == 1:
             print('Parsing preprocessed json')
             self.classes, img_shape, self.x_data, self.y_data = \
-                dmk.json_train_load(json_list[0])
+                dmk.json_big_load(json_list[0])
             self.x_data = np.array(self.x_data, dtype='uint8')
             self.y_data = np.array(self.y_data, dtype='uint8')
         else:

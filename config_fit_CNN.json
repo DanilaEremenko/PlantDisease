@@ -9,6 +9,12 @@
       "eval": 0.95
     }
   },
+  "preprocessor": {
+    "use": true,
+    "name": "contrast",
+    "args": {
+    }
+  },
   "model": {
     "create_new": false,
     "new": {

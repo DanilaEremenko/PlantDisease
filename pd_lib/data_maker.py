@@ -231,14 +231,14 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
         }
     if use_blur:
         algh_dict['blured'] = {
-            'func': img_pr.blur_img,
+            'func': img_pr.blur_arr,
             'args': {},
             'loop_list': rad_list,
             'loop_arg': 'radius'
         }
     if use_affine:
         algh_dict['affine'] = {
-            'func': img_pr.affine_warp,
+            'func': img_pr.affine_arr,
             'args': {},
             'loop_list': affine_list,
             'loop_arg': 'k'
