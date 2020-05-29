@@ -15,8 +15,6 @@ def parse_args_for_train():
 
     parser.add_argument("-o", "--output_file", type=str, help="output file with NN answers")
 
-    parser.add_argument("-c", "--config_file", type=str, help="config file with NN description")
-
     parser.add_argument("-n", "--number_of_samples", type=int, help="number of samples")
     # -------------------- parsing arguments ----------------------------------
     args = parser.parse_args()
@@ -25,15 +23,13 @@ def parse_args_for_train():
 
     output_file = args.output_file
 
-    config_file = args.config_file
-
     n_samples = args.number_of_samples
 
-    for arg in (input_file, output_file, config_file, n_samples):
+    for arg in (input_file, output_file, n_samples):
         if arg is None:
             raise Exception('arg is None')
 
-    return input_file, output_file, config_file, n_samples
+    return input_file, output_file, n_samples
 
 
 def main():
@@ -44,7 +40,7 @@ def main():
             config_dict['classifier']['name'],
             config_dict['classifier']['args'])
 
-        input_file, output_file, config_file, n_samples = parse_args_for_train()
+        input_file, output_file, n_samples = parse_args_for_train()
 
         shape = (n_samples, 256, 256, 3)
 
