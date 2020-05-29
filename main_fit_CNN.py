@@ -225,23 +225,6 @@ def main():
     # else:
     #     print("Segmentator: isn't used")
 
-    # ------------------------------- splitting --------------------------------------------------
-    # train['classes'], img_shape, train['x'], train['y'] = \
-    #     dmk.json_big_load(config_dict['data_json'])
-    #
-    # (train['x'], train['y'], train['classes']), \
-    # (test['x'], test['y'], test['classes']) = get_splited_subs(x_data=train['x'],
-    #                                                            y_data=train['y'],
-    #                                                            classes=train['classes'],
-    #                                                            validation_split=validation_split)
-    # (test['x'], test['y'], test['classes']), \
-    # (eval['x'], eval['y'], eval['classes']) = get_splited_subs(x_data=test['x'],
-    #                                                            y_data=test['y'],
-    #                                                            classes=test['classes'],
-    #                                                            validation_split=evaluate_split)
-    #
-    # data_shape = train['x'].shape[1:]
-
     with open(config_dict['data']['train_json']) as train_json_fp:
         train = json.load(train_json_fp)
         test = train.copy()
@@ -249,13 +232,31 @@ def main():
 
     data_shape = (256, 256, 3)
 
-    # ------------------------------- saving to dir ----------------------------------------------
-    # train = get_flow_dict(data_dict=train, flow_dir='Datasets/final_dataset/flow_dir/train')
-    # test = get_flow_dict(data_dict=test, flow_dir='Datasets/final_dataset/flow_dir/val')
-    # eval = get_flow_dict(data_dict=eval, flow_dir='Datasets/final_dataset/flow_dir/eval')
-    train['flow_dir'] = 'Datasets/final_dataset/flow_dir/train'
-    test['flow_dir'] = 'Datasets/final_dataset/flow_dir/val'
-    eval['flow_dir'] = 'Datasets/final_dataset/flow_dir/eval'
+    train['flow_dir'] = '%s/train' % config_dict['data']['flow_dir']
+    test['flow_dir'] = '%s/val' % config_dict['data']['flow_dir']
+    eval['flow_dir'] = '%s/eval' % config_dict['data']['flow_dir']
+
+    if config_dict['data']['create_flow_dir']:
+        print('creating flow dir...')
+        train['classes'], img_shape, train['x'], train['y'] = \
+            dmk.json_big_load(config_dict['data']['train_json'])
+
+        (train['x'], train['y'], train['classes']), \
+        (test['x'], test['y'], test['classes']) = get_splited_subs(x_data=train['x'],
+                                                                   y_data=train['y'],
+                                                                   classes=train['classes'],
+                                                                   validation_split=validation_split)
+        (test['x'], test['y'], test['classes']), \
+        (eval['x'], eval['y'], eval['classes']) = get_splited_subs(x_data=test['x'],
+                                                                   y_data=test['y'],
+                                                                   classes=test['classes'],
+                                                                   validation_split=evaluate_split)
+
+        data_shape = train['x'].shape[1:]
+
+        train = get_flow_dict(data_dict=train, flow_dir=train['flow_dir'])
+        test = get_flow_dict(data_dict=test, flow_dir=test['flow_dir'])
+        eval = get_flow_dict(data_dict=eval, flow_dir=eval['flow_dir'])
 
     # ------------------------------- weights setting --------------------------------------------
     class_weights = {}
