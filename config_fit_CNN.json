@@ -1,6 +1,8 @@
 {
   "data": {
-    "train_json": "Datasets/final_dataset/DJI_0001_joined_1540.json"
+    "create_flow_dir": false,
+    "flow_dir": "Datasets/final_dataset/big_flow_dir",
+    "train_json": "Datasets/final_dataset/DJI_0999_joined_with_blur_4620.json"
   },
   "fit": {
     "baseline": {
