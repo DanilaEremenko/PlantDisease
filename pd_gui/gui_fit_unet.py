@@ -11,12 +11,9 @@ from pd_gui.components.gui_labels import ImageTextLabel
 
 
 class WindowShowUnetFitting(WindowInterface):
-    def _init_hbox_control(self):
-        self.hbox_control = QtWidgets.QHBoxLayout()
-        self.hbox_control.addStretch(1)
-        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
-        self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
-
+    ##############################################################
+    # ---------------- init stuff --------------------------------
+    ##############################################################
     def __init__(self, x_data, y_data, y_predicted):
         super(WindowShowUnetFitting, self).__init__()
 
@@ -28,6 +25,15 @@ class WindowShowUnetFitting(WindowInterface):
         self.showFullScreen()
         self.update_main_layout(x_data, y_data, y_predicted)
 
+    def _init_hbox_control(self):
+        self.hbox_control = QtWidgets.QHBoxLayout()
+        self.hbox_control.addStretch(1)
+        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
+        self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
+
+    ##############################################################
+    # ---------------- gui logic stuff ---------------------------
+    ##############################################################
     def clear(self):
         self.main_layout.clear()
 

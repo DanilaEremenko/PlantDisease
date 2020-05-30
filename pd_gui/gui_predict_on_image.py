@@ -22,6 +22,9 @@ import numpy as np
 
 
 class WindowPredictOnImage(WindowInterface):
+    ##############################################################
+    # ---------------- init stuff --------------------------------
+    ##############################################################
     def __init__(self):
         super(WindowPredictOnImage, self).__init__()
         with open(os.path.abspath('config_full_system.json')) as config_fp:
@@ -46,10 +49,8 @@ class WindowPredictOnImage(WindowInterface):
 
             self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
             self.setCentralWidget(self.main_layout)
-            start_time = time.time()
             self.showFullScreen()
             self.update_main_layout()
-            print('full_time  = %.2f' % (time.time() - start_time))
 
     def _init_hbox_control(self):
         self.hbox_control = QtWidgets.QHBoxLayout()
@@ -75,7 +76,9 @@ class WindowPredictOnImage(WindowInterface):
 
     def update_main_layout(self):
         self.clear()
+        self.make_predict()
 
+    def make_predict(self):
         def get_key_by_answer(pos_code, bad_key):
             answer = {'mae': 9999, 'key': bad_key, 'value': 0}
             if sum(pos_code) > 0:
@@ -91,6 +94,8 @@ class WindowPredictOnImage(WindowInterface):
             while len(word) < new_size:
                 word += '_'
             return word
+
+        start_time = time.time()
 
         label_list = []
         for x, y_answer in zip(self.x_data, self.classifier.predict(self.x_data)):
@@ -112,6 +117,8 @@ class WindowPredictOnImage(WindowInterface):
             y_len=rect_len,
             label_list=label_list
         )
+
+        print('full_time  = %.2f' % (time.time() - start_time))
 
     def choose_NN(self):
         self.weights_path = str(QtWidgets.QFileDialog.getOpenFileName(self,
