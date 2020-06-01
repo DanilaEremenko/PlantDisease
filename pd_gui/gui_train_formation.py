@@ -105,8 +105,8 @@ class WindowClassificationPicture(WindowInterface):
 
     def mouseMoveEvent(self, event):
         if hasattr(self, 'img_name'):
-            self.v_bar = self.main_layout.scroll_area.verticalScrollBar()
-            self.h_bar = self.main_layout.scroll_area.horizontalScrollBar()
+            self.v_bar = self.main_layout.left_scroll_area.verticalScrollBar()
+            self.h_bar = self.main_layout.left_scroll_area.horizontalScrollBar()
             rect = list(map(lambda x: x * self.zoom_list[self.zoom_no], self.full_img.size))
             if self.main_layout.width() < rect[0]:
                 x = self.first_x - event.x()
