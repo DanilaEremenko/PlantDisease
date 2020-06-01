@@ -17,6 +17,51 @@ import os
 
 
 class WindowClassificationPicture(WindowInterface):
+    ##############################################################
+    # ---------------- init stuff --------------------------------
+    ##############################################################
+    def __init__(self):
+        self.already_marked_dir = 'Datasets/Potato/agro'
+        self.already_marked_list = os.listdir(self.already_marked_dir)
+
+        super(WindowClassificationPicture, self).__init__()
+        self.setWindowTitle("Plant Disease Recognizer")
+
+        # TODO some dev stuff
+        # with open(self.choose_json(content_title='config data')) as config_fp:
+        with open('config_create_json.json') as config_fp:
+            config_dict = json.load(config_fp)
+
+        # self.img_path = self.choose_picture()
+        # self.img_name = os.path.splitext(self.img_path)[0]
+
+        self.window_shape = config_dict['window_shape']
+        self.classes = config_dict['classes']
+        self.default_label_size = config_dict['qt_label_size']
+        self.img_thumb = config_dict['img_thumb']
+
+        self._init_hbox_control()
+        self._init_main_menu()
+
+        self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
+        self.setCentralWidget(self.main_layout)
+        self.showFullScreen()
+
+        self.choose_and_render_image()
+
+        # for offset calculation
+        self.last_x = 0
+        self.last_y = 0
+
+    def choose_and_render_image(self):
+        self.img_path = self.choose_picture()
+        if self.img_path != '':
+            self.clear()
+            self.img_name = os.path.splitext(self.img_path)[0]
+            self._init_images()
+            self._init_label_list()
+            self.update_main_layout()
+
     def _init_hbox_control(self):
 
         self.hbox_control = QtWidgets.QHBoxLayout()
@@ -45,7 +90,9 @@ class WindowClassificationPicture(WindowInterface):
         for zoom in self.zoom_list:
             add_zoom_to_menu(zoom)
 
+    ####################################################################################
     # ------------------------ MOUSE DRAGGING PART -------------------------------------
+    ####################################################################################
     def mousePressEvent(self, event):
         # TODO to fix
         if hasattr(self, 'img_name'):
@@ -69,7 +116,9 @@ class WindowClassificationPicture(WindowInterface):
                 print("\n\nDRAG OFFSET:", x, y)
                 self.main_layout.set_offset(x, y)
 
-    # ------------------------ WHEEL PART -------------------------------------
+    ####################################################################################
+    # ------------------------ WHEEL PART ----------------------------------------------
+    ####################################################################################
     #   mouse wheel event scrollо
     def wheelEvent(self, event):
         if hasattr(self, 'img_name'):
@@ -113,7 +162,9 @@ class WindowClassificationPicture(WindowInterface):
             # self.last_x = x
             # self.last_y = y
 
-    # ------------------------ ZOOM PART -------------------------------------
+    ####################################################################################
+    # ------------------------ ZOOM PART -----------------------------------------------
+    ####################################################################################
     def change_zoom(self, new_zoom):
         self.zoom = new_zoom
         print('new zoom = %d' % self.zoom)
@@ -172,94 +223,9 @@ class WindowClassificationPicture(WindowInterface):
                 )
             )
 
-    def __init__(self):
-        self.already_marked_dir = 'Datasets/Potato/agro'
-        self.already_marked_list = os.listdir(self.already_marked_dir)
-
-        super(WindowClassificationPicture, self).__init__()
-        self.setWindowTitle("Plant Disease Recognizer")
-
-        # TODO some dev stuff
-        # with open(self.choose_json(content_title='config data')) as config_fp:
-        #     config_dict = json.load(config_fp)
-        config_dict = {
-
-            "classes": {
-                "Грибные инфекции": {
-                    "фитофтороз": {"value": [0]},
-                    "альтернариоз": {"value": [1]},
-                    "прочие инфекции": {"value": [2]}
-                },
-                "Бактериальные": {
-                    "кольцевая гниль": {"value": [3]},
-                    "бурый слизистый бактериоз": {"value": [4]},
-                    "прочие гнили": {"value": [5]}
-                },
-                "Вирусы": {
-                    "полосатая мозаика": {"value": [6]},
-                    "обыкновенная мозаика": {"value": [7]},
-                    "морщинистая мозаика": {"value": [8]},
-                    "прочие мозаики": {"value": [9]}
-                },
-                "Неопределенные болезни": {
-                    "неопределенная болезнь": {"value": [10]}
-                },
-                "Вредители": {
-                    "нематоды": {"value": [11]},
-                    "колорадские жуки": {"value": [12]},
-                    "проволочники": {"value": [13]},
-                    "прочие вредители": {"value": [14]}
-                },
-                "Сорняки": {
-                    "марь белая": {"value": [15]},
-                    "подмаренник цепкий": {"value": [16]},
-                    "щирица": {"value": [17]},
-                    "пастушья сумка": {"value": [18]},
-                    "сурепка дикая": {"value": [19]},
-                    "куриное просо": {"value": [20]},
-                    "овсюг": {"value": [21]},
-                    "пырей ползучий": {"value": [22]},
-                    "вьюнок": {"value": [23]},
-                    "бодяк": {"value": [24]},
-                    "осот": {"value": [25]},
-                    "прочие сорняки": {"value": [26]}
-                }
-            },
-            "window_shape": [256, 256, 3],
-            "qt_label_size": [256, 256],
-            "img_thumb": [8192, 8192]
-        }
-
-        # self.img_path = self.choose_picture()
-        # self.img_name = os.path.splitext(self.img_path)[0]
-
-        self.window_shape = config_dict['window_shape']
-        self.classes = config_dict['classes']
-        self.default_label_size = config_dict['qt_label_size']
-        self.img_thumb = config_dict['img_thumb']
-
-        self._init_hbox_control()
-        self._init_main_menu()
-
-        self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
-        self.setCentralWidget(self.main_layout)
-        self.showFullScreen()
-
-        self.choose_and_render_image()
-
-        # for offset calculation
-        self.last_x = 0
-        self.last_y = 0
-
-    def choose_and_render_image(self):
-        self.img_path = self.choose_picture()
-        if self.img_path != '':
-            self.clear()
-            self.img_name = os.path.splitext(self.img_path)[0]
-            self._init_images()
-            self._init_label_list()
-            self.update_main_layout()
-
+    ##############################################################
+    # ---------------- gui logic stuff ---------------------------
+    ##############################################################
     def clear(self):
         self.main_layout.clear()
 

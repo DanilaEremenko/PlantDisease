@@ -6,7 +6,10 @@ import json
 import os
 import time
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import QThread
+from PyQt5.QtWidgets import QProgressBar, QLabel
+
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouts import MyGridWidget
 
@@ -22,6 +25,9 @@ import numpy as np
 
 
 class WindowPredictOnImage(WindowInterface):
+    ##############################################################
+    # ---------------- init stuff --------------------------------
+    ##############################################################
     def __init__(self):
         super(WindowPredictOnImage, self).__init__()
         with open(os.path.abspath('config_full_system.json')) as config_fp:
@@ -45,16 +51,18 @@ class WindowPredictOnImage(WindowInterface):
             self._parse_image()
 
             self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
+            self.pbar = QProgressBar(self)
+            self.main_layout.layout.addWidget(self.pbar)
+            self.right_text_labels = []
+
             self.setCentralWidget(self.main_layout)
-            start_time = time.time()
             self.showFullScreen()
             self.update_main_layout()
-            print('full_time  = %.2f' % (time.time() - start_time))
 
     def _init_hbox_control(self):
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_control.addStretch(1)
-        self.hbox_control.addWidget(ControlButton("Update Image", self.update_main_layout))
+        self.hbox_control.addWidget(ControlButton("Predict", self.update_main_layout))
         self.hbox_control.addWidget(ControlButton("Choose model", self.choose_NN))
         self.hbox_control.addWidget(ControlButton("Choose image", self._parse_image))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
@@ -72,10 +80,30 @@ class WindowPredictOnImage(WindowInterface):
 
     def clear(self):
         self.main_layout.clear()
+        for text_label in self.right_text_labels:
+            text_label.setParent(None)
 
     def update_main_layout(self):
         self.clear()
 
+        self.predict_thread = PredictThread(self)
+        fake_timer = FakeTimer(self)
+        fake_timer.valueChanged.connect(self.predict_thread.valueChanged.emit)
+
+        self.predict_thread.valueChanged.connect(self.pbar.setValue)
+        self.predict_thread.canDraw.connect(self.draw_result)
+        self.predict_thread.fakeTimerToStop.connect(fake_timer.terminate)
+
+        self.main_layout.update_scroll(
+            windows_width=self.frameGeometry().width(),
+            window_height=self.frameGeometry().height(),
+        )
+
+        # self.x_data = self.x_data[:4]
+        self.predict_thread.start()
+        fake_timer.start()
+
+    def draw_result(self):
         def get_key_by_answer(pos_code, bad_key):
             answer = {'mae': 9999, 'key': bad_key, 'value': 0}
             if sum(pos_code) > 0:
@@ -87,15 +115,22 @@ class WindowPredictOnImage(WindowInterface):
                         answer['value'] = max(pos_code)
             return answer
 
-        def add_spaces(word, new_size):  # TODO fix gui label alignment
-            while len(word) < new_size:
-                word += '_'
-            return word
-
         label_list = []
-        for x, y_answer in zip(self.x_data, self.classifier.predict(self.x_data)):
+
+        classes_dict = self.classifier.classes.copy()
+        classes_dict[self.bad_key] = {}
+        for key in [*classes_dict.keys(), self.bad_key]:
+            classes_dict[key]['num'] = 0
+            classes_dict[key]['indexes'] = []
+
+        for i, (x, y_answer) in enumerate(zip(self.x_data, self.predict_thread.y_answer)):
             answer = get_key_by_answer(pos_code=y_answer, bad_key=self.bad_key)
-            answer['key'] = add_spaces(answer['key'], new_size=self.max_key_len)
+
+            classes_dict[answer['key']]['num'] += 1
+
+            classes_dict[answer['key']]['indexes'].append(i)
+            answer['key'] += (self.max_key_len - len(answer['key'])) * " "
+            answer['key'] = "%d: %s" % (i, answer['key'])
 
             label_list.append(
                 ImageTextLabel(
@@ -104,6 +139,16 @@ class WindowPredictOnImage(WindowInterface):
                     label_size=self.config_dict['gui']['qt_label_size']
                 )
             )
+
+        self.right_text_labels = []
+        for key in classes_dict:
+            text_label = QLabel()
+            text_label.setText("%s: %d" % (key, classes_dict[key]['num']))
+            text_label.setAlignment(QtCore.Qt.AlignLeft)
+            print("%s: %s" % (key, str(classes_dict[key]['indexes'])))
+            self.right_text_labels.append(text_label)
+            self.main_layout.right_layout.addWidget(text_label)
+
         rect_len = int(np.sqrt(len(self.x_data)))
         self.main_layout.update_grid(
             windows_width=self.frameGeometry().width(),
@@ -127,3 +172,39 @@ class WindowPredictOnImage(WindowInterface):
             self.classifier = get_full_model(json_path=self.structure_path, h5_path=self.weights_path)
         else:
             print("Files with model weights and model structure does't choosed")
+
+
+class PredictThread(QThread):
+    canDraw = QtCore.pyqtSignal()
+    valueChanged = QtCore.pyqtSignal(int)
+    fakeTimerToStop = QtCore.pyqtSignal()
+    taskFinished = QtCore.pyqtSignal()
+
+    def __init__(self, parent):
+        QThread.__init__(self, parent)
+        self.mw = parent
+
+    def run(self):
+        start_time = time.time()
+
+        import keras.backend.tensorflow_backend as tb
+        tb._SYMBOLIC_SCOPE.value = True
+
+        self.y_answer = self.mw.classifier.predict(self.mw.x_data)
+        self.canDraw.emit()
+        self.fakeTimerToStop.emit()
+        self.valueChanged.emit(100)
+        self.taskFinished.emit()
+        print('full_time  = %.2f' % (time.time() - start_time))
+
+
+class FakeTimer(QThread):
+    valueChanged = QtCore.pyqtSignal(int)
+    taskFinished = QtCore.pyqtSignal()
+
+    def run(self):
+        self.valueChanged.emit(0)
+        for i in range(100):
+            time.sleep(1)  # Do "work"
+            self.valueChanged.emit(i)  # Notify progress bar to update via signal
+        self.taskFinished.emit()

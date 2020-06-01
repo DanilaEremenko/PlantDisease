@@ -16,63 +16,9 @@ import numpy as np
 
 
 class WindowMultipleExamples(WindowInterface):
-    def _init_hbox_control(self):
-        self.hbox_control = QtWidgets.QHBoxLayout()
-        self.hbox_control.addStretch(1)
-        self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
-        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
-        self.hbox_control.addWidget(ControlButton("Multiple", self.multiple_pressed))
-        self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
-
-    def _define_max_class(self):
-        self.max_class = {'name': None, 'num': 0, 'value': None}
-        self.max_key_len = 0
-        self.max_aug_for_classes = {}
-        for key, value in self.classes.items():
-            if self.classes[key]['num'] > self.max_class['num']:
-                self.max_class['name'] = key
-                self.max_class['num'] = self.classes[key]['num']
-                self.max_class['value'] = self.classes[key]['value']
-            if len(key) > self.max_key_len:
-                self.max_key_len = len(key)
-
-            self.max_aug_for_classes[key] = self.classes[key]['num'] \
-                                            + int(self.classes[key]['num'] * self.max_aug_part)
-
-    def show_histogram(self, labels, values, title='Diseases distribution'):
-        import matplotlib.pyplot as plt
-        import numpy as np
-
-        x = np.arange(len(labels))  # the label locations
-        width = 0.35  # the width of the bars
-
-        fig, ax = plt.subplots()
-        rects1 = ax.bar(x - width / 2, values, width, label='Examples num')
-
-        # Add some text for labels, title and custom x-axis tick labels, etc.
-        ax.set_ylabel('Num')
-        ax.set_title(title)
-        ax.set_xticks(x)
-        ax.set_xticklabels(labels)
-        ax.legend()
-
-        def autolabel(rects):
-            """Attach a text label above each bar in *rects*, displaying its height."""
-            for rect in rects:
-                height = rect.get_height()
-                ax.annotate('{}'.format(height),
-                            xy=(rect.get_x() + rect.get_width() / 2, height),
-                            xytext=(0, 3),  # 3 points vertical offset
-                            textcoords="offset points",
-                            ha='center', va='bottom')
-
-        autolabel(rects1)
-
-        fig.tight_layout()
-
-        plt.xticks(rotation=45)
-        plt.show()
-
+    ##############################################################
+    # ---------------- init stuff --------------------------------
+    ##############################################################
     def __init__(self, json_list):
         super(WindowMultipleExamples, self).__init__()
         self.postfix = 'joined'
@@ -148,6 +94,66 @@ class WindowMultipleExamples(WindowInterface):
             values=list(map(lambda val: val['num'], self.classes.values()))
         )
 
+    def _init_hbox_control(self):
+        self.hbox_control = QtWidgets.QHBoxLayout()
+        self.hbox_control.addStretch(1)
+        self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
+        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
+        self.hbox_control.addWidget(ControlButton("Multiple", self.multiple_pressed))
+        self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
+
+    def _define_max_class(self):
+        self.max_class = {'name': None, 'num': 0, 'value': None}
+        self.max_key_len = 0
+        self.max_aug_for_classes = {}
+        for key, value in self.classes.items():
+            if self.classes[key]['num'] > self.max_class['num']:
+                self.max_class['name'] = key
+                self.max_class['num'] = self.classes[key]['num']
+                self.max_class['value'] = self.classes[key]['value']
+            if len(key) > self.max_key_len:
+                self.max_key_len = len(key)
+
+            self.max_aug_for_classes[key] = self.classes[key]['num'] \
+                                            + int(self.classes[key]['num'] * self.max_aug_part)
+
+    ##############################################################
+    # ---------------- gui logic stuff ---------------------------
+    ##############################################################
+    def show_histogram(self, labels, values, title='Diseases distribution'):
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        x = np.arange(len(labels))  # the label locations
+        width = 0.35  # the width of the bars
+
+        fig, ax = plt.subplots()
+        rects1 = ax.bar(x - width / 2, values, width, label='Examples num')
+
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel('Num')
+        ax.set_title(title)
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels)
+        ax.legend()
+
+        def autolabel(rects):
+            """Attach a text label above each bar in *rects*, displaying its height."""
+            for rect in rects:
+                height = rect.get_height()
+                ax.annotate('{}'.format(height),
+                            xy=(rect.get_x() + rect.get_width() / 2, height),
+                            xytext=(0, 3),  # 3 points vertical offset
+                            textcoords="offset points",
+                            ha='center', va='bottom')
+
+        autolabel(rects1)
+
+        fig.tight_layout()
+
+        plt.xticks(rotation=45)
+        plt.show()
+
     def clear(self):
         self.main_layout.clear()
 
@@ -160,17 +166,14 @@ class WindowMultipleExamples(WindowInterface):
                     return key
             raise Exception('No value == %s' % str(value))
 
-        def add_spaces(word, new_size):  # TODO fix gui label alignment
-            while len(word) < new_size:
-                word += '_'
-            return word
-
         label_list = []
         for x, y in zip(self.x_data, self.y_data):
+            label_text = get_key_by_value(value=y)
+            label_text += (self.max_key_len - len(label_text)) * " "
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text=add_spaces(get_key_by_value(value=y), new_size=self.max_key_len),
+                    text=label_text,
                     label_size=self.label_size
                 )
             )

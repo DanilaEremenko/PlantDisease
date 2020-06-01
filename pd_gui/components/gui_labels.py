@@ -4,7 +4,7 @@ Custom PyQt5 GUI labels
 
 from pd_lib import img_proc
 from PyQt5.QtWidgets import QLabel, QWidget, QComboBox, QHBoxLayout, QMenu
-from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtGui import QPixmap, QImage, QFont
 from PyQt5.QtCore import Qt
 
 
@@ -137,6 +137,7 @@ class ImageTextLabel(QWidget):
 
         self.text_label = QLabel()
         self.text_label.setText(text)
+        self.text_label.setFont(QFont("Monospace"))
 
         self.img_label = QLabel()
         self.img_label.setPixmap(

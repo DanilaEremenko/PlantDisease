@@ -13,18 +13,9 @@ import numpy as np
 
 
 class WindowShowPredictions(WindowInterface):
-    def _init_hbox_control(self):
-        self.hbox_control = QtWidgets.QHBoxLayout()
-        self.hbox_control.addStretch(1)
-        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
-        self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
-
-    def _define_max_key_len(self):
-        self.max_key_len = 0
-        for key, value in self.classes.items():
-            if len(key) > self.max_key_len:
-                self.max_key_len = len(key)
-
+    ##############################################################
+    # ---------------- init stuff --------------------------------
+    ##############################################################
     def __init__(self, x_data, y_data, y_predicted, classes):
         super(WindowShowPredictions, self).__init__()
 
@@ -43,17 +34,26 @@ class WindowShowPredictions(WindowInterface):
         self.showFullScreen()
         self.update_main_layout()
 
+    def _init_hbox_control(self):
+        self.hbox_control = QtWidgets.QHBoxLayout()
+        self.hbox_control.addStretch(1)
+        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
+        self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
+
+    def _define_max_key_len(self):
+        self.max_key_len = 0
+        for key, value in self.classes.items():
+            if len(key) > self.max_key_len:
+                self.max_key_len = len(key)
+
+    ##############################################################
+    # ---------------- gui logic stuff ---------------------------
+    ##############################################################
     def clear(self):
         self.main_layout.clear()
 
     def update_main_layout(self):
         self.clear()
-
-        def get_key_by_value(value):
-            for key in self.classes.keys():
-                if (self.classes[key]['value'] == value).all():
-                    return key
-            raise Exception('No value == %s' % str(value))
 
         def get_key_by_answer(pos_code):
             answer = {'mae': 9999, 'key': None, 'value': 0}
