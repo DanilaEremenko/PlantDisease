@@ -8,7 +8,7 @@ import time
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QThread
-from PyQt5.QtWidgets import QProgressBar
+from PyQt5.QtWidgets import QProgressBar, QLabel
 
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouts import MyGridWidget
@@ -53,6 +53,7 @@ class WindowPredictOnImage(WindowInterface):
             self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
             self.pbar = QProgressBar(self)
             self.main_layout.layout.addWidget(self.pbar)
+            self.right_text_labels = []
 
             self.setCentralWidget(self.main_layout)
             self.showFullScreen()
@@ -79,6 +80,8 @@ class WindowPredictOnImage(WindowInterface):
 
     def clear(self):
         self.main_layout.clear()
+        for text_label in self.right_text_labels:
+            text_label.setParent(None)
 
     def update_main_layout(self):
         self.clear()
@@ -91,6 +94,12 @@ class WindowPredictOnImage(WindowInterface):
         self.predict_thread.canDraw.connect(self.draw_result)
         self.predict_thread.fakeTimerToStop.connect(fake_timer.terminate)
 
+        self.main_layout.update_scroll(
+            windows_width=self.frameGeometry().width(),
+            window_height=self.frameGeometry().height(),
+        )
+
+        # self.x_data = self.x_data[:4]
         self.predict_thread.start()
         fake_timer.start()
 
@@ -112,8 +121,21 @@ class WindowPredictOnImage(WindowInterface):
             return word
 
         label_list = []
+
+        classes_dict = self.classifier.classes.copy()
+        classes_dict[self.bad_key] = {}
+        for key in [*classes_dict.keys(), self.bad_key]:
+            classes_dict[key]['num'] = 0
+            classes_dict[key]['indexes'] = []
+
         for x, y_answer in zip(self.x_data, self.predict_thread.y_answer):
             answer = get_key_by_answer(pos_code=y_answer, bad_key=self.bad_key)
+
+            classes_dict[answer['key']]['num'] += 1
+
+            # classes_dict[answer['key']]['indexes'].append(i)
+            # answer['key'] = "%d: %s" % (i, answer['key'])
+
             answer['key'] = add_spaces(answer['key'], new_size=self.max_key_len)
 
             label_list.append(
@@ -123,6 +145,15 @@ class WindowPredictOnImage(WindowInterface):
                     label_size=self.config_dict['gui']['qt_label_size']
                 )
             )
+
+        self.right_text_labels = []
+        for key in classes_dict:
+            text_label = QLabel()
+            text_label.setText("%s: %d" % (key, classes_dict[key]['num']))
+            text_label.setAlignment(QtCore.Qt.AlignLeft)
+            self.right_text_labels.append(text_label)
+            self.main_layout.right_layout.addWidget(text_label)
+
         rect_len = int(np.sqrt(len(self.x_data)))
         self.main_layout.update_grid(
             windows_width=self.frameGeometry().width(),

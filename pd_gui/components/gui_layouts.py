@@ -17,6 +17,32 @@ class MyGridWidget(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
+        ###############################################
+        # ---------- left & right init ----------------
+        ###############################################
+        self.right_layout_width = 200
+        window_layouts = QHBoxLayout(self)
+        window_layouts.setContentsMargins(0, 0, 0, 0)
+        window_layouts.setSpacing(0)
+        window_layouts.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.left_layout = QVBoxLayout(self)
+        self.left_layout.setContentsMargins(0, 0, 0, 0)
+        self.left_layout.setSpacing(0)
+        self.left_layout.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+
+        self.right_layout = QVBoxLayout(self)
+        self.right_layout.setContentsMargins(0, 0, 0, 0)
+        self.right_layout.setSpacing(0)
+        self.right_layout.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+
+        window_layouts.addLayout(self.left_layout)
+        window_layouts.addLayout(self.right_layout)
+        self.layout.addLayout(window_layouts)
+
+        ###############################################
+        # --------- elements initializing -------------
+        ###############################################
         self.label_layout = QVBoxLayout(self)
         self.label_layout.setContentsMargins(0, 0, 0, 0)
         self.label_layout.setSpacing(0)
@@ -31,8 +57,8 @@ class MyGridWidget(QWidget):
         self.scroll_area = MyScrollArea()
         self.groubBox.setLayout(self.label_layout)
         self.scroll_area.setWidget(self.groubBox)
-        self.layout.addWidget(self.scroll_area)
-        self.layout.addLayout(self.label_layout)
+        self.left_layout.addWidget(self.scroll_area)
+        self.left_layout.addLayout(self.label_layout)
 
         self.hbox_control = hbox_control
         self.layout.addLayout(self.hbox_control)
@@ -80,9 +106,11 @@ class MyGridWidget(QWidget):
             i += 1
         self.hbox_image_list.append(last_hbox_line)
         self.label_layout.addLayout(last_hbox_line)
+        self.update_scroll(windows_width, window_height)
 
+    def update_scroll(self, windows_width, window_height):
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFixedWidth(min(windows_width, self.max_width))
+        self.scroll_area.setFixedWidth(min(windows_width, self.max_width) - self.right_layout_width)
         self.scroll_area.setFixedHeight(min(window_height, self.max_height))
 
     def quit_pressed(self):
