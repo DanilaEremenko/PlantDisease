@@ -21,7 +21,7 @@ class SlidingWindow(ClustererInterface):
             window_shape=self.window_shape,
             step=self.step,
             img_thumb=self.img_thumb,
-            verbose=True
+            verbose=False
         )
 
         # TODO add logic with color checking
