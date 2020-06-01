@@ -166,17 +166,14 @@ class WindowMultipleExamples(WindowInterface):
                     return key
             raise Exception('No value == %s' % str(value))
 
-        def add_spaces(word, new_size):  # TODO fix gui label alignment
-            while len(word) < new_size:
-                word += '_'
-            return word
-
         label_list = []
         for x, y in zip(self.x_data, self.y_data):
+            label_text = get_key_by_value(value=y)
+            label_text += (self.max_key_len - len(label_text)) * " "
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text=add_spaces(get_key_by_value(value=y), new_size=self.max_key_len),
+                    text=label_text,
                     label_size=self.label_size
                 )
             )

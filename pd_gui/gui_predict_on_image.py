@@ -115,11 +115,6 @@ class WindowPredictOnImage(WindowInterface):
                         answer['value'] = max(pos_code)
             return answer
 
-        def add_spaces(word, new_size):  # TODO fix gui label alignment
-            while len(word) < new_size:
-                word += '_'
-            return word
-
         label_list = []
 
         classes_dict = self.classifier.classes.copy()
@@ -128,15 +123,14 @@ class WindowPredictOnImage(WindowInterface):
             classes_dict[key]['num'] = 0
             classes_dict[key]['indexes'] = []
 
-        for x, y_answer in zip(self.x_data, self.predict_thread.y_answer):
+        for i, (x, y_answer) in enumerate(zip(self.x_data, self.predict_thread.y_answer)):
             answer = get_key_by_answer(pos_code=y_answer, bad_key=self.bad_key)
 
             classes_dict[answer['key']]['num'] += 1
 
-            # classes_dict[answer['key']]['indexes'].append(i)
-            # answer['key'] = "%d: %s" % (i, answer['key'])
-
-            answer['key'] = add_spaces(answer['key'], new_size=self.max_key_len)
+            classes_dict[answer['key']]['indexes'].append(i)
+            answer['key'] += (self.max_key_len - len(answer['key'])) * " "
+            answer['key'] = "%d: %s" % (i, answer['key'])
 
             label_list.append(
                 ImageTextLabel(
@@ -151,6 +145,7 @@ class WindowPredictOnImage(WindowInterface):
             text_label = QLabel()
             text_label.setText("%s: %d" % (key, classes_dict[key]['num']))
             text_label.setAlignment(QtCore.Qt.AlignLeft)
+            print("%s: %s" % (key, str(classes_dict[key]['indexes'])))
             self.right_text_labels.append(text_label)
             self.main_layout.right_layout.addWidget(text_label)
 
