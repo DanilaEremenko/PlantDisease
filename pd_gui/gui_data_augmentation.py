@@ -45,12 +45,15 @@ class WindowMultipleExamples(WindowInterface):
                 'rad_list': alghs_dict['blur']['val_list'],
 
                 'use_affine': alghs_dict['affine']['use'],
-                'affine_list': alghs_dict['affine']['val_list']
+                'affine_list': alghs_dict['affine']['val_list'],
+
+                'use_contrast': alghs_dict['contrast']['use'],
+                'contrast_list': alghs_dict['contrast']['val_list']
             }
             self.max_aug_part = aug_config_dict['max_aug_part']
 
         if json_list == None:
-            json_list = [self.choose_json(content_title='train_data')]
+            raise Exception('No passed json')
         self.json_name = os.path.splitext(json_list[0])[0]
 
         if len(json_list) == 1:
@@ -67,13 +70,15 @@ class WindowMultipleExamples(WindowInterface):
                 # TODO some dev stuff
                 remove_classes=['альтернариоз', 'прочие инфекции', 'морщинистая мозаика', 'полосатая мозаика']
             )
+        self.init_size = len(self.x_data)
+        self.img_shape = self.x_data.shape[1:]
         # TODO some dev stuff
-        self.classes['здоровый куст'] = self.classes['марь белая']
-        del self.classes['марь белая']
-        self.classes['мозаика'] = self.classes['прочие мозаики']
-        del self.classes['прочие мозаики']
-        self.classes['сорняк'] = self.classes['прочие сорняки']
-        del self.classes['прочие сорняки']
+        # self.classes['здоровый куст'] = self.classes['марь белая']
+        # del self.classes['марь белая']
+        # self.classes['мозаика'] = self.classes['прочие мозаики']
+        # del self.classes['прочие мозаики']
+        # self.classes['сорняк'] = self.classes['прочие сорняки']
+        # del self.classes['прочие сорняки']
 
         self._define_max_class()
 
@@ -81,7 +86,7 @@ class WindowMultipleExamples(WindowInterface):
         self.setCentralWidget(self.main_layout)
 
         self.showFullScreen()
-        self.update_main_layout()
+        self.show_full()
 
         print("---------------------------------")
         print('classes      = %s' % str(self.classes))
@@ -98,7 +103,7 @@ class WindowMultipleExamples(WindowInterface):
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_control.addStretch(1)
         self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
-        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
+        self.hbox_control.addWidget(ControlButton("Show Full", self.show_full))
         self.hbox_control.addWidget(ControlButton("Multiple", self.multiple_pressed))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
 
@@ -157,7 +162,7 @@ class WindowMultipleExamples(WindowInterface):
     def clear(self):
         self.main_layout.clear()
 
-    def update_main_layout(self):
+    def show_full(self):
         self.clear()
 
         def get_key_by_value(value):
@@ -213,10 +218,19 @@ class WindowMultipleExamples(WindowInterface):
 
                 max_class_num = self.max_aug_for_classes[key]
                 old_class_size = len(self.x_data)
-                self.x_data, self.y_data = dmk.multiple_class_examples(x_train=self.x_data, y_train=self.y_data,
-                                                                       class_for_multiple=self.classes[key]['value'],
-                                                                       **self.arg_dict,
-                                                                       max_class_num=max_class_num)
+                x_data_new, y_data_new = dmk.multiple_class_examples(x_train=self.x_data[:self.init_size],
+                                                                     y_train=self.y_data[:self.init_size],
+                                                                     class_for_mult=self.classes[key]['value'],
+                                                                     **self.arg_dict,
+                                                                     max_class_num=max_class_num)
+
+                self.x_data = np.append(self.x_data, x_data_new)
+                self.y_data = np.append(self.y_data, y_data_new)
+
+                ex_num = int(self.y_data.shape[0] / len(self.classes))
+
+                self.x_data.shape = (ex_num, *self.img_shape)
+                self.y_data.shape = (ex_num, len(self.classes))
 
                 new_ex_num = len(self.x_data) - old_class_size
                 print('%s : generated %d new examples' % (key, new_ex_num))
@@ -236,4 +250,38 @@ class WindowMultipleExamples(WindowInterface):
             labels=list(self.classes.keys()),
             values=list(map(lambda val: val['num'], self.classes.values())),
             title='Diseases distribution after augmentation'
+        )
+
+        self.show_augmentation()
+
+    def show_augmentation(self):
+        self.clear()
+
+        label_list = []
+
+        for i in [0, 1, 2]:
+            label_list.append(
+                ImageTextLabel(
+                    x=self.x_data[i],
+                    text='original',
+                    label_size=self.label_size
+                )
+            )
+            for j in range(1, int(self.max_aug_part) + 1):
+                label_text = 'aug %.2f' % self.arg_dict['contrast_list'][j - 1]
+                label_list.append(
+                    ImageTextLabel(
+                        x=self.x_data[i + j * self.init_size],
+                        text=label_text,
+                        label_size=self.label_size
+                    ),
+                )
+
+        rect_len = j + 1
+        self.main_layout.update_grid(
+            windows_width=self.main_layout.max_width,
+            window_height=self.main_layout.max_height,
+            x_len=rect_len,
+            y_len=rect_len,
+            label_list=label_list
         )
