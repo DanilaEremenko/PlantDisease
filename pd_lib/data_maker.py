@@ -11,7 +11,6 @@ from pd_lib import img_proc as img_pr, ui_cmd
 from pd_geo import exif_parser as ep
 import json
 
-
 ################################################################################
 # --------------------------------- for predict on image -----------------------
 ################################################################################
@@ -189,30 +188,30 @@ def json_big_load(json_path):
 ################################################################################
 # --------------------------------- multiple class -----------------------------
 ################################################################################
-def multiple_class_examples(x_train, y_train, class_for_multiple,
+def multiple_class_examples(x_train, y_train,
+                            class_for_mult=None,
                             use_noise=False, intensity_noise_list=(50,),
                             use_deform=False, k_deform_list=(0.5,),
                             use_blur=False, rad_list=(0.5),
                             use_affine=False, affine_list=(0.5,),
-                            max_class_num=None):
-    x_original_shape = x_train.shape
+                            use_contrast=False, contrast_list=(0.7,),
+                            max_class_num=None,
+                            mode='not all'):
+    class_for_mult = np.array(class_for_mult)
 
     class_for_multiple_examples = np.empty(0, dtype='uint8')
     class_for_mult_num = 0
 
-    for i, y in enumerate(y_train):
-        if ((y.__eq__(class_for_multiple)).all()):
-            class_for_multiple_examples = np.append(class_for_multiple_examples, x_train[i])
-            class_for_mult_num += 1
+    if mode == 'all':
+        class_for_multiple_examples = x_train
+        class_for_mult = len(x_train)
+    else:
+        for i, y in enumerate(y_train):
+            if ((y.__eq__(class_for_mult)).all()):
+                class_for_multiple_examples = np.append(class_for_multiple_examples, x_train[i])
+                class_for_mult_num += 1
+        class_for_multiple_examples.shape = (class_for_mult_num, x_train.shape[1], x_train.shape[2], x_train.shape[3])
 
-    class_for_multiple_examples.shape = (class_for_mult_num, x_train.shape[1], x_train.shape[2], x_train.shape[3])
-
-    max_new_examples_num = max_class_num - class_for_mult_num
-    new_examples_num = 0
-
-    x_new_examples = np.empty(0, dtype='uint8')
-
-    stop_augment = False
     algh_dict = {}
     # define alghoritms
     if use_noise:
@@ -243,31 +242,51 @@ def multiple_class_examples(x_train, y_train, class_for_multiple,
             'loop_list': affine_list,
             'loop_arg': 'k'
         }
+    if use_contrast:
+        algh_dict['contrast'] = {
+            'func': lambda arr, k: arr * k if k < 1 else np.vectorize(lambda x: min(255, x))(arr * k),
+            'args': {},
+            'loop_list': contrast_list,
+            'loop_arg': 'k'
+        }
+
+    max_new_examples_num = max_class_num - class_for_mult_num
+    x_new_examples = np.empty(0, dtype='uint8')
+
     # --------------- make noised examples ----------------------------------
     for alg_name, algh in algh_dict.items():
         print('generating via %s' % alg_name)
         for loop_var in algh['loop_list']:
-            if stop_augment:
-                break
-            for multiple_ex in class_for_multiple_examples:
-                if new_examples_num < max_new_examples_num:
-                    x_new_examples = \
-                        np.append(x_new_examples,
-                                  algh['func'](**{'arr': multiple_ex, algh['loop_arg']: loop_var}, **algh['args']))
-                    new_examples_num += 1
-                else:
-                    stop_augment = True
-                    break
+            print('augmentation with k = %.2f' % loop_var)
+            if len(x_new_examples) < max_new_examples_num:
+                x_new_examples = np.append(
+                    x_new_examples, np.array(
+                        list(
+                            map(
+                                lambda mult_ex: algh['func'](**{'arr': mult_ex, algh['loop_arg']: loop_var},
+                                                             **algh['args']),
+                                class_for_multiple_examples
+                            )
+                        ),
+                        dtype='uint8'
+                    )
+                )
+                x_new_examples.shape = (
+                    int(x_new_examples.shape[0] / (x_train.shape[1] * x_train.shape[2] * x_train.shape[3])),
+                    *x_train.shape[1:]
+                )
 
     # ---------------  join arrays -------------------------------------------
-    x_train = np.append(x_train, x_new_examples)
-    for i in range(new_examples_num):
-        y_train = np.append(y_train, class_for_multiple)
 
-    x_train.shape = (x_original_shape[0] + new_examples_num, *x_original_shape[1:])
-    y_train.shape = (x_original_shape[0] + new_examples_num, class_for_multiple.size)
+    if mode == 'all':
+        mult_num = int(len(x_new_examples) / len(y_train))
+        y_new_examples = np.array(list(y_train) * mult_num, dtype='uint8')
 
-    return x_train, y_train
+    else:
+        y_new_examples = np.array(list(class_for_mult.astype('uint8')) * len(x_new_examples)) \
+            .reshape((len(x_new_examples), len(class_for_mult)))
+
+    return x_new_examples, y_new_examples
 
 
 def get_pos_from_num(arr, class_num):

@@ -27,7 +27,7 @@
         1.4,
         1.5
       ],
-      "use": true
+      "use": false
     },
     "affine": {
       "val_list": [
@@ -38,7 +38,19 @@
         5
       ],
       "use": false
+    },
+    "contrast": {
+      "val_list": [
+        0.7,
+        0.8,
+        0.9,
+        1.1,
+        1.2,
+        1.3
+      ],
+      "use": true
     }
   },
-  "max_aug_part": 1.0
+  "aug_part": 6,
+  "augment_all": true
 }

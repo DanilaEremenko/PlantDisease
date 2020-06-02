@@ -13,6 +13,7 @@ from pd_gui.components.gui_labels import ImageTextLabel
 import json
 import os
 import numpy as np
+from PIL import Image
 
 
 class WindowMultipleExamples(WindowInterface):
@@ -33,6 +34,14 @@ class WindowMultipleExamples(WindowInterface):
         with open('config_data_augmentation.json') as aug_config_fp:
             aug_config_dict = json.load(aug_config_fp)
             alghs_dict = aug_config_dict['algorithms']
+
+            self.max_aug_part = aug_config_dict['aug_part']
+            self.augment_all = aug_config_dict['augment_all']
+
+            for key, value in alghs_dict.items():
+                if value['use'] and len(value['val_list']) != self.max_aug_part:
+                    raise Exception('bad val_list size for %s' % key)
+
             self.arg_dict = {
 
                 'use_noise': alghs_dict['noise']['use'],
@@ -45,12 +54,14 @@ class WindowMultipleExamples(WindowInterface):
                 'rad_list': alghs_dict['blur']['val_list'],
 
                 'use_affine': alghs_dict['affine']['use'],
-                'affine_list': alghs_dict['affine']['val_list']
+                'affine_list': alghs_dict['affine']['val_list'],
+
+                'use_contrast': alghs_dict['contrast']['use'],
+                'contrast_list': alghs_dict['contrast']['val_list']
             }
-            self.max_aug_part = aug_config_dict['max_aug_part']
 
         if json_list == None:
-            json_list = [self.choose_json(content_title='train_data')]
+            raise Exception('No passed json')
         self.json_name = os.path.splitext(json_list[0])[0]
 
         if len(json_list) == 1:
@@ -67,13 +78,15 @@ class WindowMultipleExamples(WindowInterface):
                 # TODO some dev stuff
                 remove_classes=['альтернариоз', 'прочие инфекции', 'морщинистая мозаика', 'полосатая мозаика']
             )
+        self.init_size = len(self.x_data)
+        self.img_shape = self.x_data.shape[1:]
         # TODO some dev stuff
-        self.classes['здоровый куст'] = self.classes['марь белая']
-        del self.classes['марь белая']
-        self.classes['мозаика'] = self.classes['прочие мозаики']
-        del self.classes['прочие мозаики']
-        self.classes['сорняк'] = self.classes['прочие сорняки']
-        del self.classes['прочие сорняки']
+        # self.classes['здоровый куст'] = self.classes['марь белая']
+        # del self.classes['марь белая']
+        # self.classes['мозаика'] = self.classes['прочие мозаики']
+        # del self.classes['прочие мозаики']
+        # self.classes['сорняк'] = self.classes['прочие сорняки']
+        # del self.classes['прочие сорняки']
 
         self._define_max_class()
 
@@ -81,7 +94,7 @@ class WindowMultipleExamples(WindowInterface):
         self.setCentralWidget(self.main_layout)
 
         self.showFullScreen()
-        self.update_main_layout()
+        self.show_full()
 
         print("---------------------------------")
         print('classes      = %s' % str(self.classes))
@@ -98,7 +111,7 @@ class WindowMultipleExamples(WindowInterface):
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_control.addStretch(1)
         self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed))
-        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
+        self.hbox_control.addWidget(ControlButton("Show Full", self.show_full))
         self.hbox_control.addWidget(ControlButton("Multiple", self.multiple_pressed))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
 
@@ -157,7 +170,7 @@ class WindowMultipleExamples(WindowInterface):
     def clear(self):
         self.main_layout.clear()
 
-    def update_main_layout(self):
+    def show_full(self):
         self.clear()
 
         def get_key_by_value(value):
@@ -207,26 +220,70 @@ class WindowMultipleExamples(WindowInterface):
         self.quit_default()
 
     def multiple_pressed(self):
-        for key, value in self.classes.items():
 
-            if self.classes[key]['num'] < self.max_aug_for_classes[key]:
-
-                max_class_num = self.max_aug_for_classes[key]
+        if self.augment_all:
+            if sum(map(lambda x: x['num'], self.classes.values())) < self.init_size * self.max_aug_part:
+                # ----------------------------------- augment all -----------------------------------------------------
                 old_class_size = len(self.x_data)
-                self.x_data, self.y_data = dmk.multiple_class_examples(x_train=self.x_data, y_train=self.y_data,
-                                                                       class_for_multiple=self.classes[key]['value'],
-                                                                       **self.arg_dict,
-                                                                       max_class_num=max_class_num)
 
-                new_ex_num = len(self.x_data) - old_class_size
-                print('%s : generated %d new examples' % (key, new_ex_num))
-                self.classes[key]['num'] = 0
-                for y in self.y_data:
-                    if ((y.__eq__(self.classes[key]['value'])).all()):
-                        self.classes[key]['num'] += 1
+                x_data_new, y_data_new = dmk.multiple_class_examples(x_train=self.x_data[:self.init_size],
+                                                                     y_train=self.y_data[:self.init_size],
+                                                                     **self.arg_dict,
+                                                                     max_class_num=self.init_size * self.max_aug_part,
+                                                                     mode='all')
 
+                self.x_data = np.append(self.x_data, x_data_new)
+                self.y_data = np.append(self.y_data, y_data_new)
+
+                ex_num = int(self.y_data.shape[0] / len(self.classes))
+
+                self.x_data.shape = (ex_num, *self.img_shape)
+                self.y_data.shape = (ex_num, len(self.classes))
+
+                for key, value in self.classes.items():
+                    new_ex_num = len(self.x_data) - old_class_size
+                    print('%s : generated %d new examples' % (key, new_ex_num))
+                    self.classes[key]['num'] = 0
+                    for y in self.y_data:
+                        if ((y.__eq__(self.classes[key]['value'])).all()):
+                            self.classes[key]['num'] += 1
             else:
-                print('%s : generated %d new examples (class_size == max_size)' % (key, 0))
+                print('ex_num = max_num')
+
+
+        else:
+            # ----------------------------------- augment by classes ---------------------------------------------
+            for key, value in self.classes.items():
+
+                if self.classes[key]['num'] < self.max_aug_for_classes[key]:
+
+                    max_class_num = self.max_aug_for_classes[key]
+                    old_class_size = len(self.x_data)
+
+                    x_data_new, y_data_new = dmk.multiple_class_examples(x_train=self.x_data[:self.init_size],
+                                                                         y_train=self.y_data[:self.init_size],
+                                                                         class_for_mult=self.classes[key]['value'],
+                                                                         **self.arg_dict,
+                                                                         max_class_num=max_class_num)
+
+                    self.x_data = np.append(self.x_data, x_data_new)
+                    self.y_data = np.append(self.y_data, y_data_new)
+
+                    ex_num = int(self.y_data.shape[0] / len(self.classes))
+
+                    self.x_data.shape = (ex_num, *self.img_shape)
+                    self.y_data.shape = (ex_num, len(self.classes))
+
+                    new_ex_num = len(self.x_data) - old_class_size
+                    print('%s : generated %d new examples' % (key, new_ex_num))
+                    self.classes[key]['num'] = 0
+                    for y in self.y_data:
+                        if ((y.__eq__(self.classes[key]['value'])).all()):
+                            self.classes[key]['num'] += 1
+
+                else:
+                    print('%s : generated %d new examples (class_size == max_size)' % (key, 0))
+
         print("---------------------------------")
         print('classes = %s' % str(self.classes))
         print('ex_num = %d' % sum(map(lambda x: x['num'], self.classes.values())))
@@ -236,4 +293,39 @@ class WindowMultipleExamples(WindowInterface):
             labels=list(self.classes.keys()),
             values=list(map(lambda val: val['num'], self.classes.values())),
             title='Diseases distribution after augmentation'
+        )
+
+        self.show_augmentation()
+
+    def show_augmentation(self):
+        self.clear()
+
+        label_list = []
+
+        for i in [0, 1, 2]:
+            label_list.append(
+                ImageTextLabel(
+                    x=self.x_data[i],
+                    text='original',
+                    label_size=self.label_size
+                )
+            )
+            for j in range(1, int(self.max_aug_part) + 1):
+                label_text = 'aug %.2f' % self.arg_dict['contrast_list'][j - 1]
+                label_list.append(
+                    ImageTextLabel(
+                        x=self.x_data[i + j * self.init_size],
+                        text=label_text,
+                        label_size=self.label_size
+                    ),
+                )
+
+        x_len = j + 1
+        y_len = int(len(label_list) / x_len)
+        self.main_layout.update_grid(
+            windows_width=self.main_layout.max_width,
+            window_height=self.main_layout.max_height,
+            x_len=x_len,
+            y_len=y_len,
+            label_list=label_list
         )
