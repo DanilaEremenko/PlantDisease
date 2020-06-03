@@ -37,6 +37,9 @@ class WindowMultipleExamples(WindowInterface):
 
             self.max_aug_part = aug_config_dict['aug_part']
             self.augment_all = aug_config_dict['augment_all']
+            self.output_json = aug_config_dict['output_json']
+            self.save_data_binary = aug_config_dict['save_data_to_binary']
+            self.save_data_dir = aug_config_dict['save_data_to_dir']
 
             for key, value in alghs_dict.items():
                 if value['use'] and len(value['val_list']) != self.max_aug_part:
@@ -200,22 +203,59 @@ class WindowMultipleExamples(WindowInterface):
         )
 
     def okay_pressed(self):
-        out_json_path = "%s_%s.json" % (self.json_name, self.postfix)
-        print("Save to %s" % out_json_path)
+        print("Save to %s" % self.output_json)
 
         for key in self.classes.keys():
-            self.classes[key]['value'] = list(*self.classes[key]['value'])
+            self.classes[key]['value'] = list(self.classes[key]['value'])
 
-        dmk.json_big_create(
-            json_path=out_json_path,
-            h5_path="%s_%s.hd5f" % (self.json_name, self.postfix),
-            x_data=self.x_data,
-            y_data=self.y_data,
-            longitudes=None,
-            latitudes=None,
-            img_shape=None,
-            classes=self.classes
-        )
+        if self.save_data_binary:
+            ###################################################################################
+            # ------------------------ be aware of SIGKILL ------------------------------------
+            ###################################################################################
+            binary_path = dir_path = "/".join(self.output_json.split('/')[:-1]) + "/" \
+                                     + self.output_json.split('/')[-1][:-5] + ".hd5f"
+            dmk.json_big_create(
+                json_path=self.output_json,
+                h5_path=binary_path,
+                x_data=self.x_data,
+                y_data=self.y_data,
+                longitudes=None,
+                latitudes=None,
+                img_shape=None,
+                classes=self.classes
+            )
+        elif self.save_data_dir:
+            ###################################################################################
+            # we can not pass array with size 10_000 * 256 * 256 * 3 to function, shout SIGKILL
+            ###################################################################################
+            dir_path = "/".join(self.output_json.split('/')[:-1]) \
+                       + "/" + self.output_json.split('/')[-1][:-5]
+
+            if not dir_path:
+                raise Exception("Data directory %s need to be existed" % dir_path)
+
+            for key in self.classes.keys():
+                self.classes[key]['value_num'] = dmk.get_num_from_pos(self.classes[key]['value'])
+                self.classes[key]['saved_num'] = 0
+
+            for x, y in zip(self.x_data, self.y_data):
+                for key in self.classes.keys():
+                    if (self.classes[key]['value'] == y).all():
+                        cur_flow_dir = "%s/%d_%s" % (dir_path, self.classes[key]['value_num'] + 1, key)
+                        file_path = "%s/%d.JPG" % (cur_flow_dir, self.classes[key]['saved_num'] + 1)
+                        Image.fromarray(x).save(file_path)
+                        print("%s saved" % file_path)
+                        self.classes[key]['saved_num'] += 1
+
+            with open(self.output_json, "w") as fp:
+                json.dump(
+                    {
+                        "classes": self.classes, "img_shape": None,
+                        "dir_path": dir_path,
+                        "longitudes": None, "latitudes": None
+                    },
+                    fp)
+                fp.close()
 
         self.quit_default()
 
