@@ -1,6 +1,7 @@
 """
 PyQt GUI for visualizing predictions of NN in main_fit_CNN.py
 """
+import json
 
 from PyQt5 import QtWidgets
 from pd_gui.components.gui_buttons import ControlButton
@@ -16,9 +17,8 @@ class WindowShowUnetFitting(WindowInterface):
     ##############################################################
     def __init__(self, x_data, y_data, y_predicted):
         super(WindowShowUnetFitting, self).__init__()
-
-        config_dict = self.load_dict_from_json_with_keys(key_list=['qt_label_size'])
-        self.label_size = config_dict['qt_label_size']
+        with open('config_full_system.json') as config_fp:
+            self.label_size = json.load(config_fp)['gui']['qt_label_size']
 
         self.main_layout = MyGridWidget(hbox_control=self.hbox_control)
         self.setCentralWidget(self.main_layout)
@@ -45,21 +45,21 @@ class WindowShowUnetFitting(WindowInterface):
             label_list.append(
                 ImageTextLabel(
                     x=x,
-                    text='blop',
+                    text='input',
                     label_size=self.label_size
                 )
             )
             label_list.append(
                 ImageTextLabel(
                     x=y,
-                    text='blop',
+                    text='output',
                     label_size=self.label_size
                 )
             )
             label_list.append(
                 ImageTextLabel(
                     x=y_answer,
-                    text='blop',
+                    text='U-Net answer',
                     label_size=self.label_size
                 )
             )
