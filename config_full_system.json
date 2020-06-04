@@ -18,8 +18,8 @@
     "name": "CNN",
     "bad_key": "НЕ РАСТЕНИЕ",
     "args": {
-      "json_path": "models/DenseNet_98_96_98/model_DenseNet121_50.json",
-      "h5_path": "models/DenseNet_98_96_98/model_DenseNet121_50.h5",
+      "json_path": "models/DenseNet_99_99_100/model_DenseNet121_75.json",
+      "h5_path": "models/DenseNet_99_99_100/model_DenseNet121_75.h5",
       "classes": {
         "фиотофтороз": {
           "value": [1, 0, 0, 0]
