@@ -231,28 +231,34 @@ class WindowMultipleExamples(WindowInterface):
             dir_path = "/".join(self.output_json.split('/')[:-1]) \
                        + "/" + self.output_json.split('/')[-1][:-5]
 
+            id = []
+            label = []
+
             if not dir_path:
                 raise Exception("Data directory %s need to be existed" % dir_path)
 
             for key in self.classes.keys():
                 self.classes[key]['value_num'] = dmk.get_num_from_pos(self.classes[key]['value'])
                 self.classes[key]['saved_num'] = 0
-
-            for x, y in zip(self.x_data, self.y_data):
+            for i, (x, y) in enumerate(zip(self.x_data, self.y_data)):
                 for key in self.classes.keys():
                     if (self.classes[key]['value'] == y).all():
-                        cur_flow_dir = "%s/%d_%s" % (dir_path, self.classes[key]['value_num'] + 1, key)
-                        file_path = "%s/%d.JPG" % (cur_flow_dir, self.classes[key]['saved_num'] + 1)
+                        file_path = "%s/%d.JPG" % (dir_path, i + 1)
                         Image.fromarray(x).save(file_path)
                         print("%s saved" % file_path)
-                        self.classes[key]['saved_num'] += 1
+                        id.append(file_path)
+                        label.append(key)
 
             with open(self.output_json, "w") as fp:
                 json.dump(
                     {
                         "classes": self.classes, "img_shape": None,
                         "dir_path": dir_path,
-                        "longitudes": None, "latitudes": None
+                        "longitudes": None, "latitudes": None,
+                        "dataframe": {
+                            "id": id,
+                            "label": label
+                        }
                     },
                     fp)
                 fp.close()
