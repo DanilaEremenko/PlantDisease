@@ -84,12 +84,12 @@ class WindowMultipleExamples(WindowInterface):
         self.init_size = len(self.x_data)
         self.img_shape = self.x_data.shape[1:]
         # TODO some dev stuff
-        self.classes['здоровый куст'] = self.classes['марь белая']
-        del self.classes['марь белая']
-        self.classes['мозаика'] = self.classes['прочие мозаики']
-        del self.classes['прочие мозаики']
-        self.classes['сорняк'] = self.classes['прочие сорняки']
-        del self.classes['прочие сорняки']
+        # self.classes['здоровый куст'] = self.classes['марь белая']
+        # del self.classes['марь белая']
+        # self.classes['мозаика'] = self.classes['прочие мозаики']
+        # del self.classes['прочие мозаики']
+        # self.classes['сорняк'] = self.classes['прочие сорняки']
+        # del self.classes['прочие сорняки']
 
         self._define_max_class()
 
@@ -271,7 +271,6 @@ class WindowMultipleExamples(WindowInterface):
             if sum(map(lambda x: x['num'], self.classes.values())) < self.init_size * self.max_aug_part:
                 # ----------------------------------- augment all -----------------------------------------------------
                 old_class_size = len(self.x_data)
-
                 x_data_new, y_data_new = dmk.multiple_class_examples(x_train=self.x_data[:self.init_size],
                                                                      y_train=self.y_data[:self.init_size],
                                                                      **self.arg_dict,

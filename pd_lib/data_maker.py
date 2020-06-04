@@ -277,7 +277,6 @@ def multiple_class_examples(x_train, y_train,
                 )
 
     # ---------------  join arrays -------------------------------------------
-
     if mode == 'all':
         mult_num = int(len(x_new_examples) / len(y_train))
         y_new_examples = np.array(list(y_train) * mult_num, dtype='uint8')
