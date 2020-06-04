@@ -28,13 +28,13 @@ class PlantDetector():
         for pixel in x_reshaped:
             pixel = list(map(int, pixel.tolist()))
             if sum(pixel) != 0:
+                red_pixel = 100 * (pixel[0] / sum(pixel))
                 green_pixel = 100 * (pixel[1] / sum(pixel))
                 blue_pixel = 100 * (pixel[2] / sum(pixel))
-                red_pixel = 100 * (pixel[0] / sum(pixel))
                 if green_pixel > red_pixel and green_pixel > blue_pixel and green_pixel > 35:
                     count_green += 1
-        green_percent = round((count_green / (x_reshaped.shape[0])), 2)
-        return green_percent
+        green_part = round((count_green / (x_reshaped.shape[0])), 2)
+        return green_part
 
 
 class CNNClassifier(ClassifierInterface):
