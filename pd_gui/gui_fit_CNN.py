@@ -73,6 +73,11 @@ class WindowShowPredictions(WindowInterface):
         label_list = []
         for x, y, y_answer in zip(self.x_data, self.y_data, self.y_predicted):
             answer = get_key_by_answer(pos_code=y_answer)
+
+            right_ans = get_key_by_answer(pos_code=y)
+
+            is_right_ans = True if answer['key'] == right_ans['key'] else False
+
             answer['key'] = add_spaces(answer['key'], new_size=self.max_key_len)
 
             label_list.append(
@@ -82,6 +87,12 @@ class WindowShowPredictions(WindowInterface):
                     label_size=self.label_size
                 )
             )
+
+            if is_right_ans:
+                label_list[-1].text_label.setStyleSheet('background-color: green')
+            else:
+                label_list[-1].text_label.setStyleSheet('background-color: red')
+
         rect_len = int(np.sqrt(len(self.x_data)))
         self.main_layout.update_grid(
             windows_width=self.frameGeometry().width(),
