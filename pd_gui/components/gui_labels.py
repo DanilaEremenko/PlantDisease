@@ -137,7 +137,9 @@ class ImageTextLabel(QWidget):
 
         self.text_label = QLabel()
         self.text_label.setText(text)
-        self.text_label.setFont(QFont("Monospace"))
+        font = QFont("Monospace")
+        font.setPointSize(14)
+        self.text_label.setFont(font)
 
         self.img_label = QLabel()
         self.img_label.setPixmap(

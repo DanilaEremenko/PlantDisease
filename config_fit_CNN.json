@@ -23,8 +23,8 @@
       "type": "DenseNet121"
     },
     "exist": {
-      "weights": "models/DenseNet_98_96_98/model_DenseNet121_50.h5",
-      "structure": "models/DenseNet_98_96_98/model_DenseNet121_50.json",
+      "weights": "models/DenseNet_99_99_100/model_DenseNet121_75.hd5",
+      "structure": "models/DenseNet_99_99_100/model_DenseNet121_75.json",
       "history": "models/DenseNet_98_96_98/model_DenseNet121_50_history.json"
     }
   }
