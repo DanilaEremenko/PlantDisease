@@ -264,6 +264,10 @@ def main():
         del test['dataframe']
         del eval['dataframe']
 
+        train['df'] = train['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
+        test['df'] = test['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
+        eval['df'] = eval['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
+
         #####################################################################
         # ----------------------- creating generators from df ---------------
         #####################################################################
@@ -484,9 +488,9 @@ def main():
 
             history = model.fit_generator(
                 generator=train_generator,
-                steps_per_epoch=int(1506 / train['batch_size']),
+                steps_per_epoch=int(len(train['df']) / train['batch_size']),
                 validation_data=validation_generator,
-                validation_steps=int(452 / test['batch_size']),
+                validation_steps=int(len(test['df']) / test['batch_size']),
                 epochs=epochs,
                 shuffle=True,
                 verbose=verbose,
@@ -517,7 +521,7 @@ def main():
             # gr.plot_train_test_from_history(history_dict=history.history, show=True)
         eval['loss'], eval['accuracy'] = model.evaluate_generator(
             generator=evaluate_generator,
-            steps=int(196 / eval['batch_size'])
+            steps=int(len(eval['df']) / eval['batch_size'])
         )
         print("eval_acc     %.2f%%\n" % (eval['accuracy'] * 100))
 
