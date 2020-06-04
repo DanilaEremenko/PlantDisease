@@ -2,7 +2,7 @@
   "data": {
     "create_flow_dir": false,
     "flow_dir": "Datasets/final_dataset/big_flow_dir",
-    "train_json": "Datasets/final_dataset/DJI_0999_joined_with_blur_4620.json"
+    "train_json": "Datasets/final_dataset/big_dir_ds/big_ds.json"
   },
   "fit": {
     "baseline": {
@@ -12,7 +12,7 @@
     }
   },
   "preprocessor": {
-    "use": true,
+    "use": false,
     "name": "contrast",
     "args": {
     }

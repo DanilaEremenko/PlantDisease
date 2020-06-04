@@ -13,6 +13,7 @@ from pd_gui.components.gui_labels import ImageTextLabel
 import json
 import os
 import numpy as np
+from PIL import Image
 
 
 class WindowMultipleExamples(WindowInterface):
@@ -33,6 +34,17 @@ class WindowMultipleExamples(WindowInterface):
         with open('config_data_augmentation.json') as aug_config_fp:
             aug_config_dict = json.load(aug_config_fp)
             alghs_dict = aug_config_dict['algorithms']
+
+            self.max_aug_part = aug_config_dict['aug_part']
+            self.augment_all = aug_config_dict['augment_all']
+            self.output_json = aug_config_dict['output_json']
+            self.save_data_binary = aug_config_dict['save_data_to_binary']
+            self.save_data_dir = aug_config_dict['save_data_to_dir']
+
+            for key, value in alghs_dict.items():
+                if value['use'] and len(value['val_list']) != self.max_aug_part:
+                    raise Exception('bad val_list size for %s' % key)
+
             self.arg_dict = {
 
                 'use_noise': alghs_dict['noise']['use'],
@@ -50,7 +62,6 @@ class WindowMultipleExamples(WindowInterface):
                 'use_contrast': alghs_dict['contrast']['use'],
                 'contrast_list': alghs_dict['contrast']['val_list']
             }
-            self.max_aug_part = aug_config_dict['max_aug_part']
 
         if json_list == None:
             raise Exception('No passed json')
@@ -192,37 +203,79 @@ class WindowMultipleExamples(WindowInterface):
         )
 
     def okay_pressed(self):
-        out_json_path = "%s_%s.json" % (self.json_name, self.postfix)
-        print("Save to %s" % out_json_path)
+        print("Save to %s" % self.output_json)
 
         for key in self.classes.keys():
-            self.classes[key]['value'] = list(*self.classes[key]['value'])
+            self.classes[key]['value'] = list(self.classes[key]['value'])
 
-        dmk.json_big_create(
-            json_path=out_json_path,
-            h5_path="%s_%s.hd5f" % (self.json_name, self.postfix),
-            x_data=self.x_data,
-            y_data=self.y_data,
-            longitudes=None,
-            latitudes=None,
-            img_shape=None,
-            classes=self.classes
-        )
+        if self.save_data_binary:
+            ###################################################################################
+            # ------------------------ be aware of SIGKILL ------------------------------------
+            ###################################################################################
+            binary_path = dir_path = "/".join(self.output_json.split('/')[:-1]) + "/" \
+                                     + self.output_json.split('/')[-1][:-5] + ".hd5f"
+            dmk.json_big_create(
+                json_path=self.output_json,
+                h5_path=binary_path,
+                x_data=self.x_data,
+                y_data=self.y_data,
+                longitudes=None,
+                latitudes=None,
+                img_shape=None,
+                classes=self.classes
+            )
+        elif self.save_data_dir:
+            ###################################################################################
+            # we can not pass array with size 10_000 * 256 * 256 * 3 to function, shout SIGKILL
+            ###################################################################################
+            dir_path = "/".join(self.output_json.split('/')[:-1]) \
+                       + "/" + self.output_json.split('/')[-1][:-5]
+
+            id = []
+            label = []
+
+            if not dir_path:
+                raise Exception("Data directory %s need to be existed" % dir_path)
+
+            for key in self.classes.keys():
+                self.classes[key]['value_num'] = dmk.get_num_from_pos(self.classes[key]['value'])
+                self.classes[key]['saved_num'] = 0
+            for i, (x, y) in enumerate(zip(self.x_data, self.y_data)):
+                for key in self.classes.keys():
+                    if (self.classes[key]['value'] == y).all():
+                        file_path = "%s/%d.JPG" % (dir_path, i + 1)
+                        Image.fromarray(x).save(file_path)
+                        print("%s saved" % file_path)
+                        id.append(file_path)
+                        label.append(key)
+
+            with open(self.output_json, "w") as fp:
+                json.dump(
+                    {
+                        "classes": self.classes, "img_shape": None,
+                        "dir_path": dir_path,
+                        "longitudes": None, "latitudes": None,
+                        "dataframe": {
+                            "id": id,
+                            "label": label
+                        }
+                    },
+                    fp)
+                fp.close()
 
         self.quit_default()
 
     def multiple_pressed(self):
-        for key, value in self.classes.items():
 
-            if self.classes[key]['num'] < self.max_aug_for_classes[key]:
-
-                max_class_num = self.max_aug_for_classes[key]
+        if self.augment_all:
+            if sum(map(lambda x: x['num'], self.classes.values())) < self.init_size * self.max_aug_part:
+                # ----------------------------------- augment all -----------------------------------------------------
                 old_class_size = len(self.x_data)
                 x_data_new, y_data_new = dmk.multiple_class_examples(x_train=self.x_data[:self.init_size],
                                                                      y_train=self.y_data[:self.init_size],
-                                                                     class_for_mult=self.classes[key]['value'],
                                                                      **self.arg_dict,
-                                                                     max_class_num=max_class_num)
+                                                                     max_class_num=self.init_size * self.max_aug_part,
+                                                                     mode='all')
 
                 self.x_data = np.append(self.x_data, x_data_new)
                 self.y_data = np.append(self.y_data, y_data_new)
@@ -232,15 +285,50 @@ class WindowMultipleExamples(WindowInterface):
                 self.x_data.shape = (ex_num, *self.img_shape)
                 self.y_data.shape = (ex_num, len(self.classes))
 
-                new_ex_num = len(self.x_data) - old_class_size
-                print('%s : generated %d new examples' % (key, new_ex_num))
-                self.classes[key]['num'] = 0
-                for y in self.y_data:
-                    if ((y.__eq__(self.classes[key]['value'])).all()):
-                        self.classes[key]['num'] += 1
-
+                for key, value in self.classes.items():
+                    new_ex_num = len(self.x_data) - old_class_size
+                    print('%s : generated %d new examples' % (key, new_ex_num))
+                    self.classes[key]['num'] = 0
+                    for y in self.y_data:
+                        if ((y.__eq__(self.classes[key]['value'])).all()):
+                            self.classes[key]['num'] += 1
             else:
-                print('%s : generated %d new examples (class_size == max_size)' % (key, 0))
+                print('ex_num = max_num')
+
+
+        else:
+            # ----------------------------------- augment by classes ---------------------------------------------
+            for key, value in self.classes.items():
+
+                if self.classes[key]['num'] < self.max_aug_for_classes[key]:
+
+                    max_class_num = self.max_aug_for_classes[key]
+                    old_class_size = len(self.x_data)
+
+                    x_data_new, y_data_new = dmk.multiple_class_examples(x_train=self.x_data[:self.init_size],
+                                                                         y_train=self.y_data[:self.init_size],
+                                                                         class_for_mult=self.classes[key]['value'],
+                                                                         **self.arg_dict,
+                                                                         max_class_num=max_class_num)
+
+                    self.x_data = np.append(self.x_data, x_data_new)
+                    self.y_data = np.append(self.y_data, y_data_new)
+
+                    ex_num = int(self.y_data.shape[0] / len(self.classes))
+
+                    self.x_data.shape = (ex_num, *self.img_shape)
+                    self.y_data.shape = (ex_num, len(self.classes))
+
+                    new_ex_num = len(self.x_data) - old_class_size
+                    print('%s : generated %d new examples' % (key, new_ex_num))
+                    self.classes[key]['num'] = 0
+                    for y in self.y_data:
+                        if ((y.__eq__(self.classes[key]['value'])).all()):
+                            self.classes[key]['num'] += 1
+
+                else:
+                    print('%s : generated %d new examples (class_size == max_size)' % (key, 0))
+
         print("---------------------------------")
         print('classes = %s' % str(self.classes))
         print('ex_num = %d' % sum(map(lambda x: x['num'], self.classes.values())))
@@ -277,11 +365,12 @@ class WindowMultipleExamples(WindowInterface):
                     ),
                 )
 
-        rect_len = j + 1
+        x_len = j + 1
+        y_len = int(len(label_list) / x_len)
         self.main_layout.update_grid(
             windows_width=self.main_layout.max_width,
             window_height=self.main_layout.max_height,
-            x_len=rect_len,
-            y_len=rect_len,
+            x_len=x_len,
+            y_len=y_len,
             label_list=label_list
         )

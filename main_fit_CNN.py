@@ -205,58 +205,198 @@ def main():
     with open(sys.argv[1]) as config_fp:
         config_dict = json.load(config_fp)
 
+    with open(config_dict['data']['train_json']) as train_json_fp:
+        train = json.load(train_json_fp)
+
+    data_shape = (256, 256, 3)
+
+    #####################################################################
+    # ----------------------- preprocessor loading ----------------------
+    #####################################################################
+    if config_dict['preprocessor']['use']:
+        preprocess_function = get_preprocessor_by_name(
+            config_dict['preprocessor']['name'],
+            config_dict['preprocessor']['args']).preprocess
+    else:
+        preprocess_function = None
+
     #####################################################################
     # ----------------------- data initializing --------------------------
     #####################################################################
     validation_split = 0.3
     evaluate_split = 0.3
 
-    train = {}
-    test = {}
-    eval = {}
+    import copy
 
-    #####################################################################
-    # ----------------------- segmentator check -------------------------
-    #####################################################################
-    # if config_dict['segmentator']['use']:
-    #     print("Segmentator: %s choosed" % config_dict['segmentator']['name'])
-    #     from pd_main_part.segmentators import UnetSegmentator
-    #     segmentator = UnetSegmentator(**config_dict['segmentator']['args'])
-    # else:
-    #     print("Segmentator: isn't used")
+    test = copy.deepcopy(train)
+    eval = copy.deepcopy(train)
 
-    with open(config_dict['data']['train_json']) as train_json_fp:
-        train = json.load(train_json_fp)
-        test = train.copy()
-        eval = train.copy()
+    train['batch_size'] = 16
+    test['batch_size'] = 8
+    eval['batch_size'] = 16
 
-    data_shape = (256, 256, 3)
+    if 'dataframe' in train.keys():
+        import pandas as pd
+        train['df'] = pd.DataFrame(train['dataframe'])
+        test['df'] = pd.DataFrame({'id': [], 'label': []})
+        eval['df'] = pd.DataFrame({'id': [], 'label': []})
 
-    train['flow_dir'] = '%s/train' % config_dict['data']['flow_dir']
-    test['flow_dir'] = '%s/val' % config_dict['data']['flow_dir']
-    eval['flow_dir'] = '%s/eval' % config_dict['data']['flow_dir']
+        for key in train['classes']:
+            test['classes'][key]['num'] = int(train['classes'][key]['num'] * validation_split)
+            eval['classes'][key]['num'] = int(test['classes'][key]['num'] * evaluate_split)
 
-    if config_dict['data']['create_flow_dir']:
-        print('creating flow dir...')
-        train['classes'], img_shape, train['x'], train['y'] = \
-            dmk.json_big_load(config_dict['data']['train_json'])
+        def split_df(src_df, split_part, classes):
+            res_df = pd.DataFrame({'id': [], 'label': []})
+            for key in train['classes'].keys():
+                res_df = res_df.append(src_df[src_df['label'] == key] \
+                                           [:int(split_part * classes[key]['num'])])
 
-        (train['x'], train['y'], train['classes']), \
-        (test['x'], test['y'], test['classes']) = get_splited_subs(x_data=train['x'],
-                                                                   y_data=train['y'],
-                                                                   classes=train['classes'],
-                                                                   validation_split=validation_split)
-        (test['x'], test['y'], test['classes']), \
-        (eval['x'], eval['y'], eval['classes']) = get_splited_subs(x_data=test['x'],
-                                                                   y_data=test['y'],
-                                                                   classes=test['classes'],
-                                                                   validation_split=evaluate_split)
+            src_df = pd.merge(src_df, res_df, on=['id', 'label'], how='outer', indicator=True) \
+                .query("_merge != 'both'") \
+                .drop('_merge', axis=1) \
+                .reset_index(drop=True)
+            return src_df, res_df
 
-        data_shape = train['x'].shape[1:]
+        train['df'], test['df'] = split_df(train['df'], validation_split, train['classes'])
+        test['df'], eval['df'] = split_df(test['df'], evaluate_split, test['classes'])
 
-        train = get_flow_dict(data_dict=train, flow_dir=train['flow_dir'])
-        test = get_flow_dict(data_dict=test, flow_dir=test['flow_dir'])
-        eval = get_flow_dict(data_dict=eval, flow_dir=eval['flow_dir'])
+        del train['dataframe']
+        del test['dataframe']
+        del eval['dataframe']
+
+        train['df'] = train['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
+        test['df'] = test['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
+        eval['df'] = eval['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
+
+        #####################################################################
+        # ----------------------- creating generators from df ---------------
+        #####################################################################
+        train_generator = ImageDataGenerator(
+            shear_range=0.1,
+            zoom_range=0.1,
+            horizontal_flip=True,
+            vertical_flip=True,
+            preprocessing_function=preprocess_function
+        ) \
+            .flow_from_dataframe(
+            dataframe=train['df'],
+            x_col='id',
+            y_col='label',
+            target_size=(256, 256),
+            color_mode='rgb',
+            batch_size=train['batch_size']
+        )
+
+        validation_generator = ImageDataGenerator(
+            shear_range=0.1,
+            zoom_range=0.1,
+            horizontal_flip=True,
+            vertical_flip=True,
+            preprocessing_function=preprocess_function
+        ) \
+            .flow_from_dataframe(
+            dataframe=test['df'],
+            x_col='id',
+            y_col='label',
+            target_size=(256, 256),
+            color_mode='rgb',
+            batch_size=test['batch_size']
+        )
+
+        evaluate_generator = ImageDataGenerator(
+            shear_range=0.1,
+            zoom_range=0.1,
+            horizontal_flip=True,
+            vertical_flip=True,
+            preprocessing_function=preprocess_function
+        ) \
+            .flow_from_dataframe(
+            dataframe=eval['df'],
+            x_col='id',
+            y_col='label',
+            target_size=(256, 256),
+            color_mode='rgb',
+            batch_size=eval['batch_size']
+        )
+
+
+
+    else:
+        ############################################################################
+        # ------------------------- from dir ----------------------------------------
+        ############################################################################
+        train['flow_dir'] = '%s/train' % config_dict['data']['flow_dir']
+        test['flow_dir'] = '%s/val' % config_dict['data']['flow_dir']
+        eval['flow_dir'] = '%s/eval' % config_dict['data']['flow_dir']
+
+        if config_dict['data']['create_flow_dir']:
+            print('creating flow dir...')
+            train['classes'], img_shape, train['x'], train['y'] = \
+                dmk.json_big_load(config_dict['data']['train_json'])
+
+            (train['x'], train['y'], train['classes']), \
+            (test['x'], test['y'], test['classes']) = get_splited_subs(x_data=train['x'],
+                                                                       y_data=train['y'],
+                                                                       classes=train['classes'],
+                                                                       validation_split=validation_split)
+            (test['x'], test['y'], test['classes']), \
+            (eval['x'], eval['y'], eval['classes']) = get_splited_subs(x_data=test['x'],
+                                                                       y_data=test['y'],
+                                                                       classes=test['classes'],
+                                                                       validation_split=evaluate_split)
+
+            data_shape = train['x'].shape[1:]
+
+            train = get_flow_dict(data_dict=train, flow_dir=train['flow_dir'])
+            test = get_flow_dict(data_dict=test, flow_dir=test['flow_dir'])
+            eval = get_flow_dict(data_dict=eval, flow_dir=eval['flow_dir'])
+
+            #####################################################################
+            # ----------------------- creating generators from dir --------------
+            #####################################################################
+            train_generator = ImageDataGenerator(
+                shear_range=0.1,
+                zoom_range=0.1,
+                horizontal_flip=True,
+                vertical_flip=True,
+                preprocessing_function=preprocess_function
+            ) \
+                .flow_from_directory(
+                directory=train['flow_dir'],
+                target_size=(256, 256),
+                color_mode='rgb',
+                batch_size=train['batch_size']
+
+            )
+
+            validation_generator = ImageDataGenerator(
+                shear_range=0.1,
+                zoom_range=0.1,
+                horizontal_flip=True,
+                vertical_flip=True,
+                preprocessing_function=preprocess_function
+            ) \
+                .flow_from_directory(
+                directory=test['flow_dir'],
+                target_size=(256, 256),
+                color_mode='rgb',
+                batch_size=test['batch_size']
+
+            )
+            evaluate_generator = ImageDataGenerator(
+                shear_range=0.1,
+                zoom_range=0.1,
+                horizontal_flip=True,
+                vertical_flip=True,
+                preprocessing_function=preprocess_function
+            ) \
+                .flow_from_directory(
+                directory=eval['flow_dir'],
+                target_size=(256, 256),
+                color_mode='rgb',
+                batch_size=eval['batch_size']
+
+            )
 
     # ------------------------------- weights setting --------------------------------------------
     class_weights = {}
@@ -298,10 +438,6 @@ def main():
     verbose = True
     history_show = True
 
-    train['batch_size'] = 16
-    test['batch_size'] = 8
-    eval['batch_size'] = 16
-
     #####################################################################
     # ------------------ full history create/load -----------------------
     #####################################################################
@@ -339,62 +475,6 @@ def main():
     model.compile(loss='categorical_crossentropy', optimizer=Adam(lr), metrics=['accuracy'])
 
     #####################################################################
-    # ----------------------- preprocessor loading ----------------------
-    #####################################################################
-    if config_dict['preprocessor']['use']:
-        preprocess_function = get_preprocessor_by_name(
-            config_dict['preprocessor']['name'],
-            config_dict['preprocessor']['args']).preprocess
-    else:
-        preprocess_function = None
-
-    #####################################################################
-    # ----------------------- creating train datagen --------------------
-    #####################################################################
-    train_generator = ImageDataGenerator(
-        shear_range=0.1,
-        zoom_range=0.1,
-        horizontal_flip=True,
-        vertical_flip=True,
-        preprocessing_function=preprocess_function
-    ) \
-        .flow_from_directory(
-        directory=train['flow_dir'],
-        target_size=(256, 256),
-        color_mode='rgb',
-        batch_size=train['batch_size']
-
-    )
-
-    validation_generator = ImageDataGenerator(
-        shear_range=0.1,
-        zoom_range=0.1,
-        horizontal_flip=True,
-        vertical_flip=True,
-        preprocessing_function=preprocess_function
-    ) \
-        .flow_from_directory(
-        directory=test['flow_dir'],
-        target_size=(256, 256),
-        color_mode='rgb',
-        batch_size=test['batch_size']
-
-    )
-    evaluate_generator = ImageDataGenerator(
-        shear_range=0.1,
-        zoom_range=0.1,
-        horizontal_flip=True,
-        vertical_flip=True,
-        preprocessing_function=preprocess_function
-    ) \
-        .flow_from_directory(
-        directory=eval['flow_dir'],
-        target_size=(256, 256),
-        color_mode='rgb',
-        batch_size=eval['batch_size']
-
-    )
-    #####################################################################
     # ----------------------- train_model -------------------------------
     #####################################################################
     continue_train = True
@@ -408,9 +488,9 @@ def main():
 
             history = model.fit_generator(
                 generator=train_generator,
-                steps_per_epoch=int(1506 / train['batch_size']),
+                steps_per_epoch=int(len(train['df']) / train['batch_size']),
                 validation_data=validation_generator,
-                validation_steps=int(452 / test['batch_size']),
+                validation_steps=int(len(test['df']) / test['batch_size']),
                 epochs=epochs,
                 shuffle=True,
                 verbose=verbose,
@@ -441,7 +521,7 @@ def main():
             # gr.plot_train_test_from_history(history_dict=history.history, show=True)
         eval['loss'], eval['accuracy'] = model.evaluate_generator(
             generator=evaluate_generator,
-            steps=int(196 / eval['batch_size'])
+            steps=int(len(eval['df']) / eval['batch_size'])
         )
         print("eval_acc     %.2f%%\n" % (eval['accuracy'] * 100))
 

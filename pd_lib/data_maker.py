@@ -11,7 +11,6 @@ from pd_lib import img_proc as img_pr, ui_cmd
 from pd_geo import exif_parser as ep
 import json
 
-
 ################################################################################
 # --------------------------------- for predict on image -----------------------
 ################################################################################
@@ -189,24 +188,29 @@ def json_big_load(json_path):
 ################################################################################
 # --------------------------------- multiple class -----------------------------
 ################################################################################
-def multiple_class_examples(x_train, y_train, class_for_mult,
+def multiple_class_examples(x_train, y_train,
+                            class_for_mult=None,
                             use_noise=False, intensity_noise_list=(50,),
                             use_deform=False, k_deform_list=(0.5,),
                             use_blur=False, rad_list=(0.5),
                             use_affine=False, affine_list=(0.5,),
                             use_contrast=False, contrast_list=(0.7,),
-                            max_class_num=None):
+                            max_class_num=None,
+                            mode='not all'):
     class_for_mult = np.array(class_for_mult)
 
     class_for_multiple_examples = np.empty(0, dtype='uint8')
     class_for_mult_num = 0
 
-    for i, y in enumerate(y_train):
-        if ((y.__eq__(class_for_mult)).all()):
-            class_for_multiple_examples = np.append(class_for_multiple_examples, x_train[i])
-            class_for_mult_num += 1
-
-    class_for_multiple_examples.shape = (class_for_mult_num, x_train.shape[1], x_train.shape[2], x_train.shape[3])
+    if mode == 'all':
+        class_for_multiple_examples = x_train
+        class_for_mult = len(x_train)
+    else:
+        for i, y in enumerate(y_train):
+            if ((y.__eq__(class_for_mult)).all()):
+                class_for_multiple_examples = np.append(class_for_multiple_examples, x_train[i])
+                class_for_mult_num += 1
+        class_for_multiple_examples.shape = (class_for_mult_num, x_train.shape[1], x_train.shape[2], x_train.shape[3])
 
     algh_dict = {}
     # define alghoritms
@@ -253,6 +257,7 @@ def multiple_class_examples(x_train, y_train, class_for_mult,
     for alg_name, algh in algh_dict.items():
         print('generating via %s' % alg_name)
         for loop_var in algh['loop_list']:
+            print('augmentation with k = %.2f' % loop_var)
             if len(x_new_examples) < max_new_examples_num:
                 x_new_examples = np.append(
                     x_new_examples, np.array(
@@ -272,8 +277,13 @@ def multiple_class_examples(x_train, y_train, class_for_mult,
                 )
 
     # ---------------  join arrays -------------------------------------------
-    y_new_examples = np.array(list(class_for_mult.astype('uint8')) * len(x_new_examples)) \
-        .reshape((len(x_new_examples), len(class_for_mult)))
+    if mode == 'all':
+        mult_num = int(len(x_new_examples) / len(y_train))
+        y_new_examples = np.array(list(y_train) * mult_num, dtype='uint8')
+
+    else:
+        y_new_examples = np.array(list(class_for_mult.astype('uint8')) * len(x_new_examples)) \
+            .reshape((len(x_new_examples), len(class_for_mult)))
 
     return x_new_examples, y_new_examples
 
