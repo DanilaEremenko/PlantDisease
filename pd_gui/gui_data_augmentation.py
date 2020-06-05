@@ -24,10 +24,7 @@ class WindowMultipleExamples(WindowInterface):
         super(WindowMultipleExamples, self).__init__()
         self.postfix = 'joined'
 
-        # TODO maybe will be restored someday
-        # with open(self.choose_json(content_title='config gui data')) as gui_config_fp:
-        with open('config_create_json.json') as gui_config_fp:
-            self.label_size = json.load(gui_config_fp)['qt_label_size']
+        self.label_size = (224, 224)
 
         # TODO maybe will be restored someday
         # with open(self.choose_json(content_title='config augmentation data')) as aug_config_fp:
