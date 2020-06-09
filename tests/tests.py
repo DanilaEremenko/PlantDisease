@@ -17,4 +17,10 @@ class PlantDetectorTest(unittest.TestCase):
         for i in plant_indexes:
             if list(y_data[i]) == [0, 1]:
                 right_ans += 1
-        assert right_ans == classes['PLANT']['num']
+
+        if right_ans == classes['PLANT']['num']:
+            print('right = plant_num = %d' % (right_ans))
+            assert True
+        else:
+            print('right = %d, plant_num = %d' % (right_ans, classes['PLANT']['num']))
+            assert False
