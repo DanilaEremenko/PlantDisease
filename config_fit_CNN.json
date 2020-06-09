@@ -2,7 +2,7 @@
   "data": {
     "create_flow_dir": false,
     "flow_dir": "Datasets/final_dataset/big_flow_dir",
-    "train_json": "Datasets/final_dataset/big_dir_ds/big_ds.json"
+    "train_json": "Datasets/ds_classifier/ds_7500/big_ds.json"
   },
   "fit": {
     "baseline": {
