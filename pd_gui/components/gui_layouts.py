@@ -54,10 +54,10 @@ class MyGridWidget(QWidget):
         self.max_height = m.height - 100
 
         self.groubBox = QGroupBox()
-        self.scroll_area = MyScrollArea()
+        self.left_scroll_area = MyScrollArea()
         self.groubBox.setLayout(self.label_layout)
-        self.scroll_area.setWidget(self.groubBox)
-        self.left_layout.addWidget(self.scroll_area)
+        self.left_scroll_area.setWidget(self.groubBox)
+        self.left_layout.addWidget(self.left_scroll_area)
         self.left_layout.addLayout(self.label_layout)
 
         self.hbox_control = hbox_control
@@ -65,13 +65,13 @@ class MyGridWidget(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFixedWidth(self.max_width)
-        self.scroll_area.setFixedHeight(self.max_height)
+        self.left_scroll_area.setWidgetResizable(True)
+        self.left_scroll_area.setFixedWidth(self.max_width)
+        self.left_scroll_area.setFixedHeight(self.max_height)
 
     def set_offset(self, x, y):
-        self.scroll_area.verticalScrollBar().setValue(y)
-        self.scroll_area.horizontalScrollBar().setValue(x)
+        self.left_scroll_area.verticalScrollBar().setValue(y)
+        self.left_scroll_area.horizontalScrollBar().setValue(x)
 
     def clear(self):
         for hbox in self.hbox_image_list:
@@ -109,9 +109,9 @@ class MyGridWidget(QWidget):
         self.update_scroll(windows_width, window_height)
 
     def update_scroll(self, windows_width, window_height):
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFixedWidth(min(windows_width, self.max_width) - self.right_layout_width)
-        self.scroll_area.setFixedHeight(min(window_height, self.max_height))
+        self.left_scroll_area.setWidgetResizable(True)
+        self.left_scroll_area.setFixedWidth(min(windows_width, self.max_width) - self.right_layout_width)
+        self.left_scroll_area.setFixedHeight(min(window_height, self.max_height))
 
     def quit_pressed(self):
         QtCore.QCoreApplication.instance().quit()
