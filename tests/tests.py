@@ -3,6 +3,7 @@ import unittest
 
 from keras_preprocessing.image import ImageDataGenerator
 
+from pd_lib.conv_network import get_model_by_name
 from pd_main_part.classifiers import PlantDetector, get_classifier_by_name
 from pd_lib.data_maker import json_big_load
 import pandas as pd
@@ -52,12 +53,12 @@ class ClassifierTest(unittest.TestCase):
             self.steps = len(test_samples['df']) / batch_size
 
             self.test_generator = ImageDataGenerator(
-                shear_range=0.1,
-                zoom_range=0.1,
-                horizontal_flip=True,
-                vertical_flip=True
+                #############################
+                # effects needed only to fit
+                #############################
             ) \
                 .flow_from_dataframe(
+                shuffle=False,
                 dataframe=test_samples['df'],
                 x_col='id',
                 y_col='label',
@@ -74,3 +75,25 @@ class ClassifierTest(unittest.TestCase):
 
         print('test acc = %.2f' % test_acc)
         assert test_acc > 0.95
+
+    def test_models_time_comparison(self):
+        from matplotlib import pyplot as plt
+        import time
+        models_names = ('Xception', 'DenseNet121', 'MobileNetV2')
+        for model_name in models_names:
+            model, _ = get_model_by_name(model_name, input_shape=(256, 256, 3), output_shape=4)
+            time_list = []
+            steps_list = (1_000, 5_000, 10_000)
+            for samples_size in steps_list:
+                start_time = time.time()
+                results = model.predict_generator(
+                    generator=self.test_generator,
+                    steps=samples_size
+                )
+                time_list.append(time.time() - start_time)
+            plt.plot(steps_list, time_list)
+        plt.xlabel('size')
+        plt.ylabel('time')
+        plt.title('models comparison')
+        plt.legend(models_names, loc='upper_right')
+        plt.show()

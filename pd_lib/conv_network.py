@@ -18,7 +18,7 @@ logging.getLogger('tensorflow').disabled = True
 
 def get_model_by_name(name, input_shape, output_shape):
     for model_name, model_constructor in zip(
-            ['DenseNet121', 'VGG16', 'MobileNetV2', 'InceptionResNetV2', 'NASNetMobile', 'Xception_98_97_98'],
+            ['DenseNet121', 'VGG16', 'MobileNetV2', 'InceptionResNetV2', 'NASNetMobile', 'Xception'],
             [DenseNet121, VGG16, MobileNetV2, InceptionResNetV2, NASNetMobile, Xception]
     ):
         if name.lower() == model_name.lower():
