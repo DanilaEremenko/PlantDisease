@@ -15,11 +15,14 @@ import logging
 
 logging.getLogger('tensorflow').disabled = True
 
+MODELS_NAMES = ('DenseNet121', 'VGG16', 'MobileNetV2', 'InceptionResNetV2', 'Xception')
+MODELS_KERAS = (DenseNet121, VGG16, MobileNetV2, InceptionResNetV2, Xception)
+
 
 def get_model_by_name(name, input_shape, output_shape):
     for model_name, model_constructor in zip(
-            ['DenseNet121', 'VGG16', 'MobileNetV2', 'InceptionResNetV2', 'NASNetMobile', 'Xception'],
-            [DenseNet121, VGG16, MobileNetV2, InceptionResNetV2, NASNetMobile, Xception]
+            MODELS_NAMES,
+            MODELS_KERAS
     ):
         if name.lower() == model_name.lower():
             model = get_pre_trained(model_constructor, input_shape, output_shape)
