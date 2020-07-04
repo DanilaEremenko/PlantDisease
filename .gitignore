@@ -1,8 +1,2 @@
-.idea
-Datasets*
-build
-dist
-*.spec
-__pycache__
-.ipynb_checkpoints
-*.npy
+/output/
+/supertesto.jpg

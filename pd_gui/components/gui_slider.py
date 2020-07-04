@@ -36,11 +36,20 @@ class ImgSizeSlider(QSlider):
                 return
 
 
+# class MyScrollArea(QScrollArea):
+#     def __init__(self):
+#         super().__init__()
+#
+#     def wheelEvent(self, a0: QtGui.QWheelEvent):
+#         modifiers = QApplication.keyboardModifiers()
+#         if modifiers != QtCore.Qt.ControlModifier:
+#             super().wheelEvent(a0)
+
+# disables mouse wheel to scroll image
 class MyScrollArea(QScrollArea):
     def __init__(self):
         super().__init__()
 
-    def wheelEvent(self, a0: QtGui.QWheelEvent):
-        modifiers = QApplication.keyboardModifiers()
-        if modifiers != QtCore.Qt.ControlModifier:
-            super().wheelEvent(a0)
+    def wheelEvent(self, ev):
+        if ev.type() == QtCore.QEvent.Wheel:
+            ev.ignore()
