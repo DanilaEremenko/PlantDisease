@@ -1,2 +1,9 @@
-/output/
+/output/bin_photos.npy
+/output/bin_u_photos.npy
+/output/jpeg_array_0.5.bin
+/output/jpeg_array_0.25.bin
+/output/jpeg_array_0.125.bin
+/output/jpeg_array_0.0625.bin
+/output/jpeg_array_1.bin
+/output/mask_photos.npy
 /supertesto.jpg

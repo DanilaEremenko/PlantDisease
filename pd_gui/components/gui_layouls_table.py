@@ -8,7 +8,7 @@ from pd_gui.components.gui_slider import MyScrollArea
 
 
 class MyGridWidget(QWidget):
-    def __init__(self, hbox_control):
+    def __init__(self, hbox_control, progress):
         super(MyGridWidget, self).__init__()
         self.hbox_image_list = []
         self.label_list = []
@@ -58,6 +58,8 @@ class MyGridWidget(QWidget):
         self.left_layout.addWidget(self.scroll_area)
         self.left_layout.addLayout(self.label_layout)
 
+        self.layout.addWidget(progress, alignment=QtCore.Qt.AlignCenter)
+
         self.hbox_control = hbox_control
         self.layout.addLayout(self.hbox_control)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -79,11 +81,13 @@ class MyGridWidget(QWidget):
     def resizeTable(self, edge, size=None):
         if not size == None:
             self.updateTable(size[0], size[1])
-        print('new size set', size)
+            print('new size set', size)
+
         self.table.verticalHeader().setMinimumSectionSize(edge)
         self.table.horizontalHeader().setMinimumSectionSize(edge)
         self.table.verticalHeader().setMaximumSectionSize(edge)
         self.table.horizontalHeader().setMaximumSectionSize(edge)
+        print('update edge table ', edge)
 
     def set_offset(self, x, y):
         self.scroll_area.verticalScrollBar().setValue(y)
@@ -99,8 +103,7 @@ class MyGridWidget(QWidget):
         self.hbox_image_list = []
         self.label_list = []
 
-    def update_cell(self, x, y, image):  # ,windows_width,window_height):
-        # self.clear()
+    def update_cell(self, x, y, image):
         # -------------------- init image --------------------------
         thumbnail = QTableWidgetItem()
         thumbnail.setBackground(QBrush(image))
@@ -120,7 +123,6 @@ class MyGridWidget(QWidget):
 class MyTable(QTableWidget):
     def __init__(self):
         super().__init__()
-        print('table created')
 
     def wheelEvent(self, ev):
         if ev.type() == QtCore.QEvent.Wheel:
