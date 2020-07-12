@@ -203,7 +203,7 @@ class WindowMultipleExamples(WindowInterface):
         print("Save to %s" % self.output_json)
 
         for key in self.classes.keys():
-            self.classes[key]['value'] = list(self.classes[key]['value'])
+            self.classes[key]['value'] = list(self.classes[key]['value'].flatten())
 
         if self.save_data_binary:
             ###################################################################################
