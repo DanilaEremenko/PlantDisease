@@ -176,9 +176,10 @@ def json_big_create(json_path, h5_path, x_data, y_data, img_shape, longitudes, l
 
 
 def json_big_load(json_path):
+    dir_path = '/'.join(json_path.split('/')[:-1])
     with open(json_path, "r") as json_fp:
         config_dict = json.load(json_fp)
-    h5f = h5py.File(config_dict["h5d_path"], 'r')
+    h5f = h5py.File(dir_path + '/' + config_dict["h5d_path"], 'r')
     x_data = np.array(h5f.get('x_data'))
     y_data = np.array(h5f.get('y_data'))
     h5f.close()

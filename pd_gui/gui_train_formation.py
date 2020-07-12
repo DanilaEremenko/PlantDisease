@@ -21,7 +21,7 @@ class WindowClassificationPicture(WindowInterface):
     # ---------------- init stuff --------------------------------
     ##############################################################
     def __init__(self):
-        self.already_marked_dir = 'Datasets/Potato/agro'
+        self.already_marked_dir = 'Datasets/legacy_jsons/agro'
         self.already_marked_list = os.listdir(self.already_marked_dir)
 
         super(WindowClassificationPicture, self).__init__()
