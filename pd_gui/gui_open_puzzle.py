@@ -1,18 +1,12 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QAction, QApplication, QProgressBar
+from PyQt5 import QtWidgets, QtGui
+from PyQt5.QtWidgets import QAction, QProgressBar
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouls_table import MyGridWidget
 from pd_gui.gui_window_puzzle import WindowPuzzle
 from pd_gui.gui_get_position_photos import GetMozaicMatrix
-from pd_lib import data_maker as dmk
-
-import numpy as np
-import os
-
-from pd_lib.gui_loading_thread import DownloadListThread, UpdateScreenThread, CroplerThread
+from pd_lib.loading_threads import DownloadListThread, UpdateScreenThread, SlicerThread
 from pd_lib.image_jpeg_data_maker import read_bin_jpeg
-from pd_lib.image_jpeg_data_maker import create_bin_jpeg
-
+import os
 
 class WindowGlobalPuzzle(WindowPuzzle):
     def __init__(self):
@@ -36,6 +30,8 @@ class WindowGlobalPuzzle(WindowPuzzle):
         self.last_x = 0
         self.last_y = 0
 
+        # self._init_hbox_control()
+
     def _init_hbox_control(self):
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_progress = QtWidgets.QHBoxLayout()
@@ -44,11 +40,10 @@ class WindowGlobalPuzzle(WindowPuzzle):
         self.zoom_no = 0
         self.zoom = self.zoom_list[self.zoom_no]
         self.progress = QProgressBar()
-        self.progress.setGeometry(50, 50, 500, 300)
-
+        # self.progress.setGeometry(50, 50, 500, 300)
         self.hbox_progress.addWidget(self.progress)
         self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed, styleSheet='background-color: #0cdb3c'))
-        self.hbox_control.addWidget(ControlButton("Crop", self.crop_pressed, styleSheet='background-color: #ebfa78'))
+        self.hbox_control.addWidget(ControlButton("Slice", self.crop_pressed, styleSheet='background-color: #ebfa78'))
         self.hbox_control.addWidget(ControlButton("Open", self.open_pressed, styleSheet='background-color: #fab978'))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default, styleSheet='background-color: #e84a1a'))
 
@@ -133,23 +128,28 @@ class WindowGlobalPuzzle(WindowPuzzle):
         self.screen_updating.start()
 
     def choose_and_render_image(self):
+
         dir = self.choose_file_dir()
         if not dir == '':
             imgs_name = []
             gmm = GetMozaicMatrix()
             imgs_path, count_photos = gmm.get_matrix(dir)
             if not count_photos == 0:
-                # self.clear()
+                self.clear()
                 img_width, img_height = gmm.get_resolution()
+                n=0
                 for line in imgs_path:
                     for img in line:
                         if img != None:
                             imgs_name.append(os.path.splitext(img))
+                            self.update_progress(100*n/len(line))
+                            n +=1
                 imgs_line = len(imgs_path[0])
                 imgs_row = len(imgs_path)
-                crop = CroplerThread(imgs_path, count_photos, self.window_shape, self.zoom_list, imgs_line, imgs_row)
-                crop.progress_signal.connect(self.update_progress)
-                crop.start()
+
+                self.crop = SlicerThread(imgs_path, count_photos, self.window_shape, self.zoom_list, imgs_line, imgs_row)
+                self.crop.progress_signal.connect(self.update_progress)
+                self.crop.start()
                 # self._init_images(imgs_path, count_photos)
             else:
                 self.choose_and_render_image()
@@ -160,27 +160,27 @@ class WindowGlobalPuzzle(WindowPuzzle):
     def crop_pressed(self):
         self.choose_and_render_image()
 
-    def update_progress(self, procent):
-        self.progress.setValue(1 + procent)
+    def update_progress(self, percent):
+        self.progress.setValue(1 + percent)
 
     def finish_zoom(self, state):
         self.finish_zooming = state
         print('finish load ', state)
 
     def open_pressed(self):
-        self.clear()
+        # self.clear()
         self.jpgs_names = []
         for i in self.zoom_list:
             self.jpgs_names.append("output\jpeg_array_" + str(i) + ".bin")
         if not self.jpgs_names is None:
             self.jpgs_mass = read_bin_jpeg(self.jpgs_names)
-            list_loading = DownloadListThread(self.jpgs_mass, self.main_layout, self.zoom_list)
+            self.list_loading = DownloadListThread(self.jpgs_mass, self.main_layout, self.zoom_list)
             self.screen_updating = UpdateScreenThread(self.main_layout, self.zoom_list)
             self.screen_updating.zoom_call.connect(self.screen_updating.zooming)
             self.screen_updating.zoom_end.connect(self.finish_zoom)
-            list_loading.progress_signal.connect(self.update_progress)
-            list_loading.signal.connect(self.screen_updating.displayS)
-            list_loading.start()
+            self.list_loading.progress_signal.connect(self.update_progress)
+            self.list_loading.signal.connect(self.screen_updating.displayS)
+            self.list_loading.start()
 
     def okay_pressed(self):
         self.main_layout.resizeTable(edge=16)

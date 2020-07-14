@@ -1,8 +1,6 @@
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import QMetaObject
-from PyQt5.QtGui import QImage, QBrush, QPixmap
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableWidget, QTableWidgetItem, QStyledItemDelegate, \
-    QHeaderView
+from PyQt5 import QtCore
+from PyQt5.QtGui import QBrush
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableWidget, QTableWidgetItem
 
 from pd_gui.components.gui_slider import MyScrollArea
 
@@ -50,9 +48,9 @@ class MyGridWidget(QWidget):
         from screeninfo import get_monitors
         m = get_monitors()[0]
         self.max_width = m.width
-        self.max_height = m.height - 100
-        self.table = MyTable()
+        self.max_height = m.height - 75
         self.scroll_area = MyScrollArea()
+        self.table = MyTable()
         self.scroll_area.setWidget(self.table)
 
         self.left_layout.addWidget(self.scroll_area)

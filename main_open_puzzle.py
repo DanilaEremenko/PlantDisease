@@ -9,8 +9,7 @@ from pd_gui.gui_open_puzzle import WindowGlobalPuzzle
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    WindowGlobalPuzzle()
-
+    window_class_pctr = WindowGlobalPuzzle()
     sys.exit(app.exec_())
 
 

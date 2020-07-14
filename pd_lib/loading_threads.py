@@ -61,15 +61,13 @@ class DownloadListThread(QThread):
         self.main_layout = main_layout
         self.output = np.load('output/bin_u_photos.npy')
         self.mask = np.load('output/mask_photos.npy')
-        self.multiple_size = [0, 0]
-        self.multiple_size[0] = self.mask.shape[1]
-        self.multiple_size[1] = self.mask.shape[0]
-        self.main_layout.resizeTable(size=self.multiple_size, edge=self.default_label_size)
+        self.main_layout.resizeTable(size=self.mask.shape, edge=self.default_label_size)
 
     def sort_jpgs(self, j, i):
         ara = []
         for m in range(len(self.zooms)):
             img = QImage()
+
             img.loadFromData(self.zoom_jpgs[m][j + i * self.mask.shape[1]] if self.mask[i, j] else None)
             ara.append(img)
         return ara
@@ -84,24 +82,22 @@ class DownloadListThread(QThread):
                 updated = self.label_list[-1].updateImage(size=self.zooms.index(1),
                                                           decision=self.output[j + i * self.mask.shape[1]])
                 self.main_layout.update_cell(x=j, y=i, image=updated)
-                self.usleep(10)
-            self.progress_signal.emit(i * 100 / self.mask.shape[0])
+                self.usleep(15)
+            self.progress_signal.emit(i * 100 /self.mask.shape[0])
         self.signal.emit(self.label_list, self.mask.shape[1], self.default_label_size, self.output)
 
 
-class CroplerThread(QThread):
+class SlicerThread(QThread):
     progress_signal = pyqtSignal(int)
 
     def __init__(self, imgs_path, count_photos, window_shape, zoom_list, imgs_line, imgs_row):
-        super(CroplerThread, self).__init__()
+        super(SlicerThread, self).__init__()
         self.imgs_path = imgs_path
         self.count_photos = count_photos
         self.window_shape = window_shape
         self.zoom_list = zoom_list
         self.imgs_line = imgs_line
         self.imgs_row = imgs_row
-
-    # self.progress_signal.emit(i * 100 / self.mask.shape[0])
 
     def run(self):
         print('start thread')
@@ -111,7 +107,7 @@ class CroplerThread(QThread):
         imgs_line = self.imgs_line
         for path in self.imgs_path:
             for img in path:
-                if img != None:
+                if img is not None:
                     x_data_full, full_img = dmk.get_x_from_croped_img(
                         path_to_img=img,
                         window_shape=self.window_shape,
@@ -150,6 +146,7 @@ class CroplerThread(QThread):
                             connected_x_data_full[element_to] = sum_datas[photo_from][element_from]
                         else:
                             empty_frame += 1
+                self.progress_signal.emit(frames_row * 100 / img_row)
         print('masses ', len(sum_datas), len(sum_datas[0]), len(connected_x_data_full))
         np.save('output/mask_photos', puzzle_mask)
         np.save('output/bin_photos', connected_x_data_full)
