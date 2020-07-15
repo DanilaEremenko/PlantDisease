@@ -25,12 +25,12 @@ class UpdateScreenThread(QThread):
     def zooming(self, zoom):
         self.zoom = zoom
 
-    def displayS(self, label_list, ll, def_size, output):
+    def displayS(self, label_list, ll, def_size, filter_trigger):
         self.label_list = label_list
         self.line_lenght = ll
         print('finish load')
         self.label_size = def_size
-        self.output = output
+        self.filter_trigger = filter_trigger
         self.zoom_end.emit(True)
 
     def run(self):
@@ -39,7 +39,7 @@ class UpdateScreenThread(QThread):
         x = 0
         self.zoom_end.emit(False)
         for label in self.label_list:
-            updated = label.updateImage(size=self.zoom, decision=self.output[x])
+            updated = label.updateImage(size=self.zoom, color_filter=self.filter_trigger)
             self.main_layout.update_cell(x=x % self.line_lenght,
                                          y=int(x / self.line_lenght),
                                          image=updated)
@@ -51,14 +51,16 @@ class DownloadListThread(QThread):
     signal = pyqtSignal(object, object, object, object)
     progress_signal = pyqtSignal(int)
 
-    def __init__(self, datas, main_layout, zoom_array):
+    def __init__(self, datas, main_layout, zoom_array, filter_trigger):
         super(DownloadListThread, self).__init__()
         self.zoom_jpgs = datas
         self.classes = [1, 2, 3]
         self.zooms = zoom_array
+        self.filter_trigger =filter_trigger
         self.default_label_size = int(256 * self.zooms[0])
         self.label_list = []
         self.main_layout = main_layout
+        self.isColored = filter_trigger
         self.output = np.load('output/bin_u_photos.npy')
         self.mask = np.load('output/mask_photos.npy')
         self.main_layout.resizeTable(size=self.mask.shape, edge=self.default_label_size)
@@ -67,7 +69,6 @@ class DownloadListThread(QThread):
         ara = []
         for m in range(len(self.zooms)):
             img = QImage()
-
             img.loadFromData(self.zoom_jpgs[m][j + i * self.mask.shape[1]] if self.mask[i, j] else None)
             ara.append(img)
         return ara
@@ -78,13 +79,15 @@ class DownloadListThread(QThread):
                 self.label_list.append(MergedJPGLabel(
                     datas=self.sort_jpgs(j, i),
                     classes=self.classes,
-                    label_size=self.default_label_size))
+                    label_size=self.default_label_size,
+                    decision=self.output[j + i * self.mask.shape[1]]))
+
                 updated = self.label_list[-1].updateImage(size=self.zooms.index(1),
-                                                          decision=self.output[j + i * self.mask.shape[1]])
+                                                          color_filter=self.isColored)
                 self.main_layout.update_cell(x=j, y=i, image=updated)
                 self.usleep(15)
             self.progress_signal.emit(i * 100 /self.mask.shape[0])
-        self.signal.emit(self.label_list, self.mask.shape[1], self.default_label_size, self.output)
+        self.signal.emit(self.label_list, self.mask.shape[1], self.default_label_size, self.filter_trigger)
 
 
 class SlicerThread(QThread):

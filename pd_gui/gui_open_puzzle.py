@@ -1,3 +1,5 @@
+import subprocess
+
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QAction, QProgressBar
 from pd_gui.components.gui_buttons import ControlButton
@@ -11,7 +13,8 @@ import os
 class WindowGlobalPuzzle(WindowPuzzle):
     def __init__(self):
         super(WindowGlobalPuzzle, self).__init__()
-
+        if not os.path.exists('output'):
+            os.mkdir('output')
         self.setWindowTitle("Puzzle Map")
         self.finish_zooming = False
         self.classes = [1, 2, 3]
@@ -33,6 +36,7 @@ class WindowGlobalPuzzle(WindowPuzzle):
         # self._init_hbox_control()
 
     def _init_hbox_control(self):
+
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_progress = QtWidgets.QHBoxLayout()
         self.zoom_list = [1, 0.5, 0.25, 0.125, 0.0625]
@@ -42,9 +46,10 @@ class WindowGlobalPuzzle(WindowPuzzle):
         self.progress = QProgressBar()
         # self.progress.setGeometry(50, 50, 500, 300)
         self.hbox_progress.addWidget(self.progress)
-        self.hbox_control.addWidget(ControlButton("Okay", self.okay_pressed, styleSheet='background-color: #0cdb3c'))
         self.hbox_control.addWidget(ControlButton("Slice", self.crop_pressed, styleSheet='background-color: #ebfa78'))
-        self.hbox_control.addWidget(ControlButton("Open", self.open_pressed, styleSheet='background-color: #fab978'))
+        self.hbox_control.addWidget(ControlButton("Open photo", self.open_pressed, styleSheet='background-color: #0cdb3c'))
+        self.hbox_control.addWidget(ControlButton("Open with filter", self.open_f_pressed, styleSheet='background-color: #fab978'))
+        self.hbox_control.addWidget(ControlButton("Learn by photos", self.start_learning, styleSheet='background-color: #fa56dd'))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default, styleSheet='background-color: #e84a1a'))
 
     def _init_main_menu(self):
@@ -167,20 +172,36 @@ class WindowGlobalPuzzle(WindowPuzzle):
         self.finish_zooming = state
         print('finish load ', state)
 
+    def start_learning(self):
+        # len =len(np.load('output/bin_u_photos.npy'))
+        # if os.path.exists('main_full_system_predict.py') and os.path.exists('output/bin_photos.npy') :
+        subprocess.call('main_full_system_predict.py -i output/bin_photos.npy -o output/bin_u_photos.npy -n 3000', shell=True)
+        # subprocess.Popen(['python3', 'main_full_system_predict.py']) #,  'output/bin_photos.npy','output/bin_u_photos.npy',str(1)])
+            # 'main_full_system_predict.py -i output/bin_photos.npy -o output/bin_u_photos.npy -n '+str(1)
+        # else:
+        #     print('neural network answer doesent found,start network learning')
+
     def open_pressed(self):
+        self.start_loading(False)
+
+    def open_f_pressed(self):
+        self.start_loading(True)
+
+    def start_loading(self, color_filter):
         # self.clear()
         self.jpgs_names = []
         for i in self.zoom_list:
             self.jpgs_names.append("output\jpeg_array_" + str(i) + ".bin")
         if not self.jpgs_names is None:
             self.jpgs_mass = read_bin_jpeg(self.jpgs_names)
-            self.list_loading = DownloadListThread(self.jpgs_mass, self.main_layout, self.zoom_list)
+            self.list_loading = DownloadListThread(self.jpgs_mass, self.main_layout, self.zoom_list, color_filter)
             self.screen_updating = UpdateScreenThread(self.main_layout, self.zoom_list)
             self.screen_updating.zoom_call.connect(self.screen_updating.zooming)
             self.screen_updating.zoom_end.connect(self.finish_zoom)
             self.list_loading.progress_signal.connect(self.update_progress)
             self.list_loading.signal.connect(self.screen_updating.displayS)
             self.list_loading.start()
+
 
     def okay_pressed(self):
         self.main_layout.resizeTable(edge=16)

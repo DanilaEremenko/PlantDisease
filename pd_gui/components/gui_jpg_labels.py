@@ -54,20 +54,25 @@ def getColor(i):
     return colors[i]
 
 
-def paintJpg(image, decision):
+def chooze_filter(decision):
     procent, type = max(zip(decision, range(len(decision))))
+    alpha =256 if type == 3 else int(procent * 128 + 64)
+    colors = getColor(type)
+    return QColor(colors[0], colors[1], colors[2], alpha)
+    # else:
+    #     return None
+
+def paintJpg(image, color_filter):
     if not type == 3:
-        alpha = int(procent * 128 + 64)
-        colors = getColor(type)
         p = QPainter(image)
-        p.fillRect(image.rect(), QColor(colors[0], colors[1], colors[2], alpha))
+        p.fillRect(image.rect(), color_filter)
         p.end()
     return image
 
 
 class MergedJPGLabel(QLabel):
 
-    def __init__(self, datas, classes, label_size):
+    def __init__(self, datas, classes, label_size, decision):
         super(MergedJPGLabel, self).__init__()
 
         self.classes = classes
@@ -76,18 +81,26 @@ class MergedJPGLabel(QLabel):
 
         self.background_images = datas.copy()
         self.colored = [False] * len(self.background_images)
+        self.color_filter = chooze_filter(decision)
         self.label_size = int(label_size)
         self.zoom = 1
 
-    def updateImage(self, size, decision=None):
-        if decision is None:
-            decision = [0, 0, 0, 0]
-        if not self.background_images[size] is None:
-            if (decision[3] == -1) or not self.colored[size]:
-                self.colored[size] = True
-                return paintJpg(self.background_images[size], decision)
-            else:
-                return self.background_images[size]
+    def updateImage(self, size, color_filter=True):
+        if color_filter and not self.colored[size]:
+            self.colored[size] = True
+            return paintJpg(self.background_images[size], self.color_filter)
+        else:
+            return self.background_images[size]
+
+    # def updateImage(self, size, decision=None,color_filter=True):
+    #     if decision is None:
+    #         decision = [0, 0, 0, 0]
+    #     if not self.background_images[size] is None:
+    #         if ((decision[3] == -1) or not self.colored[size]) and color_filter:
+    #             self.colored[size] = True
+    #             return paintJpg(self.background_images[size], self.color_filter)
+    #         else:
+    #             return self.background_images[size]
 
     def change_type(self, class_name, sub_class_name):
         self.class_name = class_name

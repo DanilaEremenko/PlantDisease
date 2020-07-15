@@ -78,7 +78,7 @@ class MyGridWidget(QWidget):
 
     def resizeTable(self, edge, size=None):
         if not size == None:
-            self.updateTable(size[0], size[1])
+            self.updateTable(size[1], size[0])
             print('new size set', size)
 
         self.table.verticalHeader().setMinimumSectionSize(edge)
