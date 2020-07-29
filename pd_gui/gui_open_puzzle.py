@@ -173,13 +173,7 @@ class WindowGlobalPuzzle(WindowPuzzle):
         print('finish load ', state)
 
     def start_learning(self):
-        # len =len(np.load('output/bin_u_photos.npy'))
-        # if os.path.exists('main_full_system_predict.py') and os.path.exists('output/bin_photos.npy') :
         subprocess.call('main_full_system_predict.py -i output/bin_photos.npy -o output/bin_u_photos.npy -n 3000', shell=True)
-        # subprocess.Popen(['python3', 'main_full_system_predict.py']) #,  'output/bin_photos.npy','output/bin_u_photos.npy',str(1)])
-            # 'main_full_system_predict.py -i output/bin_photos.npy -o output/bin_u_photos.npy -n '+str(1)
-        # else:
-        #     print('neural network answer doesent found,start network learning')
 
     def open_pressed(self):
         self.start_loading(False)

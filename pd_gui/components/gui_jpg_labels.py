@@ -55,12 +55,13 @@ def getColor(i):
 
 
 def chooze_filter(decision):
-    procent, type = max(zip(decision, range(len(decision))))
-    alpha =256 if type == 3 else int(procent * 128 + 64)
-    colors = getColor(type)
-    return QColor(colors[0], colors[1], colors[2], alpha)
-    # else:
-    #     return None
+    if decision==None:
+        return None
+    else:
+        procent, type = max(zip(decision, range(len(decision))))
+        alpha =256 if type == 3 else int(procent * 128 + 64)
+        colors = getColor(type)
+        return QColor(colors[0], colors[1], colors[2], alpha)
 
 def paintJpg(image, color_filter):
     if not type == 3:

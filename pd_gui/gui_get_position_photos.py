@@ -8,7 +8,7 @@ class GetMozaicMatrix():
     def __init__(self):
         self.photo_width = None
         self.photo_height = None
-        super(GetMozaicMatrix, self).__init__()
+        # super(GetMozaicMatrix, self).__init__()
 
     def get_matrix(self, photo_path):
         disperse = 0

@@ -61,7 +61,8 @@ class DownloadListThread(QThread):
         self.label_list = []
         self.main_layout = main_layout
         self.isColored = filter_trigger
-        self.output = np.load('output/bin_u_photos.npy')
+        if self.isColored:
+            self.output = np.load('output/bin_u_photos.npy')
         self.mask = np.load('output/mask_photos.npy')
         self.main_layout.resizeTable(size=self.mask.shape, edge=self.default_label_size)
 
@@ -76,11 +77,18 @@ class DownloadListThread(QThread):
     def run(self):
         for i in range(self.mask.shape[0]):
             for j in range(self.mask.shape[1]):
-                self.label_list.append(MergedJPGLabel(
-                    datas=self.sort_jpgs(j, i),
-                    classes=self.classes,
-                    label_size=self.default_label_size,
-                    decision=self.output[j + i * self.mask.shape[1]]))
+                if self.isColored:
+                    self.label_list.append(MergedJPGLabel(
+                        datas=self.sort_jpgs(j, i),
+                        classes=self.classes,
+                        label_size=self.default_label_size,
+                        decision=self.output[j + i * self.mask.shape[1]]))
+                else:
+                    self.label_list.append(MergedJPGLabel(
+                        datas=self.sort_jpgs(j, i),
+                        classes=self.classes,
+                        label_size=self.default_label_size,
+                        decision=None))
 
                 updated = self.label_list[-1].updateImage(size=self.zooms.index(1),
                                                           color_filter=self.isColored)
