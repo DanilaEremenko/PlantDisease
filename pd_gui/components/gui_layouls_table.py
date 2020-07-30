@@ -104,11 +104,12 @@ class MyGridWidget(QWidget):
         self.hbox_image_list = []
         self.label_list = []
 
-    def update_cell(self, x, y, image):
+    def update_cell(self, pos, image):
+
         # -------------------- init image --------------------------
         thumbnail = QTableWidgetItem()
         thumbnail.setBackground(QBrush(image))
-        self.table.setItem(y, x, thumbnail)
+        self.table.setItem(pos[0], pos[1], thumbnail)
         self.table.viewport().update()
         # self.update_scroll(windows_width, window_height)
 

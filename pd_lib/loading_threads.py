@@ -40,8 +40,7 @@ class UpdateScreenThread(QThread):
         self.zoom_end.emit(False)
         for label in self.label_list:
             updated = label.updateImage(size=self.zoom, color_filter=self.filter_trigger)
-            self.main_layout.update_cell(x=x % self.line_lenght,
-                                         y=int(x / self.line_lenght),
+            self.main_layout.update_cell(pos=label.get_pos(),
                                          image=updated)
             x += 1
         self.zoom_end.emit(True)
@@ -70,30 +69,40 @@ class DownloadListThread(QThread):
         ara = []
         for m in range(len(self.zooms)):
             img = QImage()
-            img.loadFromData(self.zoom_jpgs[m][j + i * self.mask.shape[1]] if self.mask[i, j] else None)
+            print('sort_jpgs',j,i,m,len(self.zoom_jpgs[m]),self.mask.shape)
+            img.loadFromData(self.zoom_jpgs[m][j + i * self.mask.shape[1]-self.empty_count] if self.mask[i, j] else None)
             ara.append(img)
         return ara
 
     def run(self):
+        self.empty_count = 0
         for i in range(self.mask.shape[0]):
             for j in range(self.mask.shape[1]):
-                if self.isColored:
-                    self.label_list.append(MergedJPGLabel(
-                        datas=self.sort_jpgs(j, i),
-                        classes=self.classes,
-                        label_size=self.default_label_size,
-                        decision=self.output[j + i * self.mask.shape[1]]))
-                else:
-                    self.label_list.append(MergedJPGLabel(
-                        datas=self.sort_jpgs(j, i),
-                        classes=self.classes,
-                        label_size=self.default_label_size,
-                        decision=None))
 
-                updated = self.label_list[-1].updateImage(size=self.zooms.index(1),
-                                                          color_filter=self.isColored)
-                self.main_layout.update_cell(x=j, y=i, image=updated)
-                self.usleep(15)
+                if self.mask[i, j]:
+                    if self.isColored:
+                        self.label_list.append(MergedJPGLabel(
+                            datas=self.sort_jpgs(j, i),
+                            classes=self.classes,
+                            label_size=self.default_label_size,
+                            decision=self.output[j + i * self.mask.shape[1]],
+                            coor=[i, j]))
+                    else:
+                        self.label_list.append(MergedJPGLabel(
+                            datas=self.sort_jpgs(j, i),
+                            classes=self.classes,
+                            label_size=self.default_label_size,
+                            decision=None,
+                            coor=[i, j]))
+                    updated = self.label_list[-1].updateImage(size=self.zooms.index(1),
+                                                              color_filter=self.isColored)
+
+                    self.main_layout.update_cell(pos=self.label_list[-1].get_pos(), image=updated)
+                    self.usleep(15)
+                else:
+                    print('choose', i, j,self.mask[i, j])
+                    self.empty_count+=1
+
             self.progress_signal.emit(i * 100 /self.mask.shape[0])
         self.signal.emit(self.label_list, self.mask.shape[1], self.default_label_size, self.filter_trigger)
 

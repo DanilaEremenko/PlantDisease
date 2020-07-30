@@ -73,7 +73,7 @@ def paintJpg(image, color_filter):
 
 class MergedJPGLabel(QLabel):
 
-    def __init__(self, datas, classes, label_size, decision):
+    def __init__(self, datas, classes, label_size, decision, coor):
         super(MergedJPGLabel, self).__init__()
 
         self.classes = classes
@@ -85,6 +85,7 @@ class MergedJPGLabel(QLabel):
         self.color_filter = chooze_filter(decision)
         self.label_size = int(label_size)
         self.zoom = 1
+        self.position = coor
 
     def updateImage(self, size, color_filter=True):
         if color_filter and not self.colored[size]:
@@ -102,6 +103,8 @@ class MergedJPGLabel(QLabel):
     #             return paintJpg(self.background_images[size], self.color_filter)
     #         else:
     #             return self.background_images[size]
+    def get_pos(self):
+        return self.position
 
     def change_type(self, class_name, sub_class_name):
         self.class_name = class_name
