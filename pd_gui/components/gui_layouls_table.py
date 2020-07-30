@@ -1,6 +1,6 @@
 from PyQt5 import QtCore
 from PyQt5.QtGui import QBrush
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableWidget, QTableWidgetItem,QAbstractItemView
 
 from pd_gui.components.gui_slider import MyScrollArea
 
@@ -51,6 +51,9 @@ class MyGridWidget(QWidget):
         self.max_height = m.height - 75
         self.scroll_area = MyScrollArea()
         self.table = MyTable()
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.table.setSelectionMode(QAbstractItemView.NoSelection)
         self.scroll_area.setWidget(self.table)
 
         self.left_layout.addWidget(self.scroll_area)
@@ -121,7 +124,33 @@ class MyGridWidget(QWidget):
 class MyTable(QTableWidget):
     def __init__(self):
         super().__init__()
+        self.v_bar = self.verticalScrollBar()
+        self.h_bar = self.horizontalScrollBar()
+        self.last_x = 0
+        self.last_y = 0
 
     def wheelEvent(self, ev):
         if ev.type() == QtCore.QEvent.Wheel:
             ev.ignore()
+
+    def mousePressEvent(self, event):
+        self.first_x = event.x()
+        self.first_y = event.y()
+        print("event press", event.x(), event.y())
+
+    def mouseMoveEvent(self, event):
+
+        x = int((self.first_x-event.x())/25)+self.last_x
+        y = int((self.first_y-event.y())/25)+self.last_y
+        print("event Move",x,y,self.last_x,self.last_y)
+
+        self.set_offset(x, y)
+
+    def mouseReleaseEvent(self, event):
+        self.last_x = self.h_bar.value()
+        self.last_y = self.v_bar.value()
+        print("relice press",self.last_x, self.last_y)
+
+    def set_offset(self, x, y):
+        self.verticalScrollBar().setValue(y)
+        self.horizontalScrollBar().setValue(x)

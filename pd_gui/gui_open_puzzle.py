@@ -1,6 +1,6 @@
 import subprocess
 
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui,QtCore
 from PyQt5.QtWidgets import QAction, QProgressBar
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouls_table import MyGridWidget
@@ -44,7 +44,7 @@ class WindowGlobalPuzzle(WindowPuzzle):
         self.zoom_no = 0
         self.zoom = self.zoom_list[self.zoom_no]
         self.progress = QProgressBar()
-        # self.progress.setGeometry(50, 50, 500, 300)
+        self.progress.setAlignment(QtCore.Qt.AlignVCenter)
         self.hbox_progress.addWidget(self.progress)
         self.hbox_control.addWidget(ControlButton("Slice", self.crop_pressed, styleSheet='background-color: #ebfa78'))
         self.hbox_control.addWidget(ControlButton("Open photo", self.open_pressed, styleSheet='background-color: #0cdb3c'))
@@ -69,7 +69,7 @@ class WindowGlobalPuzzle(WindowPuzzle):
     def mousePressEvent(self, event):
         self.first_x = event.x()
         self.first_y = event.y()
-        # print("event press", event.x(), event.y())
+        print("event press", event.x(), event.y())
         # print("last ", self.last_x, self.last_y)
         # print("press offset ", self.first_x, self.first_y)
 
@@ -78,6 +78,7 @@ class WindowGlobalPuzzle(WindowPuzzle):
         self.h_bar = self.main_layout.scroll_area.horizontalScrollBar()
         x = self.h_bar.value() + self.first_x - event.x()
         y = self.v_bar.value() + self.first_y - event.y()
+        print("event press", x, y)
         self.last_x = x
         self.last_y = y
         self.first_x = event.x()
@@ -99,7 +100,7 @@ class WindowGlobalPuzzle(WindowPuzzle):
     def move_by_cursor(self):
         cursor_x = QtGui.QCursor.pos().x()
         cursor_y = QtGui.QCursor.pos().y()
-
+        print("event press", cursor_x, cursor_y)
         window_width = self.main_layout.width()
         window_height = self.main_layout.height()
 
@@ -173,7 +174,8 @@ class WindowGlobalPuzzle(WindowPuzzle):
         print('finish load ', state)
 
     def start_learning(self):
-        subprocess.call('main_full_system_predict.py -i output/bin_photos.npy -o output/bin_u_photos.npy -n 3000', shell=True)
+        print("calculating plug")
+        # subprocess.call('main_full_system_predict.py -i output/bin_photos.npy -o output/bin_u_photos.npy -n 3000', shell=True)
 
     def open_pressed(self):
         self.start_loading(False)
@@ -195,34 +197,3 @@ class WindowGlobalPuzzle(WindowPuzzle):
             self.list_loading.progress_signal.connect(self.update_progress)
             self.list_loading.signal.connect(self.screen_updating.displayS)
             self.list_loading.start()
-
-
-    def okay_pressed(self):
-        self.main_layout.resizeTable(edge=16)
-        # y_data = np.empty(0)
-        # for class_name in self.classes.keys():
-        #     for sub_class_name in self.classes[class_name]:
-        #         self.classes[class_name][sub_class_name]['num'] = 0
-        #
-        # # Now we're going to store only examples of diseased plants
-        # x_data_full = {
-        #     'x_data': np.empty(0, dtype='uint8'),
-        #     'x_coord': [],
-        #     'longitudes': [],
-        #     'latitudes': []
-        # }
-        #
-        # ex_num = 0
-        # for x, label in zip(self.x_data_full['x_data'], self.main_layout.label_list):
-        #     if label.class_name is not None:
-        #         x_data_full['x_data'] = np.append(x_data_full['x_data'], x)
-        #         y_data = np.append(y_data, self.classes[label.class_name][label.sub_class_name]['value'])
-        #         self.classes[label.class_name][label.sub_class_name]['num'] += 1
-        #         ex_num += 1
-        #
-        # x_data_full['x_data'].shape = (ex_num, *self.window_shape)
-        # y_data.shape = (len(x_data_full['x_data']), 1)
-
-        print("OKAY")
-
-        # self.choose_and_render_image()
