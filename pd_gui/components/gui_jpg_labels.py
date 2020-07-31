@@ -55,7 +55,7 @@ def getColor(i):
 
 
 def chooze_filter(decision):
-    if decision==None:
+    if decision.any()==None:
         return None
     else:
         procent, type = max(zip(decision, range(len(decision))))
