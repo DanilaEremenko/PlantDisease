@@ -5,8 +5,7 @@ import numpy as np
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QImage
 from pd_gui.components.gui_jpg_labels import MergedJPGLabel
-from pd_gui.gui_get_position_photos import GetMozaicMatrix
-from pd_lib.image_jpeg_data_maker import create_bin_jpeg, saving_jpegs_files_zoom
+from pd_lib.image_jpeg_data_maker import saving_jpegs_files_zoom
 from pd_lib import data_maker as dmk
 
 
@@ -51,11 +50,11 @@ class DownloadListThread(QThread):
     signal = pyqtSignal(object, object, object, object)
     progress_signal = pyqtSignal(int)
 
-    def __init__(self,  main_layout, zoom_array, filter_trigger):
+    def __init__(self, main_layout, zoom_array, filter_trigger):
         super(DownloadListThread, self).__init__()
         self.classes = [1, 2, 3]
         self.zooms = zoom_array
-        self.filter_trigger =filter_trigger
+        self.filter_trigger = filter_trigger
         self.default_label_size = int(256 * self.zooms[0])
         self.label_list = []
         self.main_layout = main_layout
@@ -69,18 +68,16 @@ class DownloadListThread(QThread):
         ara = []
         for m in range(len(self.zooms)):
             img = QImage()
-            print('sort_jpgs',j,i,m,len(self.zoom_jpgs[m]),self.mask.shape)
-            img.loadFromData(self.zoom_jpgs[m][j + i * self.mask.shape[1]-self.empty_count] if self.mask[i, j] else None)
+            print('sort_jpgs', j, i, m, len(self.zoom_jpgs[m]), self.mask.shape)
+            img.loadFromData(
+                self.zoom_jpgs[m][j + i * self.mask.shape[1] - self.empty_count] if self.mask[i, j] else None)
             ara.append(img)
         return ara
-
 
     def get_jpg(self, i, j):
         ara = []
         for m in self.zooms:
-            img = QImage("output/jpeg_array_"+str(m)+"/yx_"+str(j)+"-"+str(i)+".jpeg")
-            print("output/jpeg_array_"+str(m)+"/yx_"+str(j)+"-"+str(i)+".jpeg")
-            # img.loadFromData("output/jpeg_array_"+str(m)+"/yx_"+str(j)+"-"+str(i)+".jpeg" if self.mask[i, j] else None)
+            img = QImage("output/jpeg_array_" + str(m) + "/yx_" + str(j) + "-" + str(i) + ".jpeg")
             ara.append(img)
         return ara
 
@@ -106,14 +103,13 @@ class DownloadListThread(QThread):
                             coor=[i, j]))
                     updated = self.label_list[-1].updateImage(size=self.zooms.index(1),
                                                               color_filter=self.isColored)
-
                     self.main_layout.update_cell(pos=self.label_list[-1].get_pos(), image=updated)
                     self.usleep(15)
                 else:
-                    print('choose', i, j,self.mask[i, j])
-                    self.empty_count+=1
+                    print('choose', i, j, self.mask[i, j])
+                    self.empty_count += 1
 
-            self.progress_signal.emit(i * 100 /self.mask.shape[0])
+            self.progress_signal.emit(i * 100 / self.mask.shape[0])
         self.signal.emit(self.label_list, self.mask.shape[1], self.default_label_size, self.filter_trigger)
 
 
@@ -162,33 +158,27 @@ class SlicerThread(QThread):
                     for m in range(img_line):
                         curr = False if self.imgs_path[i][j] is None else True
                         puzzle_mask[n + i * img_row][m + j * img_line] = curr
-        file_urls=[]
+        file_urls = []
         for row in range(0, imgs_row):
             for frames_row in range(0, img_row):
                 for line in range(0, imgs_line):
                     for frames_line in range(0, img_line):
                         photo_from = line + row * imgs_line - int(empty_frame / (img_line * img_row))
                         element_from = img_line * frames_row + frames_line
-                        x = int(element_from % 20)
-                        y = int(element_from / 20)
-                        if puzzle_mask[y + row * 15][x + line * 20]:
+                        x = int(element_from % img_line)
+                        y = int(element_from / img_line)
+                        global_x = x + line * img_line
+                        global_y = y + row * img_row
+                        if puzzle_mask[global_y][global_x]:
                             element_to += 1
-                            # connected_x_data_full[element_to] = sum_datas[photo_from][element_from]
-                            file_urls.append(saving_jpegs_files_zoom(sum_datas[photo_from][element_from], self.zoom_list, x + line * 20, y + row * 15))
-
-                            print(x + line * 20, y + row * 15)
+                            file_urls.append(
+                                saving_jpegs_files_zoom(sum_datas[photo_from][element_from], self.zoom_list, global_x,
+                                                        global_y))
                         else:
                             empty_frame += 1
                 self.progress_signal.emit(frames_row * 100 / img_row)
-
-
-        d = {
-            'names': file_urls
-        }
+        d = {'names': file_urls}
         with open("output/jpgs_names", 'w') as f:
             json.dump(d, f)
-
         print('masses ', len(sum_datas), len(sum_datas[0]), len(connected_x_data_full))
         np.save('output/mask_photos', puzzle_mask)
-        # np.save('output/bin_photos', connected_x_data_full)
-        # create_bin_jpeg(self, connected_x_data_full.copy(), self.zoom_list)

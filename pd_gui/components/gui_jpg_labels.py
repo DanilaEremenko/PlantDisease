@@ -59,9 +59,10 @@ def chooze_filter(decision):
         return None
     else:
         procent, type = max(zip(decision, range(len(decision))))
-        alpha =256 if type == 3 else int(procent * 128 + 64)
+        alpha = 256 if type == 3 else int(procent * 128 + 64)
         colors = getColor(type)
         return QColor(colors[0], colors[1], colors[2], alpha)
+
 
 def paintJpg(image, color_filter):
     if not type == 3:
@@ -94,15 +95,6 @@ class MergedJPGLabel(QLabel):
         else:
             return self.background_images[size]
 
-    # def updateImage(self, size, decision=None,color_filter=True):
-    #     if decision is None:
-    #         decision = [0, 0, 0, 0]
-    #     if not self.background_images[size] is None:
-    #         if ((decision[3] == -1) or not self.colored[size]) and color_filter:
-    #             self.colored[size] = True
-    #             return paintJpg(self.background_images[size], self.color_filter)
-    #         else:
-    #             return self.background_images[size]
     def get_pos(self):
         return self.position
 
