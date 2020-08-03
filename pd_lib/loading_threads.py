@@ -5,7 +5,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QImage
 from pd_gui.components.gui_jpg_labels import MergedJPGLabel
 from pd_gui.gui_get_position_photos import GetMozaicMatrix
-from pd_lib.image_jpeg_data_maker import create_bin_jpeg
+from pd_lib.image_jpeg_data_maker import create_bin_jpeg, saving_jpegs_files_zoom
 from pd_lib import data_maker as dmk
 
 
@@ -74,6 +74,17 @@ class DownloadListThread(QThread):
             ara.append(img)
         return ara
 
+
+    def get_jpg(self, j, i):
+        ara = []
+        for m in range(1):
+            img = QImage("output/jpeg_array_"+str(m)+"/yx_"+str(j)+"-"+str(i)+".jpeg")
+            print('sort_jpgs',j,i,m,len(self.zoom_jpgs[m]),self.mask.shape)
+
+            # img.loadFromData("output/jpeg_array_"+str(m)+"/yx_"+str(j)+"-"+str(i)+".jpeg" if self.mask[i, j] else None)
+            ara.append(img)
+        return ara
+
     def run(self):
         self.empty_count = 0
         for i in range(self.mask.shape[0]):
@@ -82,14 +93,14 @@ class DownloadListThread(QThread):
                 if self.mask[i, j]:
                     if self.isColored:
                         self.label_list.append(MergedJPGLabel(
-                            datas=self.sort_jpgs(j, i),
+                            datas=self.get_jpg(j, i),
                             classes=self.classes,
                             label_size=self.default_label_size,
                             decision=self.output[j + i * self.mask.shape[1]],
                             coor=[i, j]))
                     else:
                         self.label_list.append(MergedJPGLabel(
-                            datas=self.sort_jpgs(j, i),
+                            datas=self.get_jpg(j, i),
                             classes=self.classes,
                             label_size=self.default_label_size,
                             decision=None,
@@ -164,10 +175,12 @@ class SlicerThread(QThread):
                         if puzzle_mask[y + row * 15][x + line * 20]:
                             element_to += 1
                             connected_x_data_full[element_to] = sum_datas[photo_from][element_from]
+                            saving_jpegs_files_zoom(sum_datas[photo_from][element_from], self.zoom_list, x + line * 20, y + row * 15)
+                            print(x + line * 20, y + row * 15)
                         else:
                             empty_frame += 1
                 self.progress_signal.emit(frames_row * 100 / img_row)
         print('masses ', len(sum_datas), len(sum_datas[0]), len(connected_x_data_full))
         np.save('output/mask_photos', puzzle_mask)
-        np.save('output/bin_photos', connected_x_data_full)
-        create_bin_jpeg(self, connected_x_data_full.copy(), self.zoom_list)
+        # np.save('output/bin_photos', connected_x_data_full)
+        # create_bin_jpeg(self, connected_x_data_full.copy(), self.zoom_list)

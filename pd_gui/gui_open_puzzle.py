@@ -15,6 +15,12 @@ class WindowGlobalPuzzle(WindowPuzzle):
         super(WindowGlobalPuzzle, self).__init__()
         if not os.path.exists('output'):
             os.mkdir('output')
+        for z in self.zoom_list:
+
+
+            if not os.path.exists('output/jpeg_array_' + str(z)):
+                os.mkdir('output/jpeg_array_'+ str(z))
+
         self.setWindowTitle("Puzzle Map")
         self.finish_zooming = False
         self.classes = [1, 2, 3]
