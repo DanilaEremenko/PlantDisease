@@ -191,15 +191,15 @@ class WindowGlobalPuzzle(WindowPuzzle):
 
     def start_loading(self, color_filter):
         # self.clear()
-        self.jpgs_names = []
-        for i in self.zoom_list:
-            self.jpgs_names.append("output\jpeg_array_" + str(i) + ".bin")
-        if not self.jpgs_names is None:
-            self.jpgs_mass = read_bin_jpeg(self.jpgs_names)
-            self.list_loading = DownloadListThread(self.jpgs_mass, self.main_layout, self.zoom_list, color_filter)
-            self.screen_updating = UpdateScreenThread(self.main_layout, self.zoom_list)
-            self.screen_updating.zoom_call.connect(self.screen_updating.zooming)
-            self.screen_updating.zoom_end.connect(self.finish_zoom)
-            self.list_loading.progress_signal.connect(self.update_progress)
-            self.list_loading.signal.connect(self.screen_updating.displayS)
-            self.list_loading.start()
+        # self.jpgs_names = []
+        # for i in self.zoom_list:
+            # self.jpgs_names.append("output\jpeg_array_" + str(i) + ".bin")
+        # if not self.jpgs_names is None:
+            # self.jpgs_mass = read_bin_jpeg(self.jpgs_names)
+        self.list_loading = DownloadListThread( self.main_layout, self.zoom_list, color_filter)
+        self.screen_updating = UpdateScreenThread(self.main_layout, self.zoom_list)
+        self.screen_updating.zoom_call.connect(self.screen_updating.zooming)
+        self.screen_updating.zoom_end.connect(self.finish_zoom)
+        self.list_loading.progress_signal.connect(self.update_progress)
+        self.list_loading.signal.connect(self.screen_updating.displayS)
+        self.list_loading.start()

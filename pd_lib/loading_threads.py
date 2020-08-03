@@ -50,9 +50,8 @@ class DownloadListThread(QThread):
     signal = pyqtSignal(object, object, object, object)
     progress_signal = pyqtSignal(int)
 
-    def __init__(self, datas, main_layout, zoom_array, filter_trigger):
+    def __init__(self,  main_layout, zoom_array, filter_trigger):
         super(DownloadListThread, self).__init__()
-        self.zoom_jpgs = datas
         self.classes = [1, 2, 3]
         self.zooms = zoom_array
         self.filter_trigger =filter_trigger
@@ -75,12 +74,11 @@ class DownloadListThread(QThread):
         return ara
 
 
-    def get_jpg(self, j, i):
+    def get_jpg(self, i, j):
         ara = []
-        for m in range(1):
+        for m in self.zooms:
             img = QImage("output/jpeg_array_"+str(m)+"/yx_"+str(j)+"-"+str(i)+".jpeg")
-            print('sort_jpgs',j,i,m,len(self.zoom_jpgs[m]),self.mask.shape)
-
+            print("output/jpeg_array_"+str(m)+"/yx_"+str(j)+"-"+str(i)+".jpeg")
             # img.loadFromData("output/jpeg_array_"+str(m)+"/yx_"+str(j)+"-"+str(i)+".jpeg" if self.mask[i, j] else None)
             ara.append(img)
         return ara
