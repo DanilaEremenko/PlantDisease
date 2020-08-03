@@ -25,13 +25,17 @@ def saving_jpeg_zoom(th,img_massive,zoom):
     return name
 
 
-def saving_jpegs_files_zoom(img,zoom,x,y):
+def saving_jpegs_files_zoom(img, zoom, x, y):
+
     for z in zoom:
-        name = "output/jpeg_array_" + str(z) + "/yx_"+str(y)+"-"+str(x)+".jpeg"
+        name = "output/jpeg_array_" + str(z) + "/yx_" + str(y) + "-" + str(x) + ".jpeg"
         image = Image.fromarray(img, 'RGB')
         small = image.resize((int(image.width * z), int(image.height * z)), Image.ANTIALIAS)
         small.save(name, format='JPEG', quality=80, optimize=True, progressive=True)
-
+        if z==1:
+            return name
+        else:
+            return None
 
 def read_bin_jpeg(names):
     header = b'\xff\xd8'

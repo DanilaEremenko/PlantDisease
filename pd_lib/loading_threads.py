@@ -1,3 +1,4 @@
+import json
 import os
 
 import numpy as np
@@ -161,7 +162,7 @@ class SlicerThread(QThread):
                     for m in range(img_line):
                         curr = False if self.imgs_path[i][j] is None else True
                         puzzle_mask[n + i * img_row][m + j * img_line] = curr
-
+        file_urls=[]
         for row in range(0, imgs_row):
             for frames_row in range(0, img_row):
                 for line in range(0, imgs_line):
@@ -172,12 +173,21 @@ class SlicerThread(QThread):
                         y = int(element_from / 20)
                         if puzzle_mask[y + row * 15][x + line * 20]:
                             element_to += 1
-                            connected_x_data_full[element_to] = sum_datas[photo_from][element_from]
-                            saving_jpegs_files_zoom(sum_datas[photo_from][element_from], self.zoom_list, x + line * 20, y + row * 15)
+                            # connected_x_data_full[element_to] = sum_datas[photo_from][element_from]
+                            file_urls.append(saving_jpegs_files_zoom(sum_datas[photo_from][element_from], self.zoom_list, x + line * 20, y + row * 15))
+
                             print(x + line * 20, y + row * 15)
                         else:
                             empty_frame += 1
                 self.progress_signal.emit(frames_row * 100 / img_row)
+
+
+        d = {
+            'names': file_urls
+        }
+        with open("output/jpgs_names", 'w') as f:
+            json.dump(d, f)
+
         print('masses ', len(sum_datas), len(sum_datas[0]), len(connected_x_data_full))
         np.save('output/mask_photos', puzzle_mask)
         # np.save('output/bin_photos', connected_x_data_full)
