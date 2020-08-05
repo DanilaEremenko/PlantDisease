@@ -50,7 +50,7 @@ def read_bin_jpeg(names):
             end = massive.find(tail, delta) + 2
             ends += 1
             delta = end
-            jpeg_mass.append(convert_to_image(massive[start:end]))  # add image container
+            jpeg_mass.append(massive[start:end])  # add image container
             # print(start, end, delta)
         print('Start: %d End: %d' % (starts, ends))
         file_mass.append(jpeg_mass.copy())

@@ -5,7 +5,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QImage
 from pd_gui.components.gui_jpg_labels import MergedJPGLabel
 from pd_gui.gui_get_position_photos import GetMozaicMatrix
-from pd_lib.image_jpeg_data_maker import create_bin_jpeg
+from pd_lib.image_jpeg_data_maker import create_bin_jpeg, convert_to_image
 from pd_lib import data_maker as dmk
 
 
@@ -68,7 +68,7 @@ class DownloadListThread(QThread):
     def sort_jpgs(self, j, i):
         ara = []
         for m in range(len(self.zooms)):
-            ara.append(self.zoom_jpgs[m][j + i * self.mask.shape[1] - self.empty_count] if self.mask[i, j] else None)
+            ara.append(convert_to_image(self.zoom_jpgs[m][j + i * self.mask.shape[1] - self.empty_count]) if self.mask[i, j] else None)
         return ara
 
     def run(self):
