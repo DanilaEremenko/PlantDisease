@@ -1,6 +1,6 @@
 import subprocess
 
-from PyQt5 import QtWidgets, QtGui,QtCore
+from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QAction, QProgressBar
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouls_table import MyGridWidget
@@ -9,6 +9,7 @@ from pd_gui.gui_get_position_photos import GetMozaicMatrix
 from pd_lib.loading_threads import DownloadListThread, UpdateScreenThread, SlicerThread
 from pd_lib.image_jpeg_data_maker import read_bin_jpeg
 import os
+
 
 class WindowGlobalPuzzle(WindowPuzzle):
     def __init__(self):
@@ -47,9 +48,12 @@ class WindowGlobalPuzzle(WindowPuzzle):
         self.progress.setAlignment(QtCore.Qt.AlignVCenter)
         self.hbox_progress.addWidget(self.progress)
         self.hbox_control.addWidget(ControlButton("Slice", self.crop_pressed, styleSheet='background-color: #ebfa78'))
-        self.hbox_control.addWidget(ControlButton("Open photo", self.open_pressed, styleSheet='background-color: #0cdb3c'))
-        self.hbox_control.addWidget(ControlButton("Open with filter", self.open_f_pressed, styleSheet='background-color: #fab978'))
-        self.hbox_control.addWidget(ControlButton("Learn by photos", self.start_learning, styleSheet='background-color: #fa56dd'))
+        self.hbox_control.addWidget(
+            ControlButton("Open photo", self.open_pressed, styleSheet='background-color: #0cdb3c'))
+        self.hbox_control.addWidget(
+            ControlButton("Open with filter", self.open_f_pressed, styleSheet='background-color: #fab978'))
+        self.hbox_control.addWidget(
+            ControlButton("Learn by photos", self.start_learning, styleSheet='background-color: #fa56dd'))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default, styleSheet='background-color: #e84a1a'))
 
     def _init_main_menu(self):
@@ -143,17 +147,18 @@ class WindowGlobalPuzzle(WindowPuzzle):
             if not count_photos == 0:
                 self.clear()
                 img_width, img_height = gmm.get_resolution()
-                n=0
+                n = 0
                 for line in imgs_path:
                     for img in line:
                         if img != None:
                             imgs_name.append(os.path.splitext(img))
-                            self.update_progress(100*n/len(line))
-                            n +=1
+                            self.update_progress(100 * n / len(line))
+                            n += 1
                 imgs_line = len(imgs_path[0])
                 imgs_row = len(imgs_path)
 
-                self.crop = SlicerThread(imgs_path, count_photos, self.window_shape, self.zoom_list, imgs_line, imgs_row)
+                self.crop = SlicerThread(imgs_path, count_photos, self.window_shape, self.zoom_list, imgs_line,
+                                         imgs_row)
                 self.crop.progress_signal.connect(self.update_progress)
                 self.crop.start()
                 # self._init_images(imgs_path, count_photos)

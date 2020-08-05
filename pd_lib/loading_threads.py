@@ -55,7 +55,7 @@ class DownloadListThread(QThread):
         self.zoom_jpgs = datas
         self.classes = [1, 2, 3]
         self.zooms = zoom_array
-        self.filter_trigger =filter_trigger
+        self.filter_trigger = filter_trigger
         self.default_label_size = int(256 * self.zooms[0])
         self.label_list = []
         self.main_layout = main_layout
@@ -68,17 +68,13 @@ class DownloadListThread(QThread):
     def sort_jpgs(self, j, i):
         ara = []
         for m in range(len(self.zooms)):
-            img = QImage()
-            print('sort_jpgs',j,i,m,len(self.zoom_jpgs[m]),self.mask.shape)
-            img.loadFromData(self.zoom_jpgs[m][j + i * self.mask.shape[1]-self.empty_count] if self.mask[i, j] else None)
-            ara.append(img)
+            ara.append(self.zoom_jpgs[m][j + i * self.mask.shape[1] - self.empty_count] if self.mask[i, j] else None)
         return ara
 
     def run(self):
         self.empty_count = 0
         for i in range(self.mask.shape[0]):
             for j in range(self.mask.shape[1]):
-
                 if self.mask[i, j]:
                     if self.isColored:
                         self.label_list.append(MergedJPGLabel(
@@ -100,10 +96,10 @@ class DownloadListThread(QThread):
                     self.main_layout.update_cell(pos=self.label_list[-1].get_pos(), image=updated)
                     self.usleep(15)
                 else:
-                    print('choose', i, j,self.mask[i, j])
-                    self.empty_count+=1
+                    print('choose', i, j, self.mask[i, j])
+                    self.empty_count += 1
 
-            self.progress_signal.emit(i * 100 /self.mask.shape[0])
+            self.progress_signal.emit(i * 100 / self.mask.shape[0])
         self.signal.emit(self.label_list, self.mask.shape[1], self.default_label_size, self.filter_trigger)
 
 

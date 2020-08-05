@@ -1,6 +1,6 @@
 from PyQt5 import QtCore
 from PyQt5.QtGui import QBrush
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableWidget, QTableWidgetItem,QAbstractItemView
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QTableWidget, QTableWidgetItem, QAbstractItemView
 
 from pd_gui.components.gui_slider import MyScrollArea
 
@@ -140,17 +140,16 @@ class MyTable(QTableWidget):
         print("event press", event.x(), event.y())
 
     def mouseMoveEvent(self, event):
-
-        x = int((self.first_x-event.x())/25)+self.last_x
-        y = int((self.first_y-event.y())/25)+self.last_y
-        print("event Move",x,y,self.last_x,self.last_y)
+        x = int((self.first_x - event.x()) / 25) + self.last_x
+        y = int((self.first_y - event.y()) / 25) + self.last_y
+        print("event Move", x, y, self.last_x, self.last_y)
 
         self.set_offset(x, y)
 
     def mouseReleaseEvent(self, event):
         self.last_x = self.h_bar.value()
         self.last_y = self.v_bar.value()
-        print("relice press",self.last_x, self.last_y)
+        print("relice press", self.last_x, self.last_y)
 
     def set_offset(self, x, y):
         self.verticalScrollBar().setValue(y)
