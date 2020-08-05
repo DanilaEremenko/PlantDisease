@@ -32,6 +32,33 @@ def convert_to_image(massive):
     return img
 
 
+def read_bin_jpeg_curren_piece(name, length, offset):
+    piece = []
+    header = b'\xff\xd8'
+    tail = b'\xff\xd9'
+    updt_file = open(name, 'rb')
+    massive = updt_file.read()
+    starts = 0
+    ends = 0
+    delta = 0
+    while delta < len(massive):
+        start = massive.find(header, delta)
+        starts += 1
+        end = massive.find(tail, delta) + 2
+        ends += 1
+        delta = end
+
+        offset -= 1
+        if offset < 0:
+            piece.append(massive[start:end])
+            length -= 1
+            if length <= 0:
+                return piece.copy()
+    print('Start: %d End: %d' % (starts, ends))
+
+    return piece.copy()
+
+
 def read_bin_jpeg(names):
     header = b'\xff\xd8'
     tail = b'\xff\xd9'
@@ -50,8 +77,7 @@ def read_bin_jpeg(names):
             end = massive.find(tail, delta) + 2
             ends += 1
             delta = end
-            jpeg_mass.append(massive[start:end])  # add image container
-            # print(start, end, delta)
+            jpeg_mass.append(massive[start:end])
         print('Start: %d End: %d' % (starts, ends))
         file_mass.append(jpeg_mass.copy())
     return file_mass
