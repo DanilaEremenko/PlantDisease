@@ -10,12 +10,7 @@ from pd_gui.gui_data_augmentation import WindowMultipleExamples
 def main():
     app = QtWidgets.QApplication(sys.argv)
 
-    if len(sys.argv) == 1:
-        json_list = None
-    else:
-        json_list = sys.argv[1:]
-
-    window_class_pctr = WindowMultipleExamples(json_list=json_list)
+    window_class_pctr = WindowMultipleExamples()
 
     sys.exit(app.exec_())
 

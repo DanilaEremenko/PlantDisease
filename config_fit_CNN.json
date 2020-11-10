@@ -1,7 +1,6 @@
 {
   "data": {
     "create_flow_dir": false,
-    "flow_dir": "Datasets/final_dataset/big_flow_dir",
     "train_json": "Datasets/ds_classifier/ds_7500/big_ds.json"
   },
   "fit": {
@@ -23,7 +22,7 @@
       "type": "DenseNet121"
     },
     "exist": {
-      "weights": "models/DenseNet_99_99_100/model_DenseNet121_75.hd5",
+      "weights": "models/DenseNet_99_99_100/model_DenseNet121_75.h5",
       "structure": "models/DenseNet_99_99_100/model_DenseNet121_75.json",
       "history": "models/DenseNet_98_96_98/model_DenseNet121_50_history.json"
     }

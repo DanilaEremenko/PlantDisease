@@ -19,9 +19,7 @@ def save_model_to_json(model, path):
 
 
 def get_model_from_json(path):
-    json_string = ""
-    for line in open(path, 'r').readlines(): json_string += line
-
+    json_string = open(path, 'r').read()
     return model_from_json(json_string)
 
 

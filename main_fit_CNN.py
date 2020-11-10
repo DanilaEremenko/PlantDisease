@@ -235,168 +235,89 @@ def main():
     test['batch_size'] = 8
     eval['batch_size'] = 16
 
-    if 'dataframe' in train.keys():
-        import pandas as pd
-        train['df'] = pd.DataFrame(train['dataframe'])
-        test['df'] = pd.DataFrame({'id': [], 'label': []})
-        eval['df'] = pd.DataFrame({'id': [], 'label': []})
+    import pandas as pd
+    train['df'] = pd.DataFrame(train['dataframe'])
+    test['df'] = pd.DataFrame({'id': [], 'label': []})
+    eval['df'] = pd.DataFrame({'id': [], 'label': []})
 
-        for key in train['classes']:
-            test['classes'][key]['num'] = int(train['classes'][key]['num'] * validation_split)
-            eval['classes'][key]['num'] = int(test['classes'][key]['num'] * evaluate_split)
+    for key in train['classes']:
+        test['classes'][key]['num'] = int(train['classes'][key]['num'] * validation_split)
+        eval['classes'][key]['num'] = int(test['classes'][key]['num'] * evaluate_split)
 
-        def split_df(src_df, split_part, classes):
-            res_df = pd.DataFrame({'id': [], 'label': []})
-            for key in train['classes'].keys():
-                res_df = res_df.append(src_df[src_df['label'] == key] \
-                                           [:int(split_part * classes[key]['num'])])
+    def split_df(src_df, split_part, classes):
+        res_df = pd.DataFrame({'id': [], 'label': []})
+        for key in train['classes'].keys():
+            res_df = res_df.append(src_df[src_df['label'] == key] \
+                                       [:int(split_part * classes[key]['num'])])
 
-            src_df = pd.merge(src_df, res_df, on=['id', 'label'], how='outer', indicator=True) \
-                .query("_merge != 'both'") \
-                .drop('_merge', axis=1) \
-                .reset_index(drop=True)
-            return src_df, res_df
+        src_df = pd.merge(src_df, res_df, on=['id', 'label'], how='outer', indicator=True) \
+            .query("_merge != 'both'") \
+            .drop('_merge', axis=1) \
+            .reset_index(drop=True)
+        return src_df, res_df
 
-        train['df'], test['df'] = split_df(train['df'], validation_split, train['classes'])
-        test['df'], eval['df'] = split_df(test['df'], evaluate_split, test['classes'])
+    train['df'], test['df'] = split_df(train['df'], validation_split, train['classes'])
+    test['df'], eval['df'] = split_df(test['df'], evaluate_split, test['classes'])
 
-        del train['dataframe']
-        del test['dataframe']
-        del eval['dataframe']
+    del train['dataframe']
+    del test['dataframe']
+    del eval['dataframe']
 
-        train['df'] = train['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
-        test['df'] = test['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
-        eval['df'] = eval['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
+    # TODO great bone
+    train['df'] = train['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
+    test['df'] = test['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
+    eval['df'] = eval['df'].replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])
 
-        #####################################################################
-        # ----------------------- creating generators from df ---------------
-        #####################################################################
-        train_generator = ImageDataGenerator(
-            shear_range=0.1,
-            zoom_range=0.1,
-            horizontal_flip=True,
-            vertical_flip=True,
-            preprocessing_function=preprocess_function
-        ) \
-            .flow_from_dataframe(
-            dataframe=train['df'],
-            x_col='id',
-            y_col='label',
-            target_size=(256, 256),
-            color_mode='rgb',
-            batch_size=train['batch_size']
-        )
+    #####################################################################
+    # ----------------------- creating generators from df ---------------
+    #####################################################################
+    train_generator = ImageDataGenerator(
+        shear_range=0.1,
+        zoom_range=0.1,
+        horizontal_flip=True,
+        vertical_flip=True,
+        preprocessing_function=preprocess_function
+    ) \
+        .flow_from_dataframe(
+        dataframe=train['df'],
+        x_col='id',
+        y_col='label',
+        target_size=(256, 256),
+        color_mode='rgb',
+        batch_size=train['batch_size']
+    )
 
-        validation_generator = ImageDataGenerator(
-            shear_range=0.1,
-            zoom_range=0.1,
-            horizontal_flip=True,
-            vertical_flip=True,
-            preprocessing_function=preprocess_function
-        ) \
-            .flow_from_dataframe(
-            dataframe=test['df'],
-            x_col='id',
-            y_col='label',
-            target_size=(256, 256),
-            color_mode='rgb',
-            batch_size=test['batch_size']
-        )
+    validation_generator = ImageDataGenerator(
+        shear_range=0.1,
+        zoom_range=0.1,
+        horizontal_flip=True,
+        vertical_flip=True,
+        preprocessing_function=preprocess_function
+    ) \
+        .flow_from_dataframe(
+        dataframe=test['df'],
+        x_col='id',
+        y_col='label',
+        target_size=(256, 256),
+        color_mode='rgb',
+        batch_size=test['batch_size']
+    )
 
-        evaluate_generator = ImageDataGenerator(
-            shear_range=0.1,
-            zoom_range=0.1,
-            horizontal_flip=True,
-            vertical_flip=True,
-            preprocessing_function=preprocess_function
-        ) \
-            .flow_from_dataframe(
-            dataframe=eval['df'],
-            x_col='id',
-            y_col='label',
-            target_size=(256, 256),
-            color_mode='rgb',
-            batch_size=eval['batch_size']
-        )
-
-
-
-    else:
-        ############################################################################
-        # ------------------------- from dir ----------------------------------------
-        ############################################################################
-        train['flow_dir'] = '%s/train' % config_dict['data']['flow_dir']
-        test['flow_dir'] = '%s/val' % config_dict['data']['flow_dir']
-        eval['flow_dir'] = '%s/eval' % config_dict['data']['flow_dir']
-
-        if config_dict['data']['create_flow_dir']:
-            print('creating flow dir...')
-            train['classes'], img_shape, train['x'], train['y'] = \
-                dmk.json_big_load(config_dict['data']['train_json'])
-
-            (train['x'], train['y'], train['classes']), \
-            (test['x'], test['y'], test['classes']) = get_splited_subs(x_data=train['x'],
-                                                                       y_data=train['y'],
-                                                                       classes=train['classes'],
-                                                                       validation_split=validation_split)
-            (test['x'], test['y'], test['classes']), \
-            (eval['x'], eval['y'], eval['classes']) = get_splited_subs(x_data=test['x'],
-                                                                       y_data=test['y'],
-                                                                       classes=test['classes'],
-                                                                       validation_split=evaluate_split)
-
-            data_shape = train['x'].shape[1:]
-
-            train = get_flow_dict(data_dict=train, flow_dir=train['flow_dir'])
-            test = get_flow_dict(data_dict=test, flow_dir=test['flow_dir'])
-            eval = get_flow_dict(data_dict=eval, flow_dir=eval['flow_dir'])
-
-            #####################################################################
-            # ----------------------- creating generators from dir --------------
-            #####################################################################
-            train_generator = ImageDataGenerator(
-                shear_range=0.1,
-                zoom_range=0.1,
-                horizontal_flip=True,
-                vertical_flip=True,
-                preprocessing_function=preprocess_function
-            ) \
-                .flow_from_directory(
-                directory=train['flow_dir'],
-                target_size=(256, 256),
-                color_mode='rgb',
-                batch_size=train['batch_size']
-
-            )
-
-            validation_generator = ImageDataGenerator(
-                shear_range=0.1,
-                zoom_range=0.1,
-                horizontal_flip=True,
-                vertical_flip=True,
-                preprocessing_function=preprocess_function
-            ) \
-                .flow_from_directory(
-                directory=test['flow_dir'],
-                target_size=(256, 256),
-                color_mode='rgb',
-                batch_size=test['batch_size']
-
-            )
-            evaluate_generator = ImageDataGenerator(
-                shear_range=0.1,
-                zoom_range=0.1,
-                horizontal_flip=True,
-                vertical_flip=True,
-                preprocessing_function=preprocess_function
-            ) \
-                .flow_from_directory(
-                directory=eval['flow_dir'],
-                target_size=(256, 256),
-                color_mode='rgb',
-                batch_size=eval['batch_size']
-
-            )
+    evaluate_generator = ImageDataGenerator(
+        shear_range=0.1,
+        zoom_range=0.1,
+        horizontal_flip=True,
+        vertical_flip=True,
+        preprocessing_function=preprocess_function
+    ) \
+        .flow_from_dataframe(
+        dataframe=eval['df'],
+        x_col='id',
+        y_col='label',
+        target_size=(256, 256),
+        color_mode='rgb',
+        batch_size=eval['batch_size']
+    )
 
     # ------------------------------- weights setting --------------------------------------------
     class_weights = {}

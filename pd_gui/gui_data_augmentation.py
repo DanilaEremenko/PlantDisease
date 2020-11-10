@@ -1,8 +1,11 @@
 """
 PyQt GUI for main_data_augmentation.py
 """
+import re
 
 from PyQt5 import QtWidgets
+from keras_preprocessing.image import ImageDataGenerator
+
 from pd_gui.components.gui_buttons import ControlButton
 from pd_gui.components.gui_layouts import MyGridWidget
 
@@ -20,7 +23,7 @@ class WindowMultipleExamples(WindowInterface):
     ##############################################################
     # ---------------- init stuff --------------------------------
     ##############################################################
-    def __init__(self, json_list):
+    def __init__(self):
         super(WindowMultipleExamples, self).__init__()
         self.postfix = 'joined'
 
@@ -35,8 +38,6 @@ class WindowMultipleExamples(WindowInterface):
             self.max_aug_part = aug_config_dict['aug_part']
             self.augment_all = aug_config_dict['augment_all']
             self.output_json = aug_config_dict['output_json']
-            self.save_data_binary = aug_config_dict['save_data_to_binary']
-            self.save_data_dir = aug_config_dict['save_data_to_dir']
 
             for key, value in alghs_dict.items():
                 if value['use'] and len(value['val_list']) != self.max_aug_part:
@@ -59,17 +60,36 @@ class WindowMultipleExamples(WindowInterface):
                 'use_contrast': alghs_dict['contrast']['use'],
                 'contrast_list': alghs_dict['contrast']['val_list']
             }
+            self.json_dir_list = aug_config_dict['json_dir_list']
+            json_list = []
+            for dir_name in self.json_dir_list:
+                new_json_list = [file_name for file_name in os.listdir(dir_name) if re.search('.json', file_name)]
+                new_json_list = ["%s/%s" % (dir_name, json_name) for json_name in new_json_list]
+                json_list = [*json_list, *new_json_list]
 
-        if json_list == None:
-            raise Exception('No passed json')
         self.json_name = os.path.splitext(json_list[0])[0]
 
         if len(json_list) == 1:
             print('Parsing preprocessed json')
-            self.classes, img_shape, self.x_data, self.y_data = \
-                dmk.json_big_load(json_list[0])
-            self.x_data = np.array(self.x_data, dtype='uint8')
-            self.y_data = np.array(self.y_data, dtype='uint8')
+            with open(json_list[0]) as json_fp:
+                json_dict = json.load(json_fp)
+                self.classes = json_dict['classes']
+                self.img_shape = json_dict['img_shape']
+                import pandas as pd
+                df = pd.DataFrame(json_dict['dataframe'])
+                df = df.replace(['фитофтороз', 'здоровый куст'], ['афитофтороз', 'яздоровый куст'])  # TODO great bone
+
+                train_generator = ImageDataGenerator().flow_from_dataframe(
+                    dataframe=df,
+                    x_col='id',
+                    y_col='label',
+                    target_size=(256, 256),
+                    color_mode='rgb',
+                    batch_size=len(df)
+                )
+                self.x_data, self.y_data = train_generator.next()
+                self.x_data = np.array(self.x_data, dtype='uint8')
+                self.y_data = np.array(self.y_data, dtype='uint8')
         else:
             print('Parsing json list')
             self.classes, self.x_data, self.y_data = dmk.get_data_from_json_list(
@@ -78,15 +98,16 @@ class WindowMultipleExamples(WindowInterface):
                 # TODO some dev stuff
                 remove_classes=['альтернариоз', 'прочие инфекции', 'морщинистая мозаика', 'полосатая мозаика']
             )
+            # TODO some dev stuff
+            self.classes['здоровый куст'] = self.classes['марь белая']
+            del self.classes['марь белая']
+            self.classes['мозаика'] = self.classes['прочие мозаики']
+            del self.classes['прочие мозаики']
+            self.classes['сорняк'] = self.classes['прочие сорняки']
+            del self.classes['прочие сорняки']
+
         self.init_size = len(self.x_data)
         self.img_shape = self.x_data.shape[1:]
-        # TODO some dev stuff
-        # self.classes['здоровый куст'] = self.classes['марь белая']
-        # del self.classes['марь белая']
-        # self.classes['мозаика'] = self.classes['прочие мозаики']
-        # del self.classes['прочие мозаики']
-        # self.classes['сорняк'] = self.classes['прочие сорняки']
-        # del self.classes['прочие сорняки']
 
         self._define_max_class()
 
@@ -205,60 +226,44 @@ class WindowMultipleExamples(WindowInterface):
         for key in self.classes.keys():
             self.classes[key]['value'] = list(self.classes[key]['value'].flatten())
 
-        if self.save_data_binary:
-            ###################################################################################
-            # ------------------------ be aware of SIGKILL ------------------------------------
-            ###################################################################################
-            binary_path = dir_path = "/".join(self.output_json.split('/')[:-1]) + "/" \
-                                     + self.output_json.split('/')[-1][:-5] + ".hd5f"
-            dmk.json_big_create(
-                json_path=self.output_json,
-                h5_path=binary_path,
-                x_data=self.x_data,
-                y_data=self.y_data,
-                longitudes=None,
-                latitudes=None,
-                img_shape=None,
-                classes=self.classes
-            )
-        elif self.save_data_dir:
-            ###################################################################################
-            # we can not pass array with size 10_000 * 256 * 256 * 3 to function, shout SIGKILL
-            ###################################################################################
-            dir_path = "/".join(self.output_json.split('/')[:-1]) \
-                       + "/" + self.output_json.split('/')[-1][:-5]
+        ###################################################################################
+        # ----------------- save train data as directory of images ------------------------
+        ###################################################################################
+        dir_path = "/".join(self.output_json.split('/')[:-1]) \
+                   + "/" + self.output_json.split('/')[-1][:-5]
 
-            id = []
-            label = []
+        id = []
+        label = []
 
-            if not dir_path:
-                raise Exception("Data directory %s need to be existed" % dir_path)
+        if not os.path.isdir(dir_path):
+            os.mkdir(dir_path)
+            print('%s dir created' % dir_path)
 
+        for key in self.classes.keys():
+            self.classes[key]['value_num'] = dmk.get_num_from_pos(self.classes[key]['value'])
+            self.classes[key]['saved_num'] = 0
+        for i, (x, y) in enumerate(zip(self.x_data, self.y_data)):
             for key in self.classes.keys():
-                self.classes[key]['value_num'] = dmk.get_num_from_pos(self.classes[key]['value'])
-                self.classes[key]['saved_num'] = 0
-            for i, (x, y) in enumerate(zip(self.x_data, self.y_data)):
-                for key in self.classes.keys():
-                    if (self.classes[key]['value'] == y).all():
-                        file_path = "%s/%d.JPG" % (dir_path, i + 1)
-                        Image.fromarray(x).save(file_path)
-                        print("%s saved" % file_path)
-                        id.append(file_path)
-                        label.append(key)
+                if (self.classes[key]['value'] == y).all():
+                    file_path = "%s/%d.JPG" % (dir_path, i + 1)
+                    Image.fromarray(x).save(file_path)
+                    print("%s saved" % file_path)
+                    id.append(file_path)
+                    label.append(key)
 
-            with open(self.output_json, "w") as fp:
-                json.dump(
-                    {
-                        "classes": self.classes, "img_shape": None,
-                        "dir_path": dir_path,
-                        "longitudes": None, "latitudes": None,
-                        "dataframe": {
-                            "id": id,
-                            "label": label
-                        }
-                    },
-                    fp)
-                fp.close()
+        with open(self.output_json, "w") as fp:
+            json.dump(
+                {
+                    "classes": self.classes, "img_shape": None,
+                    "dir_path": dir_path,
+                    "longitudes": None, "latitudes": None,
+                    "dataframe": {
+                        "id": id,
+                        "label": label
+                    }
+                },
+                fp)
+            fp.close()
 
         self.quit_default()
 

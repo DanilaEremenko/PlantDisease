@@ -52,6 +52,8 @@
   "aug_part": 4,
   "augment_all": true,
   "output_json": "Datasets/ds_classifier/final_ds/big_ds.json",
-  "save_data_to_binary": false,
-  "save_data_to_dir": true
+  "json_dir_list": [
+    "Datasets/legacy_jsons/agro",
+    "Datasets/legacy_jsons/health"
+  ]
 }
