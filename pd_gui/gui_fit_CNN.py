@@ -16,15 +16,15 @@ class WindowShowPredictions(WindowInterface):
     ##############################################################
     # ---------------- init stuff --------------------------------
     ##############################################################
-    def __init__(self, x_data, y_data, y_predicted, classes):
+    def __init__(self, evaluate_generator, model, classes):
         super(WindowShowPredictions, self).__init__()
 
         config_dict = self.load_dict_from_json_with_keys(key_list=['qt_label_size'])
         self.label_size = config_dict['qt_label_size']
 
-        self.x_data = x_data
-        self.y_data = y_data
-        self.y_predicted = y_predicted
+        self.evaluate_generator = evaluate_generator
+        self.model = model
+
         self.classes = classes
 
         self._define_max_key_len()
@@ -37,7 +37,7 @@ class WindowShowPredictions(WindowInterface):
     def _init_hbox_control(self):
         self.hbox_control = QtWidgets.QHBoxLayout()
         self.hbox_control.addStretch(1)
-        self.hbox_control.addWidget(ControlButton("Update", self.update_main_layout))
+        self.hbox_control.addWidget(ControlButton("Next Batch", self.update_main_layout))
         self.hbox_control.addWidget(ControlButton("Quit", self.quit_default))
 
     def _define_max_key_len(self):
@@ -71,7 +71,12 @@ class WindowShowPredictions(WindowInterface):
             return word
 
         label_list = []
-        for x, y, y_answer in zip(self.x_data, self.y_data, self.y_predicted):
+
+        x_data, y_data = self.evaluate_generator.next()
+        x_data = np.array(x_data, dtype='uint8')
+        y_predicted = self.model.predict(x_data)
+
+        for x, y, y_answer in zip(x_data, y_data, y_predicted):
             answer = get_key_by_answer(pos_code=y_answer)
 
             right_ans = get_key_by_answer(pos_code=y)
@@ -93,7 +98,7 @@ class WindowShowPredictions(WindowInterface):
             else:
                 label_list[-1].text_label.setStyleSheet('background-color: red')
 
-        rect_len = int(np.sqrt(len(self.x_data)))
+        rect_len = int(np.sqrt(len(x_data)))
         self.main_layout.update_grid(
             windows_width=self.frameGeometry().width(),
             window_height=self.frameGeometry().height(),

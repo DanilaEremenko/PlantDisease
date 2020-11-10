@@ -98,13 +98,16 @@ class WindowMultipleExamples(WindowInterface):
                 # TODO some dev stuff
                 remove_classes=['альтернариоз', 'прочие инфекции', 'морщинистая мозаика', 'полосатая мозаика']
             )
+
             # TODO some dev stuff
-            self.classes['здоровый куст'] = self.classes['марь белая']
-            del self.classes['марь белая']
-            self.classes['мозаика'] = self.classes['прочие мозаики']
-            del self.classes['прочие мозаики']
-            self.classes['сорняк'] = self.classes['прочие сорняки']
-            del self.classes['прочие сорняки']
+            def replace_diseases(from_key, to_key):
+                if from_key in self.classes:
+                    self.classes[to_key] = self.classes[from_key]
+                    del self.classes[from_key]
+
+            replace_diseases(from_key='марь белая', to_key='здоровый куст')
+            replace_diseases(from_key='прочие мозаики', to_key='мозаика')
+            replace_diseases(from_key='прочие сорняки', to_key='сорняк')
 
         self.init_size = len(self.x_data)
         self.img_shape = self.x_data.shape[1:]

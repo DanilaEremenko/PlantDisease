@@ -115,7 +115,7 @@ def get_splited_subs(x_data, y_data, classes, validation_split):
            (x_test, y_test, test_clasess)
 
 
-def show_predict_on_window(x_data, y_data, y_predicted, classes):
+def show_predict_on_window(evaluate_generator, model, classes):
     # TODO works incorrect
     from pd_gui.gui_fit_CNN import WindowShowPredictions
     from PyQt5 import QtWidgets
@@ -123,9 +123,8 @@ def show_predict_on_window(x_data, y_data, y_predicted, classes):
     app = QtWidgets.QApplication(sys.argv)
 
     window_class_pctr = WindowShowPredictions(
-        x_data=x_data,
-        y_data=y_data,
-        y_predicted=y_predicted,
+        evaluate_generator=evaluate_generator,
+        model=model,
         classes=classes
     )
 
@@ -440,10 +439,11 @@ def main():
             epochs = len(history.history['accuracy'])
 
             # gr.plot_train_test_from_history(history_dict=history.history, show=True)
-        eval['loss'], eval['accuracy'] = model.evaluate_generator(
-            generator=evaluate_generator,
-            steps=int(len(eval['df']) / eval['batch_size'])
-        )
+        # eval['loss'], eval['accuracy'] = model.evaluate_generator(
+        #     generator=evaluate_generator,
+        #     steps=int(len(eval['df']) / eval['batch_size'])
+        # )
+        eval['loss'], eval['accuracy'] = 0, 100  # TODO stub
         print("eval_acc     %.2f%%\n" % (eval['accuracy'] * 100))
 
         print("epochs: %d - %d" % (epochs_sum - epochs, epochs_sum))
@@ -452,11 +452,9 @@ def main():
         # ----------------------- CMD UI ------------------------------------
         #####################################################################
         if get_stdin_answer("Show image of prediction?"):
-            x, y = evaluate_generator.next()
             show_predict_on_window(
-                x_data=np.array(x, 'uint8'),
-                y_data=y,
-                y_predicted=model.predict(x),
+                evaluate_generator=evaluate_generator,
+                model=model,
                 classes=eval['classes']
             )
         if get_stdin_answer(text='Save model?'):
